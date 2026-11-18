@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "skills": {
+    "local-skill-d406fc91-a36f-41f0-9a8a-429b3a2d0442": {
+      "skillId": "local-skill-d406fc91-a36f-41f0-9a8a-429b3a2d0442",
+      "versionId": "1",
+      "slug": "login-modal-integration",
+      "name": "Login Modal Integration",
+      "version": 1,
+      "bundleSha256": "30fe67cf95f68d47a84a11963c5c45e661927a32ed058309c4bdad9a262bc275",
+      "receiptId": "7614f05f-8f2b-4474-9b4b-bfabecd13014",
+      "files": {
+        "SKILL.md": "891f4879c44b4b54ffe3aefdeb8b8f6c79df22162ded9d508759f397fc667bff"
+      },
+      "description": "Integra um modal de login e registro com pers LocalStorage, tema escuro e alto z-index para menus móveis."
+    }
+  }
+}

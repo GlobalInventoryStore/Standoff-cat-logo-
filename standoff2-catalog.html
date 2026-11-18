@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standoff 2 - Catálogo de Contas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-subtle: #12121a;
+      --card: #1a1a24;
+      --card-hover: #222230;
+      --fg: #f0f0f5;
+      --muted: #8888a0;
+      --accent: #c8102e;
+      --accent-hover: #e71534;
+      --border: #2a2a3a;
+      --success: #10b981;
+      --info: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-pattern {
+      background-image: 
+        linear-gradient(180deg, rgba(20,20,30,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20,20,30,0.3) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    .hamburger {
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .hamburger.active {
+      transform: rotate(45deg);
+    }
+    .hamburger span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: var(--fg);
+      margin: 8px 0;
+      transition: all 0.3s ease;
+    }
+    .hamburger.active span:nth-child(1) {
+      opacity: 0;
+      transform: translateX(8px);
+    }
+    .hamburger.active span:nth-child(2) {
+      transform: rotate(90deg);
+    }
+    .hamburger.active span:nth-child(3) {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 300px;
+      max-height: 100vh;
+      background: var(--bg-subtle);
+      border-left: 1px solid var(--border);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+    .mobile-menu a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .mobile-menu a:hover {
+      background: var(--card);
+    }
+
+    .accounts-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+      @media (min-width: 640px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (min-width: 1024px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      @media (min-width: 1280px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .account-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .account-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .account-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .account-card:hover img {
+      transform: scale(1.05);
+    }
+    .card-content {
+      padding: 1.25rem;
+    }
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+    .card-meta {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .site-footer {
+      background: var(--bg-subtle);
+      border-top: 1px solid var(--border);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hamburger span {
+        transition: none;
+      }
+      .account-card:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-pattern">
+
+  <header class="fixed top-0 left-0 right-0 z-50 bg-[var(--bg)]/80 backdrop-blur-md border-b border-[var(--border)]">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-xl font-bold text-[var(--accent)]">Standoff 2</span>
+        <span class="text-sm text-[var(--muted)]">Catálogo</span>
+      </div>
+      <button class="hamburger hamburger--spin" id="hamburgerBtn" aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <nav class="mobile-menu" id="mobileMenu" aria-label="Navegação principal">
+      <a href="#secao-contas" class="block">Contas</a>
+      <a href="#features" class="block">Features</a>
+      <a href="#sobre" class="block">Sobre</a>
+      <a href="#" class="block">Sair</a>
+    </nav>
+  </header>
+
+  <main class="pt-20 pb-16">
+    <section class="max-w-7xl mx-auto px-6 mb-12">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+        Explore o melhor <span class="text-[var(--accent)]">Standoff 2</span>
+      </h1>
+      <p class="text-lg text-[var(--muted)] max-w-2xl">
+        Descubra contas exclusivas, skins raras e equipamentos premium para elevar sua experiência no jogo.
+      </p>
+    </section>
+
+    <section id="secao-contas" class="max-w-7xl mx-auto px-6">
+      <h2 class="text-3xl font-semibold mb-8">Catálogo de Contas</h2>
+      <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo ou use os filtros para refinar sua busca:</p>
+      <div class="accounts-grid">
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1566546626024-1c31655e5f7e?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Skin exclusiva" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Lendária</h3>
+            <p class="card-meta">Rank lendário • 500+ vitórias</p>
+            <p class="card-desc">Conta com as skins mais exclusivas do jogo e estatísticas excepcionais. Pronto para competição.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1571003123494-1f059892a1be?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Competitive" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Competitive</h3>
+            <p class="card-meta">Rank Diamond • 200+ vitórias</p>
+            <p class="card-desc">Conta bem balanceada com equipamentos de alto desempenho. Ideal para subir de rank.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1518717758534-8338861e72c1?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Collection" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Collection</h3>
+            <p class="card-meta">Colecionador • 300+ skins</p>
+            <p class="card-desc">Acumule uma vasta coleção de skins e itens raros. O sonho de qualquer colecionador.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1565665031411-7b07523d1a5e?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Elite" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Elite</h3>
+            <p class="card-meta">Rank Master • 100+ vitórias</p>
+            <p class="card-desc">Conta elite com acesso antecipado a novas funcionalidades e eventos exclusivos.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1518769573014-8547901f79ec?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Beginner" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Iniciante</h3>
+            <p class="card-meta">Rank Bronze • 50+ vitórias</p>
+            <p class="card-desc">Pontapé inicial perfeito. Conta com itens básicos para aprender o jogo.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1566546626024-1c31655e5f7e?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Premium" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Premium</h3>
+            <p class="card-meta">Rank Platinum • 350+ vitórias</p>
+            <p class="card-desc">Conta premium com todas as vantagens e bônus exclusivos disponíveis.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1571003123494-1f059892a1be?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Mythic" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Mítica</h3>
+            <p class="card-meta">Rank Mythic • 50+ vitórias</p>
+            <p class="card-desc">A conta mais rara do catálogo. Acesso limitado a itens lendários e efeitos exclusivos.</p>
+          </div>
+        </article>
+        <article class="account-card">
+          <img src="https://images.unsplash.com/photo-1518717758534-8338861e72c1?w=500&h=300&fit=crop" alt="Conta Standoff 2 - Special" loading="lazy">
+          <div class="card-content">
+            <h3 class="card-title">Conta Special</h3>
+            <p class="card-meta">Edição Limitada • 100+ vitórias</p>
+            <p class="card-desc">Conta de edição limitada com itens que nunca mais serão disponibilizados.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" class="max-w-7xl mx-auto px-6 mb-12">
+      <h2 class="text-3xl font-semibold mb-6">Por que escolher nossa conta?</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+          <div class="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 14l9-5a1 1 0 000-1.72l-9-5a1 1 0 00-1.72 1L2 14a1 1 0 00.34 1.31l8 4a1 1 0 001.66 0l8-4a1 1 0 00.34-1.31L12 14z"/></svg>
+          </div>
+          <h3 class="font-medium mb-2">Segurança garantida</h3>
+          <p class="text-[var(--muted)]">Todas as contas passam por verificação rigorosa de segurança e autenticidade.</p>
+        </div>
+        <div>
+          <div class="w-12 h-12 rounded-full bg-[var(--info)]/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-[var(--info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6H6v-6l4-2z"/><path d="M12 18v6l4 2v-6h-2v6l-4 2v-6H4v-6l4-2z"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
+          </div>
+          <h3 class="font-medium mb-2">Suporte 24h</h3>
+          <p class="text-[var(--muted)]">Equipe de suporte pronta para ajudar a qualquer hora do dia.</p>
+        </div>
+        <div>
+          <div class="w-12 h-12 rounded-full bg-[var(--success)]/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 19v-4m0-7v4m6-3h4a2 2 0 002-2V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m2 6H15"/><path d="M9.683 7H4a2 2 0 00-2 2v2a2 2 0 002 2h2.683l5.25 4.75a2 2 0 01-.391 3.07L21 12a2 2 0 01-2.058 1.38L13 19.5l1.75 2.25a2 2 0 01-.39 3.07l-5.25 4.75A2 2 0 0021 17v-2a2 2 0 00-2-2h-2.683l-5.25-4.75a2 2 0 01-.391-3.07L3 12a2 2 0 00-2.058-1.38L11 4.5l-1.75-2.25a2 2 0 01.391-3.07l5.25-4.75z"/></svg>
+          </div>
+          <h3 class="font-medium mb-2">Entrega rápida</h3>
+          <p class="text-[var(--muted)]">Sua conta é entregue em até 24h após a confirmação do pagamento.</p>
+        </div>
+        <div>
+          <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H4a2 2 0 00-2 2v6a2 2 0 002 2z"/><path d="M2 4h20a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2z"/></svg>
+          </div>
+          <h3 class="font-medium mb-2">Privacidade total</h3>
+          <p class="text-[var(--muted)]">Suas informações permanecem confidenciais e nunca são compartilhadas.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="sobre" class="max-w-7xl mx-auto px-6 mb-12">
+      <h2 class="text-3xl font-semibold mb-6">Sobre o Standoff 2</h2>
+      <p class="text-[var(--muted)] leading-relaxed">
+        Standoff 2 é a versão mobile do popular jogo de tiro tático Counter-Strike. Com jogabilidade fluida, mapas icônicos e uma comunidade vibrante, o jogo oferece uma experiência completa de tiro tático para dispositivos móveis (iOS e Android). Nosso catálogo traz as melhores contas para você aproveitar ao máximo todo o potencial do jogo.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div>
+          <h4 class="font-medium mb-3">Standoff 2</h4>
+          <p class="text-[var(--muted)] text-sm">Catálogo oficial de contas para Standoff 2. Seguro, rápido e confiável.</p>
+          <div class="mt-4">
+            <a href="#" class="text-[var(--muted)] hover:text-[var(--fg)] transition text-sm">Termos de uso</a>
+            <span class="mx-2 text-[var(--muted)] hover:text-[var(--fg)] transition">|</span>
+            <a href="#" class="text-[var(--muted)] hover:text-[var(--fg)] transition text-sm">Política de privacidade</a>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-medium mb-3">Produto</h4>
+          <ul class="space-y-2 text-[var(--muted)] text-sm">
+            <li><a href="#secao-contas">Catálogo de contas</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#sobre">Sobre</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-3">Recursos</h4>
+          <ul class="space-y-2 text-[var(--muted)] text-sm">
+            <li><a href="#" class="hover:text-[var(--fg)] transition">Suporte</a></li>
+            <li><a href="#" class="hover:text-[var(--fg)] transition">FAQ</a></li>
+            <li><a href="#" class="hover:text-[var(--fg)] transition">Contato</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-3">Siga-nos</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--fg)] transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6h-6V8a2 2 0 012-2h2a2 2 0 012 2v6h-6l4 2z"/></svg>
+            </a>
+            <a href="#" class="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--fg)] transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6h-6V8a2 2 0 012-2h2a2 2 0 012 2v6h-6l4 2z"/></svg>
+            </a>
+            <a href="#" class="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--fg)] transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6h-6V8a2 2 0 012-2h2a2 2 0 012 2v6h-6l4 2z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 pt-8 border-t border-[var(--border)] text-center">
+        <p class="text-[var(--muted)] text-sm">2024 Standoff 2 Catalog. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const hamburgerBtn = document.getElementById('hamburgerBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+
+      hamburgerBtn.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileMenu.classList.toggle('open');
+        this.setAttribute('aria-expanded', this.classList.contains('active'));
+        mobileMenu.setAttribute('aria-hidden', !this.classList.contains('active'));
+      });
+
+      const menuLinks = mobileMenu.querySelectorAll('a');
+      menuLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          hamburgerBtn.classList.remove('active');
+          mobileMenu.classList.remove('open');
+          hamburgerBtn.setAttribute('aria-expanded', 'false');
+          mobileMenu.setAttribute('aria-hidden', 'true');
+        });
+      });
+
+      document.addEventListener('click', function(event) {
+        if (!hamburgerBtn.contains(event.target) && !mobileMenu.contains(event.target)) {
+          hamburgerBtn.classList.remove('active');
+          mobileMenu.classList.remove('open');
+          hamburgerBtn.setAttribute('aria-expanded', 'false');
+          mobileMenu.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      mobileMenu.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      mobileMenu.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > swipeThreshold) {
+          hamburgerBtn.classList.remove('active');
+          mobileMenu.classList.remove('open');
+          hamburgerBtn.setAttribute('aria-expanded', 'false');
+          mobileMenu.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        hamburgerBtn.style.transition = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
