@@ -46,8 +46,8 @@
 <body>
 
     <!-- Header / Navbar -->
-    <header class="border-b border-gray-800 bg-[#0b0f17]/90 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <header class="border-b border-gray-800 bg-[#0b0f17]/95 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center relative">
             <span class="text-2xl font-black text-[#ff4655] tracking-wider uppercase">STANDOFF 2</span>
             
             <div class="flex items-center gap-3">
@@ -62,8 +62,8 @@
         </div>
     </header>
 
-    <!-- Menu Hambúrguer (Mobile) - Flutuante e Oculto por padrão -->
-    <div id="mobile-menu" class="hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3 shadow-2xl absolute top-[73px] left-0 w-full z-40">
+    <!-- Menu Hambúrguer Flutuante Fixado (Não afeta o layout da página) -->
+    <div id="mobile-menu" class="hidden bg-[#131b2e] border border-gray-800 rounded-2xl px-6 py-4 space-y-3 shadow-2xl fixed top-16 right-4 w-72 z-50">
         <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Início</a>
         <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Termos</a>
         <a href="#" onclick="openAnuncioModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
@@ -262,9 +262,9 @@
         const AVATARES = [
             'https://api.dicebear.com/7.x/bottts/svg?seed=user1',
             'https://api.dicebear.com/7.x/bottts/svg?seed=user2',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=user3',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=user4',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=user5'
+            'https://api.dicebear.com/7.x/bottts/svg?seed-user3',
+            'https://api.dicebear.com/7.x/bottts/svg?seed-user4',
+            'https://api.dicebear.com/7.x/bottts/svg?seed-user5'
         ];
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -275,13 +275,19 @@
             }
             carregarAvataresRegistro();
 
-            // Menu Hambúrguer
+            // Menu Hambúrguer Flutuante
             const hamburgerBtn = document.getElementById('hamburger-btn');
             const mobileMenu = document.getElementById('mobile-menu');
             if (hamburgerBtn && mobileMenu) {
                 hamburgerBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     mobileMenu.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
                 });
 
                 mobileMenu.querySelectorAll('.menu-link').forEach(link => {
