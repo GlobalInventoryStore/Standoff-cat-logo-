@@ -22,6 +22,9 @@
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .accounts-grid {
             display: grid;
@@ -39,7 +42,7 @@
         .btn-primary:hover { background: #fa3243; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body>
 
     <!-- Header / Navbar -->
     <header class="border-b border-gray-800 bg-[#0b0f17]/90 backdrop-blur sticky top-0 z-50">
@@ -271,7 +274,7 @@
             }
             carregarAvataresRegistro();
 
-            // Lógica robusta do menu hambúrguer
+            // Menu Hambúrguer
             const hamburgerBtn = document.getElementById('hamburger-btn');
             const mobileMenu = document.getElementById('mobile-menu');
             if (hamburgerBtn && mobileMenu) {
@@ -435,7 +438,39 @@
         function closeDetalhes() { document.getElementById('modal-detalhes').style.display = 'none'; }
         function comprarConta() { alert('Redirecionando para o chat de atendimento seguro via PIX/Cartão...'); closeDetalhes(); }
 
-        function publicarAnuncioFinal()
-</script>
+        function publicarAnuncioFinal() {
+            const titulo = document.getElementById('conta-titulo').value.trim();
+            const preco = document.getElementById('conta-preco').value.trim();
+            const rank = document.getElementById('conta-rank').value.trim();
+            const vinculo = document.getElementById('conta-vinculo').value;
+            const desc = document.getElementById('conta-desc').value.trim() || "Sem descrição adicional.";
+
+            if (!titulo || !preco || !rank) {
+                alert('Preencha os campos obrigatórios!');
+                return;
+            }
+
+            const grid = document.getElementById('catalogo-cards');
+            const novoCard = document.createElement('div');
+            novoCard.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl";
+            novoCard.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${rank}</span>
+                        <span class="text-lg font-bold text-emerald-400">${preco}</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-1">${titulo}</h3>
+                    <p class="text-xs text-[var(--muted)] mb-2">Vínculo: ${vinculo}</p>
+                    <p class="text-xs text-[var(--muted)] mb-4">${desc}</p>
+                </div>
+                <button onclick="verDetalhes('${titulo}', '${preco}', '${rank}', '${vinculo}', '${desc}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
+                    Ver Detalhes
+                </button>
+            `;
+            grid.prepend(novoCard);
+            closeAnuncioModal();
+            alert('Conta publicada com sucesso no catálogo!');
+        }
+    </script>
 </body>
 </html>
