@@ -3,16 +3,16 @@
   "skills": {
     "local-skill-d406fc91-a36f-41f0-9a8a-429b3a2d0442": {
       "skillId": "local-skill-d406fc91-a36f-41f0-9a8a-429b3a2d0442",
-      "versionId": "1",
+      "versionId": "2",
       "slug": "login-modal-integration",
       "name": "Login Modal Integration",
-      "version": 1,
-      "bundleSha256": "30fe67cf95f68d47a84a11963c5c45e661927a32ed058309c4bdad9a262bc275",
+      "version": 2,
+      "bundleSha256": "1644ccbe6b11e4f49e7cbebbfe29a87f93ceffa47090d38df7d045eeaa013c1e",
       "receiptId": "7614f05f-8f2b-4474-9b4b-bfabecd13014",
       "files": {
-        "SKILL.md": "891f4879c44b4b54ffe3aefdeb8b8f6c79df22162ded9d508759f397fc667bff"
+        "SKILL.md": "25694daa83ef515a43ec057e36816276019b976fc150f00cce095496e254d542"
       },
-      "description": "Integra um modal de login e registro com pers LocalStorage, tema escuro e alto z-index para menus móveis."
+      "description": "Integra modal de login e registro com pers LocalStorage, tema escuro, alto z-index para menus móveis e conexão Supabase, com mensagens de erro na tela para diagnóstico."
     }
   }
 }
