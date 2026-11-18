@@ -176,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Modal Obrigatório de Verificação de Vendedor (MANTIDO 100% INTACTO) -->
+    <!-- Modal Obrigatório de Verificação de Vendedor -->
     <div id="modal-verificar-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex justify-between items-center mb-4">
@@ -313,7 +313,7 @@
         </div>
     </div>
 
-    <!-- Modal do Ticket de Compra & Status (Aprovado / Recusado) -->
+    <!-- Modal do Ticket de Compra & Status -->
     <div id="modal-ticket" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
@@ -357,7 +357,7 @@
         </div>
     </div>
 
-    <!-- Modal de Termos de Serviço Completo (Proteção contra Axlebolt e Negociações Externas) -->
+    <!-- Modal de Termos de Serviço Completo -->
     <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-3 text-[#ff4655]">Termos de Serviço e Segurança</h3>
@@ -372,7 +372,7 @@
         </div>
     </div>
 
-    <!-- Modal de Anúncio (Com compressor automático de imagens) -->
+    <!-- Modal de Anúncio -->
     <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
@@ -580,7 +580,6 @@
         function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
         function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
         
-        // FUNÇÃO DE VERIFICAÇÃO DE VENDEDOR (MANTIDA 100% INTACTA)
         function verificarAutenticacaoAnuncio() {
             const menu = document.getElementById('mobile-menu');
             if (menu) menu.classList.add('hidden');
