@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standoff 2 - Catálogo de Contas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-primary: #0b0f17;
+            --bg-card: #131b2e;
+            --accent: #ff4655;
+            --text-main: #f3f4f6;
+            --muted: #9ca3af;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        /* Evitar sobreposição no header mobile */
+        header .flex.gap-4 {
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        /* Espaço mínimo para o botão entrar e hambúrguer não se colarem */
+        .auth-btn{min-width: 110px;}
+        /* Esconder overflow horizontal */
+        body{overflow-x:hidden;}
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-gray-800 bg-[#0b0f17]/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-black text-[#ff4655] tracking-wider">STANDOFF 2</span>
+                <span class="text-xs bg-[#ff4655]/10 text-[#ff4655] px-2 py-0.5 rounded font-bold uppercase">Catálogo</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="#secao-contas" class="text-sm font-medium hover:text-[#ff4655] transition">Início</a>
+                <a href="#" onclick="openTermosModal()" class="text-sm font-medium hover:text-[#ff4655] transition">Termos</a>
+                <a href="#" onclick="openAnuncioModal()" class="text-sm font-medium hover:text-[#ff4655] transition">Anunciar</a>
+            </nav>
+
+            <div class="flex items-center gap-4">
+                <div id="auth-container" style="flex-shrink: 0;">
+                    <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 flex-shrink-0 min-w-[120px]">
+                        Entrar / Cadastrar
+                    </button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-300 hover:text-white flex-shrink-0">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Menu Mobile -->
+    <div id="mobile-menu" class="hidden md:hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3">
+        <a href="#secao-contas" onclick="toggleMobileMenu()" class="block text-sm font-medium">Início</a>
+        <a href="#" onclick="openTermosModal(); toggleMobileMenu();" class="block text-sm font-medium">Termos</a>
+        <a href="#" onclick="openAnuncioModal(); toggleMobileMenu();" class="block text-sm font-medium">Anunciar</a>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow">
+        <section id="secao-contas" class="max-w-7xl mx-auto px-6 pb-12 pt-16">
+            <h2 class="text-3xl font-bold mb-2">Catálogo de Contas</h2>
+            <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes:</p>
+            
+            <div class="accounts-grid" id="catalogo-cards">
+                <!-- Card 1 -->
+                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Master</span>
+                            <span class="text-lg font-bold text-emerald-400">R$ 150,00</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1">Conta com M9 Bayonet & AKR</h3>
+                        <p class="text-xs text-[var(--muted)] mb-2">Vínculo: Google ID</p>
+                        <p class="text-xs text-[var(--muted)] mb-4">Inventário recheado com luvas e skins raras.</p>
+                    </div>
+                    <button onclick="verDetalhes('Conta com M9 Bayonet & AKR', 'R$ 150,00', 'Master', 'Google ID', 'Inventário completo contendo M9 Bayonet Treasure Hunter, AKR Genesis e luvas exclusivas. Acesso total garantido.')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition">
+                        Ver Detalhes
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="border-t border-gray-800 py-6 text-center text-xs text-[var(--muted)]">
+        Standoff 2 Marketplace &copy; 2026 - Todos os direitos reservados.
+    </footer>
+
+    <!-- Modal de Login / Cadastro -->
+    <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+            <h3 class="text-xl font-bold mb-2">Criar Conta / Entrar</h3>
+            <p class="text-sm text-[var(--muted)] mb-5">Insira um Gmail válido e confirme a sua senha.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">E-mail (@gmail.com)</label>
+                    <input id="reg-email" type="email" placeholder="seuemail@gmail.com" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Senha</label>
+                    <input id="reg-pass" type="password" placeholder="••••••••" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Confirmar Senha</label>
+                    <input id="reg-confirm-pass" type="password" placeholder="••••••••" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div id="reg-feedback" class="text-xs font-medium text-center hidden"></div>
+                
+                <button onclick="realizarCadastro()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
+                    Cadastrar e Entrar
+                </button>
+            </div>
+
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Conta -->
+    <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+            <div class="flex gap-2 mb-3">
+                <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
+                <span id="detalhe-vinculo" class="bg-blue-500/10 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Vínculo</span>
+            </div>
+            <h3 id="detalhe-titulo" class="text-xl font-bold mb-1">Nome da Conta</h3>
+            <p id="detalhe-preco" class="text-lg font-bold text-emerald-400 mb-4">R$ 0,00</p>
+            <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6">Descrição detalhada dos itens da conta.</p>
+            
+            <div id="compra-feedback" class="text-xs font-medium text-emerald-400 mb-3 hidden text-center">Redirecionando para o chat de compra segura (PIX/Cartão)...</div>
+
+            <div class="space-y-3">
+                <button onclick="comprarConta()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
+                    Comprar Agora
+                </button>
+                <button onclick="closeDetalhes()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-sm">Voltar</button>
+            </div>
+            <button onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal de Termos -->
+    <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+            <h3 class="text-xl font-bold mb-3 text-[#ff4655]">Termos de Serviço</h3>
+            <p class="text-sm text-[var(--muted)] leading-relaxed mb-5">Garantimos total segurança nas transações de contas de Standoff 2 com intermediação segura e suporte dedicado.</p>
+            <button onclick="closeTermosModal()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-sm">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal Automático de Anúncio com Validação Completa -->
+    <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-lg rounded-2xl p-6 relative overflow-y-auto max-h-[90vh]" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+            <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
+            <p class="text-xs text-[var(--muted)] mb-5">Preencha todos os campos obrigatórios para publicar.</p>
+            
+            <!-- ETAPA 1: Solicitar WhatsApp e Gmail -->
+            <div id="anuncio-etapa-1" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Número de WhatsApp (com DDD)</label>
+                    <input id="anuncio-whatsapp" type="text" placeholder="(11) 99999-9999" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Seu Gmail (@gmail.com)</label>
+                    <input id="anuncio-gmail" type="email" placeholder="seuemail@gmail.com" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div id="etapa1-feedback" class="text-xs font-medium text-center hidden"></div>
+                <button type="button" onclick="enviarCodigoVerificacao()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
+                    Enviar Código de Verificação
+                </button>
+            </div>
+
+            <!-- ETAPA 2: Digitar o Código recebido -->
+            <div id="anuncio-etapa-2" class="space-y-4 hidden">
+                <div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-xs text-amber-300">
+                    Código de verificação enviado! (Código de teste: <strong id="codigo-gerado-exibicao">1234</strong>).
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Digite o Código de 4 Dígitos</label>
+                    <input id="anuncio-codigo-input" type="text" maxlength="4" placeholder="1234" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-center text-lg tracking-widest focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div id="etapa2-feedback" class="text-xs font-medium text-center hidden"></div>
+                <button type="button" onclick="verificarCodigo()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm transition">
+                    Confirmar Código
+                </button>
+            </div>
+
+            <!-- ETAPA 3: Preencher Detalhes e Vínculo Obrigatório -->
+            <div id="anuncio-etapa-3" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Título do Anúncio (Obrigatório)</label>
+                    <input id="conta-titulo" type="text" placeholder="Ex: Conta com Facas Raras" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Preço R$ (Obrigatório)</label>
+                        <input id="conta-preco" type="text" placeholder="R$ 150,00" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Rank (Obrigatório)</label>
+                        <input id="conta-rank" type="text" placeholder="Ex: Master" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Tipo de Vínculo (Obrigatório)</label>
+                    <select id="conta-vinculo" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655] text-gray-200">
+                        <option value="">Selecione o Vínculo...</option>
+                        <option value="Google ID">Google ID</option>
+                        <option value="Apple ID">Apple ID</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="VK">VK</option>
+                        <option value="Huawei ID">Huawei ID</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Foto da Conta / Inventário (Obrigatório)</label>
+                    <input id="conta-foto" type="file" accept="image/*" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-3 py-2 text-xs text-[var(--muted)] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ff4655] file:text-white hover:file:bg-[#fa3243]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição e Exigências (Opcional)</label>
+                    <textarea id="conta-desc" rows="2" placeholder="Detalhes adicionais (opcional)..." class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]"></textarea>
+                </div>
+                <div id="etapa3-feedback" class="text-xs font-medium text-center hidden"></div>
+                <button type="button" onclick="publicarAnuncioFinal()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
+                    Publicar Conta no Catálogo
+                </button>
+            </div>
+
+            <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
+        </div>
+    </div>
+
+    <!-- Scripts de Controle -->
+    <script>
+        let codigoCorreto = "1234";
+
+        window.onload = function() {
+            const usuarioSalvo = localStorage.getItem('standoff_user');
+            if (usuarioSalvo) {
+                atualizarBotaoAuth(usuarioSalvo);
+            }
+        };
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('reg-feedback').classList.add('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function realizarCadastro() {
+            const email = document.getElementById('reg-email').value.trim();
+            const senha = document.getElementById('reg-pass').value;
+            const confirmaSenha = document.getElementById('reg-confirm-pass').value;
+            const feedback = document.getElementById('reg-feedback');
+
+            feedback.classList.remove('hidden');
+
+            if (!email.endsWith('@gmail.com') || email.length < 11) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Erro: Digite um endereço de Gmail válido (@gmail.com)!";
+                return;
+            }
+
+            if (senha.length < 6) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Erro: A senha deve ter pelo menos 6 caracteres!";
+                return;
+            }
+
+            if (senha !== confirmaSenha) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Erro: As senhas não coincidem!";
+                return;
+            }
+
+            localStorage.setItem('standoff_user', email);
+            feedback.className = "text-xs font-medium text-emerald-400 text-center";
+            feedback.innerText = "Cadastro realizado com sucesso!";
+
+            setTimeout(() => {
+                closeModal();
+                atualizarBotaoAuth(email);
+            }, 1200);
+        }
+
+        function atualizarBotaoAuth(email) {
+            document.getElementById('auth-container').innerHTML = `
+                <div class="flex items-center gap-2 bg-[#131b2e] border border-gray-800 px-4 py-2 rounded-xl">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span class="text-xs font-medium text-gray-200 truncate max-w-[120px]">${email}</span>
+                    <button onclick="sairConta()" class="text-[10px] text-red-400 hover:underline ml-1">Sair</button>
+                </div>
+            `;
+        }
+
+        function sairConta() {
+            localStorage.removeItem('standoff_user');
+            document.getElementById('auth-container').innerHTML = `
+                <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
+                    Entrar / Cadastrar
+                </button>
+            `;
+        }
+
+        function verDetalhes(titulo, preco, rank, vinculo, desc) {
+            document.getElementById('detalhe-titulo').innerText = titulo;
+            document.getElementById('detalhe-preco').innerText = preco;
+            document.getElementById('detalhe-badge').innerText = rank;
+            document.getElementById('detalhe-vinculo').innerText = vinculo;
+            document.getElementById('detalhe-desc').innerText = desc;
+            document.getElementById('compra-feedback').classList.add('hidden');
+            document.getElementById('modal-detalhes').style.display = 'flex';
+        }
+
+        function closeDetalhes() {
+            document.getElementById('modal-detalhes').style.display = 'none';
+        }
+
+        function comprarConta() {
+            const feedback = document.getElementById('compra-feedback');
+            feedback.classList.remove('hidden');
+            setTimeout(() => {
+                closeDetalhes();
+            }, 1800);
+        }
+
+        function openTermosModal() {
+            document.getElementById('modal-termos').style.display = 'flex';
+        }
+
+        function closeTermosModal() {
+            document.getElementById('modal-termos').style.display = 'none';
+        }
+
+        function openAnuncioModal() {
+            document.getElementById('modal-anuncio').style.display = 'flex';
+            document.getElementById('anuncio-etapa-1').style.display = 'block';
+            document.getElementById('anuncio-etapa-2').style.display = 'none';
+            document.getElementById('anuncio-etapa-3').style.display = 'none';
+            document.getElementById('etapa1-feedback').classList.add('hidden');
+        }
+
+        function closeAnuncioModal() {
+            document.getElementById('modal-anuncio').style.display = 'none';
+        }
+
+        function enviarCodigoVerificacao() {
+            const whatsapp = document.getElementById('anuncio-whatsapp').value.trim();
+            const gmail = document.getElementById('anuncio-gmail').value.trim();
+            const feedback = document.getElementById('etapa1-feedback');
+
+            feedback.classList.remove('hidden');
+
+            if (whatsapp.length < 8) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Erro: Digite um número de WhatsApp válido!";
+                return;
+            }
+
+            if (!gmail.endsWith('@gmail.com')) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Erro: Digite um Gmail válido (@gmail.com)!";
+                return;
+            }
+
+            codigoCorreto = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('codigo-gerado-exibicao').innerText = codigoCorreto;
+
+            feedback.className = "text-xs font-medium text-emerald-400 text-center";
+            feedback.innerText = "Código enviado com sucesso!";
+
+            setTimeout(() => {
+                document.getElementById('anuncio-etapa-1').style.display = 'none';
+                document.getElementById('anuncio-etapa-2').style.display = 'block';
+            }, 1000);
+        }
+
+        function verificarCodigo() {
+            const digitado = document.getElementById('anuncio-codigo-input').value.trim();
+            const feedback = document.getElementById('etapa2-feedback');
+
+            feedback.classList.remove('hidden');
+
+            if (digitado !== codigoCorreto) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Código incorreto! Tente novamente.";
+                return;
+            }
+
+            feedback.className = "text-xs font-medium text-emerald-400 text-center";
+            feedback.innerText = "Verificado com sucesso!";
+
+            setTimeout(() => {
+                document.getElementById('anuncio-etapa-2').style.display = 'none';
+                document.getElementById('anuncio-etapa-3').style.display = 'block';
+            }, 1000);
+        }
+
+        function publicarAnuncioFinal() {
+            const titulo = document.getElementById('conta-titulo').value.trim();
+            const preco = document.getElementById('conta-preco').value.trim();
+            const rank = document.getElementById('conta-rank').value.trim();
+            const vinculo = document.getElementById('conta-vinculo').value;
+            const foto = document.getElementById('conta-foto').files.length;
+            const desc = document.getElementById('conta-desc').value.trim() || "Sem descrição adicional.";
+            const feedback = document.getElementById('etapa3-feedback');
+
+            feedback.classList.remove('hidden');
+
+            // Validação estrita para obrigar o preenchimento de tudo exceto descrição
+            if (!titulo || !preco || !rank || !vinculo || foto === 0) {
+                feedback.className = "text-xs font-medium text-red-400 text-center";
+                feedback.innerText = "Atenção: Preencha todos os campos obrigatórios e envie a foto da conta!";
+                return;
+            }
+
+            feedback.className = "text-xs font-medium text-emerald-400 text-center";
+            feedback.innerText = "Conta publicada com sucesso no catálogo!";
+
+            // Adiciona o card dinamicamente no catálogo principal
+            setTimeout(() => {
+                const grid = document.getElementById('catalogo-cards');
+                const novoCard = document.createElement('div');
+                novoCard.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl";
+                novoCard.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${rank}</span>
+                            <span class="text-lg font-bold text-emerald-400">${preco}</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1">${titulo}</h3>
+                        <p class="text-xs text-[var(--muted)] mb-2">Vínculo: ${vinculo}</p>
+                        <p class="text-xs text-[var(--muted)] mb-4">${desc}</p>
+                    </div>
+                    <button onclick="verDetalhes('${titulo}', '${preco}', '${rank}', '${vinculo}', '${desc}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition">
+                        Ver Detalhes
+                    </button>
+                `;
+                grid.prepend(novoCard);
+                closeAnuncioModal();
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
