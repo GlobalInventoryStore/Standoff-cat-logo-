@@ -38,7 +38,7 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; background: var(--bg-primary); border: 1px solid #1f2937; border-radius: 0.5rem; padding: 0.75rem; color: white; font-size: 0.875rem; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; background: var(--bg-primary); border: 1px solid #1f2937; border-radius: 0.5rem; padding: 0.75rem; color: white; font-size: 0.875rem; box-sizing: border-box; }
         .btn-primary { background: var(--accent); color: white; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; text-align: center; cursor: pointer; width: 100%; transition: background 0.2s; }
         .btn-primary:hover { background: #fa3243; }
     </style>
@@ -98,7 +98,7 @@
             <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes:</p>
             
             <div class="accounts-grid" id="catalogo-cards">
-                <!-- Os cards são injetados aqui via JavaScript (incluindo os salvos e o padrão) -->
+                <!-- Anúncios injetados dinamicamente via JS -->
             </div>
         </section>
     </main>
@@ -141,13 +141,13 @@
             <div id="register-tab" class="tab-content">
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
-                        <label>Gmail (Obrigatório para contato e verificação)</label>
+                        <label>Gmail (Obrigatório para contato)</label>
                         <input type="email" id="reg-email" required placeholder="seuemail@gmail.com" autocomplete="email">
                     </div>
                     <div class="input-group flex gap-2 items-end">
                         <div class="flex-grow">
                             <label>Código de Verificação</label>
-                            <input type="text" id="reg-code" required placeholder="Digite o código enviado" autocomplete="one-time-code">
+                            <input type="text" id="reg-code" required placeholder="Código enviado" autocomplete="one-time-code">
                         </div>
                         <button type="button" onclick="enviarCodigoGmail()" class="bg-gray-800 hover:bg-gray-700 text-xs text-white px-3 py-3 rounded-lg font-bold transition cursor-pointer h-[42px]">Enviar Código</button>
                     </div>
@@ -177,11 +177,42 @@
         </div>
     </div>
 
-    <!-- Modal de Detalhes da Conta -->
+    <!-- Modal Obrigatório de Verificação de Gmail ao Anunciar -->
+    <div id="modal-verificar-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[#ff4655]">Verificação de Vendedor</h3>
+                <button onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-[var(--muted)] mb-4">Para anunciar uma conta, confirme seu Gmail para receber o código de segurança:</p>
+            
+            <form onsubmit="confirmarCodigoAnuncio(event)">
+                <div class="input-group">
+                    <label>Seu Gmail de Contato</label>
+                    <input type="email" id="anuncio-email" required placeholder="seuemail@gmail.com">
+                </div>
+                <div class="input-group flex gap-2 items-end">
+                    <div class="flex-grow">
+                        <label>Código de Verificação</label>
+                        <input type="text" id="anuncio-code" required placeholder="Código enviado">
+                    </div>
+                    <button type="button" onclick="enviarCodigoAnuncio()" class="bg-gray-800 hover:bg-gray-700 text-xs text-white px-3 py-3 rounded-lg font-bold transition cursor-pointer h-[42px]">Enviar Código</button>
+                </div>
+                <div id="anuncio-feedback" class="text-xs text-center text-red-400 mb-2"></div>
+                <button type="submit" class="btn-primary mt-2">Confirmar e Continuar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Conta & Carrossel de até 7 Fotos -->
     <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div id="detalhe-img-container" class="mb-4 hidden">
-                <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-48 object-cover rounded-xl border border-gray-800">
+                <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden flex items-center justify-center">
+                    <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-full object-contain">
+                </div>
+                <!-- Miniaturas para navegar pelas fotos (até 7) -->
+                <div id="detalhe-miniaturas" class="flex gap-2 mt-2 overflow-x-auto pb-1"></div>
             </div>
             <div class="flex gap-2 mb-3">
                 <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
@@ -193,12 +224,66 @@
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6">Descrição detalhada dos itens da conta.</p>
             
             <div class="space-y-3">
-                <button onclick="comprarConta()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 cursor-pointer">
-                    Comprar Agora
+                <button onclick="abrirCheckout()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 cursor-pointer">
+                    Comprar Agora (Escolher Pagamento)
                 </button>
                 <button onclick="closeDetalhes()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
             </div>
             <button onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal de Checkout / Formas de Pagamento -->
+    <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
+            <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Escolha a Forma de Pagamento</h3>
+            <p class="text-xs text-[var(--muted)] mb-5">Selecione como deseja pagar por esta conta:</p>
+            
+            <div class="space-y-3 mb-6">
+                <!-- PIX -->
+                <label class="flex items-center justify-between p-3.5 bg-[#0b0f17] border border-gray-800 rounded-xl cursor-pointer hover:border-[#ff4655] transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-emerald-400 font-bold text-lg">⚡</span>
+                        <div>
+                            <p class="text-sm font-bold text-white">PIX</p>
+                            <span class="text-[10px] text-emerald-400">Aprovação imediata + Bônus</span>
+                        </div>
+                    </div>
+                    <input type="radio" name="pagamento" value="pix" checked class="accent-[#ff4655]">
+                </label>
+
+                <!-- Cartão de Crédito -->
+                <label class="flex items-center justify-between p-3.5 bg-[#0b0f17] border border-gray-800 rounded-xl cursor-pointer hover:border-[#ff4655] transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-blue-400 font-bold text-lg">💳</span>
+                        <div>
+                            <p class="text-sm font-bold text-white">Cartão de Crédito</p>
+                            <span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span>
+                        </div>
+                    </div>
+                    <input type="radio" name="pagamento" value="cartao" class="accent-[#ff4655]">
+                </label>
+
+                <!-- Criptomoedas -->
+                <label class="flex items-center justify-between p-3.5 bg-[#0b0f17] border border-gray-800 rounded-xl cursor-pointer hover:border-[#ff4655] transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-amber-400 font-bold text-lg">🪙</span>
+                        <div>
+                            <p class="text-sm font-bold text-white">Criptomoedas (USDT / BTC)</p>
+                            <span class="text-[10px] text-[var(--muted)]">Desconto especial</span>
+                        </div>
+                    </div>
+                    <input type="radio" name="pagamento" value="cripto" class="accent-[#ff4655]">
+                </label>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="finalizarCompra()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-500/20 cursor-pointer">
+                    Concluir Pagamento Seguro
+                </button>
+                <button onclick="closeCheckout()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
+            </div>
+            <button onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
 
@@ -211,7 +296,7 @@
         </div>
     </div>
 
-    <!-- Modal de Anúncio (Com upload de fotos) -->
+    <!-- Modal de Anúncio (Com suporte a até 7 fotos) -->
     <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
@@ -220,21 +305,30 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Título do Anúncio</label>
-                    <input id="conta-titulo" type="text" placeholder="Ex: Conta com Facas Raras" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus-border-[#ff4655]">
+                    <input id="conta-titulo" type="text" placeholder="Ex: Conta com Facas Raras" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ff4655]">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Preço R$</label>
-                        <input id="conta-preco" type="text" placeholder="R$ 150,00" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus-border-[#ff4655]">
+                        <input id="conta-preco" type="text" placeholder="R$ 150,00" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ff4655]">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Rank</label>
-                        <input id="conta-rank" type="text" placeholder="Ex: Master" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus-border-[#ff4655]">
+                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Patente / Rank</label>
+                        <select id="conta-rank" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655] text-gray-200">
+                            <option value="Bronze">Bronze</option>
+                            <option value="Prata">Prata</option>
+                            <option value="Ouro">Ouro</option>
+                            <option value="Platina">Platina</option>
+                            <option value="Diamante">Diamante</option>
+                            <option value="Master" selected>Master</option>
+                            <option value="Elite">Elite</option>
+                            <option value="The Champion">The Champion (Lenda)</option>
+                        </select>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Tipo de Vínculo</label>
-                    <select id="conta-vinculo" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus-border-[#ff4655] text-gray-200">
+                    <select id="conta-vinculo" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655] text-gray-200">
                         <option value="Google ID">Google ID</option>
                         <option value="Apple ID">Apple ID</option>
                         <option value="Facebook">Facebook</option>
@@ -242,12 +336,13 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Adicionar Foto / Print da Conta</label>
-                    <input id="conta-foto" type="file" accept="image/*" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ff4655] file:text-white hover:file:bg-[#fa3243] cursor-pointer">
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Adicionar Fotos da Conta (Até 7 fotos)</label>
+                    <input id="conta-fotos" type="file" accept="image/*" multiple class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ff4655] file:text-white hover:file:bg-[#fa3243] cursor-pointer">
+                    <span class="text-[10px] text-[var(--muted)] mt-1 block">Selecione até 7 imagens de uma vez ou envie gradualmente.</span>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição</label>
-                    <textarea id="conta-desc" rows="2" placeholder="Detalhes dos itens..." class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus-border-[#ff4655]"></textarea>
+                    <textarea id="conta-desc" rows="2" placeholder="Detalhes dos itens..." class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ff4655]"></textarea>
                 </div>
                 <button type="button" onclick="publicarAnuncioFinal()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 cursor-pointer">
                     Publicar Conta no Catálogo
@@ -257,10 +352,34 @@
         </div>
     </div>
 
+    <!-- Modal de Alerta / Sucesso Estilizado -->
+    <div id="modal-alerta" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
+            <div id="alerta-icone" class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
+            <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
+            <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed">Mensagem de confirmação aqui.</p>
+            <button id="alerta-btn-ok" onclick="fecharAlerta()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-2.5 rounded-xl font-bold text-xs transition cursor-pointer">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação Estilizado -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
+            <h3 class="text-lg font-bold mb-2 text-white">Confirmação</h3>
+            <p id="confirm-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed">Tem certeza que deseja realizar esta ação?</p>
+            <div class="flex gap-2">
+                <button id="confirm-btn-sim" class="flex-1 bg-[#ff4655] hover:bg-[#fa3243] text-white py-2.5 rounded-xl font-bold text-xs transition cursor-pointer">Sim</button>
+                <button onclick="fecharConfirmacao(false)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-xs transition cursor-pointer">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts de Lógica e Estado -->
     <script>
         let currentUser = null;
         let codigoEnviadoSimulado = "";
+        let codigoAnuncioSimulado = "";
+        let callbackConfirmacao = null;
         const AVATARES = [
             'https://api.dicebear.com/7.x/bottts/svg?seed=user1',
             'https://api.dicebear.com/7.x/bottts/svg?seed-user2',
@@ -301,6 +420,40 @@
             }
         });
 
+        function mostrarAlerta(titulo, texto, tipo = 'sucesso') {
+            document.getElementById('alerta-titulo').textContent = titulo;
+            document.getElementById('alerta-texto').textContent = texto;
+            const icone = document.getElementById('alerta-icone');
+            if (tipo === 'sucesso') {
+                icone.className = 'w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
+                icone.textContent = '✓';
+            } else {
+                icone.className = 'w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
+                icone.textContent = '!';
+            }
+            document.getElementById('modal-alerta').style.display = 'flex';
+        }
+
+        function fecharAlerta() {
+            document.getElementById('modal-alerta').style.display = 'none';
+        }
+
+        function mostrarConfirmacao(texto, callback) {
+            document.getElementById('confirm-texto').textContent = texto;
+            callbackConfirmacao = callback;
+            document.getElementById('modal-confirmacao').style.display = 'flex';
+            document.getElementById('confirm-btn-sim').onclick = function() {
+                fecharConfirmacao(true);
+            };
+        }
+
+        function fecharConfirmacao(resposta) {
+            document.getElementById('modal-confirmacao').style.display = 'none';
+            if (resposta && typeof callbackConfirmacao === 'function') {
+                callbackConfirmacao();
+            }
+        }
+
         function carregarAvataresRegistro() {
             const grid = document.getElementById('avatars-grid');
             if (!grid) return;
@@ -336,21 +489,59 @@
         function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
         function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
         
+        // Exige verificação por Gmail e código antes de abrir o modal de anúncio
         function verificarAutenticacaoAnuncio() {
             const menu = document.getElementById('mobile-menu');
             if (menu) menu.classList.add('hidden');
 
             if (!currentUser) {
-                alert('Você precisa estar logado para anunciar uma conta!');
+                mostrarAlerta('Atenção', 'Você precisa estar logado para anunciar uma conta!', 'aviso');
                 openModal();
                 return;
             }
+            document.getElementById('anuncio-email').value = currentUser.email || '';
+            document.getElementById('modal-verificar-anuncio').style.display = 'flex';
+        }
+
+        function closeVerificarAnuncio() {
+            document.getElementById('modal-verificar-anuncio').style.display = 'none';
+        }
+
+        function enviarCodigoAnuncio() {
+            const email = document.getElementById('anuncio-email').value.trim();
+            const feedback = document.getElementById('anuncio-feedback');
+
+            if (!email || !email.endsWith('@gmail.com')) {
+                feedback.textContent = 'Insira um Gmail válido (@gmail.com).';
+                return;
+            }
+
+            codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            feedback.style.color = '#10b981';
+            feedback.textContent = `Código enviado para ${email}. (Código: ${codigoAnuncioSimulado})`;
+        }
+
+        function confirmarCodigoAnuncio(event) {
+            event.preventDefault();
+            const codigoInput = document.getElementById('anuncio-code').value.trim();
+            const feedback = document.getElementById('anuncio-feedback');
+            feedback.style.color = '#f87171';
+
+            if (!codigoAnuncioSimulado || codigoInput !== codigoAnuncioSimulado) {
+                feedback.textContent = 'Código de verificação incorreto ou não solicitado!';
+                return;
+            }
+
+            closeVerificarAnuncio();
+            document.getElementById('anuncio-code').value = '';
+            feedback.textContent = '';
+            // Abre o modal de criar anúncio após validar com sucesso
             document.getElementById('modal-anuncio').style.display = 'flex';
         }
         
         function closeAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'none'; }
 
-        // Envio de código de verificação para o Gmail
+        // Envio de código de verificação para Registro
         function enviarCodigoGmail() {
             const email = document.getElementById('reg-email').value.trim();
             const feedback = document.getElementById('register-feedback');
@@ -365,7 +556,7 @@
             feedback.textContent = `Código simulado enviado para ${email}. (Código: ${codigoEnviadoSimulado})`;
         }
 
-        // Registro com verificação de código Gmail, nome opcional/aleatório e senhas
+        // Registro
         function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('reg-email').value.trim();
@@ -380,7 +571,7 @@
                 feedback.textContent = 'Por favor, insira um Gmail válido (@gmail.com).';
                 return;
             }
-            if (codigoInput !== codigoEnviadoSimulado) {
+            if (!codigoEnviadoSimulado || codigoInput !== codigoEnviadoSimulado) {
                 feedback.textContent = 'Código de verificação incorreto ou não solicitado!';
                 return;
             }
@@ -415,6 +606,7 @@
             aplicarEstadoUsuario();
             closeModal();
             feedback.textContent = '';
+            mostrarAlerta('Sucesso!', 'Conta criada e verificada com sucesso!');
         }
 
         // Login
@@ -463,6 +655,7 @@
             currentUser = null;
             localStorage.removeItem('standoff2_user');
             aplicarEstadoUsuario();
+            mostrarAlerta('Sessão Encerrada', 'Você saiu da sua conta com sucesso.');
             const menu = document.getElementById('mobile-menu');
             if (menu) menu.classList.add('hidden');
         }
@@ -473,7 +666,6 @@
             if (salvos) {
                 return JSON.parse(salvos);
             }
-            // Anúncio padrão inicial
             return [
                 {
                     id: 'default_1',
@@ -483,7 +675,8 @@
                     vinculo: 'Google ID',
                     desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
                     vendedor: 'Sistema',
-                    foto: ''
+                    vendedorEmail: 'sistema@gmail.com',
+                    fotos: []
                 }
             ];
         }
@@ -499,15 +692,17 @@
                 card.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl relative";
                 
                 let botaoRemover = '';
-                // Se o usuário logado for o dono do anúncio, mostra o botão de remover
-                if (currentUser && anuncio.vendedor === currentUser.username) {
-                    botaoRemover = `<button onclick="removerAnuncio('${anuncio.id}')" class="absolute top-4 right-4 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">Remover</button>`;
+                if (currentUser && (anuncio.vendedor === currentUser.username || anuncio.vendedorEmail === currentUser.email)) {
+                    botaoRemover = `<button onclick="confirmarRemoverAnuncio('${anuncio.id}')" class="absolute top-4 right-4 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer z-10">Remover</button>`;
                 }
+
+                // Codifica as fotos para passar no evento de clique
+                const fotosStr = encodeURIComponent(JSON.stringify(anuncio.fotos || []));
 
                 card.innerHTML = `
                     ${botaoRemover}
                     <div>
-                        <div class="flex justify-between items-start mb-4">
+                        <div class="flex justify-between items-start mb-4 pr-16">
                             <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${anuncio.rank}</span>
                             <span class="text-lg font-bold text-emerald-400">${anuncio.preco}</span>
                         </div>
@@ -516,7 +711,7 @@
                         <p class="text-xs text-gray-400 mb-2">Vendedor: ${anuncio.vendedor}</p>
                         <p class="text-xs text-[var(--muted)] mb-4">${anuncio.desc}</p>
                     </div>
-                    <button onclick="verDetalhes('${anuncio.titulo}', '${anuncio.preco}', '${anuncio.rank}', '${anuncio.vinculo}', '${anuncio.desc}', '${anuncio.vendedor}', '${anuncio.foto}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
+                    <button onclick="verDetalhes('${anuncio.titulo.replace(/'/g, "\\'")}', '${anuncio.preco}', '${anuncio.rank}', '${anuncio.vinculo}', '${anuncio.desc.replace(/'/g, "\\'")}', '${anuncio.vendedor}', '${fotosStr}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
                         Ver Detalhes
                     </button>
                 `;
@@ -524,33 +719,45 @@
             });
         }
 
+        // Publicar anúncio suportando até 7 fotos
         function publicarAnuncioFinal() {
             const titulo = document.getElementById('conta-titulo').value.trim();
             const preco = document.getElementById('conta-preco').value.trim();
-            const rank = document.getElementById('conta-rank').value.trim();
+            const rank = document.getElementById('conta-rank').value;
             const vinculo = document.getElementById('conta-vinculo').value;
             const desc = document.getElementById('conta-desc').value.trim() || "Sem descrição adicional.";
-            const fotoInput = document.getElementById('conta-foto');
+            const fotoInput = document.getElementById('conta-fotos');
 
             if (!titulo || !preco || !rank) {
-                alert('Preencha os campos obrigatórios!');
+                mostrarAlerta('Campos obrigatórios', 'Preencha o título, preço e selecione a patente!', 'aviso');
                 return;
             }
 
             let precoFormatado = preco.startsWith('R$') ? preco : `R$ ${preco}`;
+            const arquivos = fotoInput.files;
 
-            if (fotoInput.files && fotoInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, e.target.result);
-                };
-                reader.readAsDataURL(fotoInput.files[0]);
+            if (arquivos && arquivos.length > 0) {
+                const maxFotos = Math.min(arquivos.length, 7);
+                let fotosProcessadas = [];
+                let lidas = 0;
+
+                for (let i = 0; i < maxFotos; i++) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotosProcessadas.push(e.target.result);
+                        lidas++;
+                        if (lidas === maxFotos) {
+                            salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, fotosProcessadas);
+                        }
+                    };
+                    reader.readAsDataURL(arquivos[i]);
+                }
             } else {
-                salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, '');
+                salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, []);
             }
         }
 
-        function salvarNovoAnuncio(titulo, preco, rank, vinculo, desc, foto) {
+        function salvarNovoAnuncio(titulo, preco, rank, vinculo, desc, fotos) {
             const novoAnuncio = {
                 id: 'anuncio_' + Date.now(),
                 titulo,
@@ -559,7 +766,8 @@
                 vinculo,
                 desc,
                 vendedor: currentUser.username,
-                foto
+                vendedorEmail: currentUser.email,
+                fotos
             };
 
             let anuncios = obterAnunciosSalvos();
@@ -568,27 +776,26 @@
 
             carregarCatalogo();
             closeAnuncioModal();
-            alert('Conta publicada com sucesso no catálogo!');
+            mostrarAlerta('Sucesso!', 'Conta publicada com sucesso no catálogo!');
             
-            // Limpar campos
             document.getElementById('conta-titulo').value = '';
             document.getElementById('conta-preco').value = '';
-            document.getElementById('conta-rank').value = '';
             document.getElementById('conta-desc').value = '';
-            document.getElementById('conta-foto').value = '';
+            document.getElementById('conta-fotos').value = '';
         }
 
-        function removerAnuncio(id) {
-            if (confirm('Tem certeza que deseja retirar este anúncio da venda?')) {
+        function confirmarRemoverAnuncio(id) {
+            mostrarConfirmacao('Tem certeza que deseja retirar este anúncio da venda?', function() {
                 let anuncios = obterAnunciosSalvos();
                 anuncios = anuncios.filter(a => a.id !== id);
                 localStorage.setItem('standoff2_anuncios', JSON.stringify(anuncios));
                 carregarCatalogo();
-                alert('Anúncio removido com sucesso!');
-            }
+                mostrarAlerta('Removido', 'Anúncio retirado do catálogo com sucesso.');
+            });
         }
 
-        function verDetalhes(titulo, preco, rank, vinculo, desc, vendedor, foto) {
+        // Exibir Detalhes com Carrossel de Fotos
+        function verDetalhes(titulo, preco, rank, vinculo, desc, vendedor, fotosStr) {
             document.getElementById('detalhe-titulo').textContent = titulo;
             document.getElementById('detalhe-preco').textContent = preco;
             document.getElementById('detalhe-badge').textContent = rank;
@@ -596,11 +803,33 @@
             document.getElementById('detalhe-desc').textContent = desc;
             document.getElementById('detalhe-vendedor').querySelector('span').textContent = vendedor;
             
+            let fotos = [];
+            try {
+                fotos = JSON.parse(decodeURIComponent(fotosStr));
+            } catch(e) { fotos = []; }
+
             const imgContainer = document.getElementById('detalhe-img-container');
             const imgElement = document.getElementById('detalhe-imagem');
-            if (foto) {
-                imgElement.src = foto;
+            const miniaturasContainer = document.getElementById('detalhe-miniaturas');
+            miniaturasContainer.innerHTML = '';
+
+            if (fotos && fotos.length > 0) {
+                imgElement.src = fotos[0];
                 imgContainer.classList.remove('hidden');
+
+                if (fotos.length > 1) {
+                    fotos.forEach((fotoUrl, idx) => {
+                        const thumb = document.createElement('img');
+                        thumb.src = fotoUrl;
+                        thumb.className = `w-14 h-14 object-cover rounded-lg cursor-pointer border-2 ${idx === 0 ? 'border-[#ff4655]' : 'border-transparent'} hover:opacity-80 transition`;
+                        thumb.onclick = function() {
+                            imgElement.src = fotoUrl;
+                            miniaturasContainer.querySelectorAll('img').forEach(t => t.classList.remove('border-[#ff4655]'));
+                            thumb.classList.add('border-[#ff4655]');
+                        };
+                        miniaturasContainer.appendChild(thumb);
+                    });
+                }
             } else {
                 imgContainer.classList.add('hidden');
             }
@@ -609,7 +838,28 @@
         }
 
         function closeDetalhes() { document.getElementById('modal-detalhes').style.display = 'none'; }
-        function comprarConta() { alert('Redirecionando para o chat de atendimento seguro via PIX/Cartão...'); closeDetalhes(); }
+        
+        // Fluxo de Checkout para escolha de pagamento (PIX, Cartão, Cripto)
+        function abrirCheckout() {
+            closeDetalhes();
+            document.getElementById('modal-checkout').style.display = 'flex';
+        }
+
+        function closeCheckout() {
+            document.getElementById('modal-checkout').style.display = 'none';
+        }
+
+        function finalizarCompra() {
+            const metodo = document.querySelector('input[name="pagamento"]:checked').value;
+            closeCheckout();
+            if (metodo === 'pix') {
+                mostrarAlerta('PIX Selecionado', 'Gerando QR Code PIX para pagamento imediato com bônus...');
+            } else if (metodo === 'cartao') {
+                mostrarAlerta('Cartão de Crédito', 'Redirecionando para o ambiente seguro de pagamento parcelado...');
+            } else if (metodo === 'cripto') {
+                mostrarAlerta('Criptomoedas', 'Carregando carteira USDT/BTC para transferência segura...');
+            }
+        }
     </script>
 </body>
 </html>
