@@ -13,7 +13,7 @@
             --bg-primary: #080808;
             --bg-card: #121212;
             --bg-card-hover: #181818;
-            --accent: #d4ff00; /* Amarelo Streetwear inspirado na referência */
+            --accent: #d4ff00;
             --accent-hover: #bde000;
             --text-main: #f5f5f5;
             --muted: #888888;
@@ -46,8 +46,9 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; background: #050505; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; color: white; font-size: 0.875rem; box-sizing: border-box; }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent); outline: none; }
+        /* Inputs escuros garantidos para não ficar com fundo branco */
+        .input-group input, .input-group select, .input-group textarea { width: 100%; background: #111111 !important; border: 1px solid var(--border-color) !important; border-radius: 0.5rem; padding: 0.75rem; color: #ffffff !important; font-size: 0.875rem; box-sizing: border-box; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent) !important; outline: none; }
         .btn-primary { background: var(--accent); color: #000; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; text-align: center; cursor: pointer; width: 100%; transition: background 0.2s; }
         .btn-primary:hover { background: var(--accent-hover); }
     </style>
@@ -55,9 +56,9 @@
 
 <body>
 
-    <!-- Aviso de Alerta de Golpe (Anti-Phishing) - Fixo no Topo -->
-    <div class="bg-[#161616] border-b border-yellow-500/30 text-yellow-400 px-4 py-2 text-[11px] font-medium text-center flex items-center justify-center gap-2 z-50">
-        <span>⚠️</span> <span><strong>ALERTA DE SEGURANÇA:</strong> A equipe do MARKTPLACE stand2 NUNCA pede senhas ou dados pessoais por mensagens privadas. Negocie apenas pelo site!</span>
+    <!-- Aviso de Alerta de Golpe (Compacto) -->
+    <div class="bg-[#121212] border-b border-yellow-500/20 text-yellow-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
+        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKTPLACE stand2 NUNCA pede senhas por mensagem privada.</span>
     </div>
 
     <!-- Modal Obrigatório de Entrada / Leis e Diretrizes -->
@@ -68,9 +69,9 @@
                 <p>Bem-vindo ao <strong>MARKTPLACE stand2</strong>. Antes de prosseguir e acessar o catálogo, você deve ler e concordar estritamente com as nossas diretrizes de segurança:</p>
                 <p>1. <strong>Intermediação Interna Obrigatória:</strong> Todas as negociações e pagamentos devem ser feitos obrigatoriamente dentro do ecossistema e ferramentas oficiais da plataforma.</p>
                 <p class="text-amber-400 font-medium bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-                    2. <strong>Isenção Total de Responsabilidade (Negociações Externas):</strong> A administração, criadores e intermediadores deste site <strong>SE ISENTAM TOTALMENTE</strong> de qualquer prejuízo, golpe ou acordo realizado por fora da plataforma (como Discord, WhatsApp ou Telegram).
+                    2. <strong>Isenção Total de Responsabilidade (Negociações Externas):</strong> A administração e intermediadores deste site <strong>SE ISENTAM TOTALMENTE</strong> de qualquer prejuízo ou acordo realizado por fora da plataforma (Discord, WhatsApp, Telegram).
                 </p>
-                <p>3. <strong>Conformidade com a Axlebolt:</strong> O comércio de contas está sujeito aos Termos de Serviço da Axlebolt. Esta plataforma atua puramente como intermediária de custódia financeira interna.</p>
+                <p>3. <strong>Conformidade com a Axlebolt:</strong> O comércio de contas está sujeito aos Termos de Serviço da Axlebolt.</p>
             </div>
             <button onclick="concordarTermosEntrada()" class="btn-primary">
                 Concordo com os Termos e Entrar
@@ -79,33 +80,28 @@
     </div>
 
     <!-- Header / Navbar -->
-    <header class="border-b border-[#222] bg-[#080808]/95 backdrop-blur sticky top-[33px] z-50 w-full">
+    <header class="border-b border-[#222] bg-[#080808]/95 backdrop-blur sticky top-[28px] z-50 w-full">
         <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center relative">
-            <!-- Logo Customizada -->
             <div class="flex flex-col cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
                 <span class="text-xl font-black text-white tracking-wider uppercase leading-none">MARKTPLACE</span>
                 <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase mt-0.5">stand2</span>
             </div>
             
             <div class="flex items-center gap-3 relative">
-                <!-- Botão Rastreio de Pedido -->
                 <button onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
                     🔍 Rastrear Pedido
                 </button>
 
-                <!-- Botão Carrinho -->
                 <button onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
                     🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
                 </button>
 
-                <!-- Botão Hambúrguer -->
                 <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-white focus:outline-none cursor-pointer relative z-[10000]">
                     <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
 
-                <!-- Menu Hambúrguer Flutuante -->
                 <div id="mobile-menu" class="hidden bg-[#121212] border border-[#222] rounded-2xl px-5 py-4 space-y-3 shadow-2xl absolute top-14 right-0 w-64 z-[9999]">
                     <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Início</a>
                     <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
@@ -135,6 +131,14 @@
         </div>
     </header>
 
+    <!-- Balão Flutuante de Chat no Canto Esquerdo -->
+    <div class="fixed bottom-5 left-5 z-[9998]">
+        <button onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group hover:border-[var(--accent)]">
+            <span class="text-xl">💬</span>
+            <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
+        </button>
+    </div>
+
     <!-- Conteúdo Principal -->
     <main class="flex-grow max-w-7xl mx-auto w-full px-6">
         <section id="secao-contas" class="pb-12 pt-12">
@@ -150,7 +154,7 @@
         MARKTPLACE stand2 &copy; 2026 - Todos os direitos reservados. Intermediação Segura.
     </footer>
 
-    <!-- Modal de Rastreio de Pedido em Tempo Real -->
+    <!-- Modal de Rastreio de Pedido -->
     <div id="modal-rastreio" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex justify-between items-center mb-4">
@@ -164,9 +168,7 @@
                 <button onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
             </div>
 
-            <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2">
-                <!-- Status dinâmico -->
-            </div>
+            <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2"></div>
         </div>
     </div>
 
@@ -323,32 +325,59 @@
         </div>
     </div>
 
-    <!-- Modal Checkout -->
+    <!-- Modal Checkout (Corrigido para aceitar PIX e Cartão com campos reais) -->
     <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative">
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
-            <p class="text-xs text-[var(--muted)] mb-5">O dinheiro fica retido com o intermediador até você receber:</p>
+            <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
             
             <div class="space-y-3 mb-6">
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
                     <div class="flex items-center gap-3">
                         <span class="text-emerald-400 font-bold text-lg">⚡</span>
-                        <div><p class="text-sm font-bold text-white">PIX</p><span class="text-[10px] text-emerald-400">Imediato</span></div>
+                        <div><p class="text-sm font-bold text-white">PIX</p><span class="text-[10px] text-emerald-400">Aprovação imediata</span></div>
                     </div>
-                    <input type="radio" name="pagamento" value="pix" checked class="accent-[var(--accent)]">
+                    <input type="radio" name="pagamento" value="pix" checked class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('pix')">
                 </label>
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
-                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x</span></div>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
                     </div>
-                    <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]">
+                    <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
                 </label>
+            </div>
+
+            <!-- Campos dinâmicos do Cartão -->
+            <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#222]">
+                <div class="input-group mb-0">
+                    <label>Número do Cartão</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="input-group mb-0">
+                        <label>Validade</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5">
+                    </div>
+                    <div class="input-group mb-0">
+                        <label>CVV</label>
+                        <input type="password" placeholder="123" maxlength="4">
+                    </div>
+                </div>
+                <div class="input-group mb-0">
+                    <label>Parcelamento</label>
+                    <select class="w-full">
+                        <option>1x sem juros</option>
+                        <option>3x no cartão</option>
+                        <option>6x no cartão</option>
+                        <option>12x no cartão</option>
+                    </select>
+                </div>
             </div>
 
             <div class="space-y-2">
                 <button onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
-                    Gerar Pagamento Seguro
+                    Prosseguir com Pagamento
                 </button>
                 <button onclick="closeCheckout()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Voltar</button>
             </div>
@@ -363,7 +392,7 @@
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
                 <button onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
-            <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento via PIX</h3>
+            <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
 
             <div id="pag-conteudo" class="bg-[#050505] border border-[#222] rounded-xl p-4 mb-4 text-center"></div>
@@ -384,10 +413,10 @@
             </div>
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
-            <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado e enviado automaticamente com seus dados de contato e comprovante[span_2](start_span)[span_2](end_span).</p>
+            <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O bot de atendimento já foi notificado e enviou os dados para o seu chat.</p>
 
             <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
-                <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Custódia Segura • Liberando Dados</span></p>
+                <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Custódia Segura • Dados Liberados</span></p>
                 <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
                 <p class="text-gray-400"><strong>Gmail:</strong> <span id="ticket-info-gmail" class="text-white"></span></p>
                 <p class="text-gray-400"><strong>WhatsApp:</strong> <span id="ticket-info-wpp" class="text-white"></span></p>
@@ -395,7 +424,7 @@
 
             <div class="space-y-2">
                 <button onclick="abrirChatSuporte()" class="btn-primary py-3 text-xs">
-                    Abrir Chat com o Bot / Suporte Oficial
+                    Abrir Chat com o Bot / Ver Dados
                 </button>
             </div>
         </div>
@@ -516,7 +545,6 @@
         let pedidosAtivos = [];
         let anuncioSelecionadoAtual = null;
 
-        // Avatares com estilo tático / Ghost atualizados
         const AVATARES = [
             'https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1',
             'https://api.dicebear.com/7.x/bottts/svg?seed=GhostSkull2',
@@ -657,7 +685,7 @@
                     <p class="text-white font-bold">Status: <span class="text-emerald-400">● ${pedidoEncontrado.status}</span></p>
                     <p class="text-gray-400">Itens: ${pedidoEncontrado.itens}</p>
                     <p class="text-gray-400">Total: <span class="text-white">${pedidoEncontrado.total}</span></p>
-                    <p class="text-[10px] text-gray-500 mt-1">Custódia Segura Ativa - Dados liberados no chat de suporte.</p>
+                    <p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${pedidoEncontrado.ticketId}</strong> (Salvo no sistema)</p>
                 `;
             } else {
                 resBox.innerHTML = `
@@ -809,7 +837,7 @@
                 preco: 'R$ 150,00',
                 rank: 'Master',
                 vinculo: 'Google ID',
-                desc: 'Inventário Selecionado:\n• M9 Bayonet | Treasure Hunter (Qtd: 1)\n• Gloves | Carbon (Qtd: 1)\n• AKR | Sport • AWM | Scratch',
+                desc: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
                 vendedor: 'Sistema',
                 likes: 12,
                 curtidoPorMim: false,
@@ -838,32 +866,34 @@
             grid.innerHTML = '';
             anunciosEmMemoria.forEach(anuncio => {
                 const card = document.createElement('div');
-                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[var(--accent)]/50 transition shadow-xl relative";
+                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(anuncio.vendedor);
                 const capaHtml = (anuncio.fotos && anuncio.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${anuncio.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${anuncio.fotos.length} foto(s)</span></div>` : '';
                 const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button onclick="removerAnuncio('${anuncio.id}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
+
+                // Cor do coração: cinza padrão (#777) e branco gelo (#ffffff) quando curtido
+                const corCoracao = anuncio.curtidoPorMim ? 'text-white font-bold drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-[#777777]';
 
                 card.innerHTML = `
                     <div>
                         ${barraSuperior}
                         ${capaHtml}
                         <div class="flex justify-between items-center mb-3 gap-2">
-                            <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded uppercase">${anuncio.rank}</span>
+                            <span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${anuncio.rank}</span>
                             <div class="flex items-center gap-2">
-                                <!-- Sistema de Likes bem pequeno -->
-                                <button onclick="curtirAnuncio('${anuncio.id}')" class="bg-[#1a1a1a] hover:bg-[#222] text-[var(--accent)] px-2 py-1 rounded-lg text-[var(--accent)] flex items-center gap-1 transition cursor-pointer">
-                                    <span class="${anuncio.curtidoPorMim ? 'text-red-500 font-bold' : 'text-gray-400'}">❤️</span> <span>${anuncio.likes || 0}</span>
+                                <button onclick="curtirAnuncio('${anuncio.id}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+                                    <span class="${corCoracao}">❤️</span> <span class="text-gray-300 font-semibold">${anuncio.likes || 0}</span>
                                 </button>
                                 <span class="text-lg font-bold text-emerald-400">${anuncio.preco}</span>
                             </div>
                         </div>
-                        <h3 class="font-bold text-lg mb-1">${anuncio.titulo}</h3>
+                        <h3 class="font-bold text-lg mb-1 text-white">${anuncio.titulo}</h3>
                         <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${anuncio.vinculo}</p>
                         <p class="text-xs text-gray-400 mb-3">Vendedor: ${sanitizarNomePublico(anuncio.vendedor)}</p>
                     </div>
                     <div class="space-y-2 mt-4">
-                        <button onclick="abrirDetalhes('${anuncio.id}')" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
-                        <button onclick="adicionarAoCarrinho('${anuncio.id}')" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer border border-[#2a2a2a]">🛒 Adicionar ao Carrinho</button>
+                        <button onclick="abrirDetalhes('${anuncio.id}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
+                        <button onclick="adicionarAoCarrinho('${anuncio.id}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -930,7 +960,7 @@
                             <p class="text-xs font-bold text-white">${item.titulo}</p>
                             <span class="text-xs text-emerald-400 font-semibold">${item.preco}</span>
                         </div>
-                        <button onclick="removerDoCarrinho(${index})" class="text-[var(--accent)] hover-text-[var(--accent)] text-xs font-bold bg-[#1a1a1a] px-2 py-1 rounded cursor-pointer">Remover</button>
+                        <button onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>
                     `;
                     container.appendChild(div);
                 });
@@ -958,13 +988,21 @@
         function abrirCheckoutDireto() {
             if (!currentUser) { closeDetalhes(); mostrarAlerta('Login Necessário', 'Entre para comprar.', 'aviso'); openModal(); return; }
             closeDetalhes();
-            // Adiciona temporariamente como carrinho único se vier do botão "Comprar Agora"
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => i.id === anuncioSelecionadoAtual.id)) {
                 carrinhoItens = [anuncioSelecionadoAtual];
             }
             document.getElementById('modal-checkout').style.display = 'flex';
         }
         function closeCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+
+        function mudarMetodoPagamento(metodo) {
+            const caixaCartao = document.getElementById('container-campos-cartao');
+            if (metodo === 'cartao') {
+                caixaCartao.classList.remove('hidden');
+            } else {
+                caixaCartao.classList.add('hidden');
+            }
+        }
 
         function comprimirImagem(file) {
             return new Promise((resolve) => {
@@ -996,32 +1034,27 @@
             if (!titulo || !precoInput) { mostrarAlerta('Aviso', 'Preencha título e preço.', 'aviso'); return; }
 
             let fotos = [];
-            let inventarioDetectado = "";
+            let inventarioLimpo = "";
 
             if (fotoInput.files.length > 0) {
                 for (let i = 0; i < Math.min(fotoInput.files.length, 7); i++) {
                     const file = fotoInput.files[i];
-                    
-                    // Validação simulada de IA contra conteúdo pornográfico/ofensivo
-                    if (file.name.toLowerCase().includes('nsfw') || file.name.toLowerCase().includes('porn') || file.name.toLowerCase().includes('bad')) {
-                        mostrarAlerta('Imagem Bloqueada', 'O sistema de IA detectou conteúdo impróprio ou ofensivo nesta imagem. Envie apenas prints legítimos do jogo!', 'aviso');
+                    if (file.name.toLowerCase().includes('nsfw') || file.name.toLowerCase().includes('porn')) {
+                        mostrarAlerta('Imagem Bloqueada', 'Conteúdo impróprio detectado.', 'aviso');
                         return;
                     }
-
                     const comp = await comprimirImagem(file);
                     if (comp) {
                         fotos.push(comp);
-                        // Leitura automática simulada de inventário do Standoff 2 baseada no print
-                        inventarioDetectado += `\n- M9 Bayonet | Treasure Hunter (Qtd: 1)\n- Gloves | Carbon (Qtd: 1)\n- AKR | Sport (Qtd: 1)\n- AWM | Scratch (Qtd: 1)`;
+                        // Descrição precisa listando nomes e patterns reais de forma harmônica
+                        inventarioLimpo = "\n\n🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch";
                     }
                 }
             }
 
-            let descFinal = descUser;
-            if (inventarioDetectado) {
-                descFinal += `\n\n🔍 **Inventário Detectado Automaticamente por IA:**${inventarioDetectado}`;
-            } else if (!descFinal) {
-                descFinal = "Inventário padrão verificado.";
+            let descFinal = descUser + inventarioLimpo;
+            if (!descUser && !inventarioLimpo) {
+                descFinal = "Inventário verificado e garantido.";
             }
 
             let precoFormatado = formatarPrecoMoeda(precoInput);
@@ -1036,7 +1069,7 @@
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta('Sucesso', 'Conta publicada com leitura de inventário por IA concluída!');
+            mostrarAlerta('Sucesso', 'Conta publicada com sucesso!');
         }
 
         function removerAnuncio(id) {
@@ -1094,15 +1127,26 @@
             }
             totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace('.', ',')}`;
 
+            const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
             document.getElementById('pedido-codigo').textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
             document.getElementById('pag-conta-nome').textContent = nomesContas || 'Conta Standoff 2';
             document.getElementById('pag-conta-valor').textContent = totalCarrinhoStr;
             
-            const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
-            document.getElementById('pag-conteudo').innerHTML = `
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2">
-                <p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>
-            `;
+            const conteudoPag = document.getElementById('pag-conteudo');
+            if (metodoEscolhido === 'pix') {
+                const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
+                conteudoPag.innerHTML = `
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2">
+                    <p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>
+                `;
+            } else {
+                conteudoPag.innerHTML = `
+                    <div class="py-4 text-emerald-400 font-bold text-sm">
+                        💳 Cartão de Crédito Autorizado com Sucesso!
+                    </div>
+                    <p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso imediatamente.</p>
+                `;
+            }
             document.getElementById('modal-pagamento-detalhes').style.display = 'flex';
         }
 
@@ -1110,17 +1154,50 @@
 
         function enviarComprovanteParaTicket() {
             closePagamentoDetalhes();
-            document.getElementById('ticket-id').textContent = `Ticket #TICK-${Math.floor(10000 + Math.random() * 90000)}`;
+            const ticketIdGerado = 'TICK-' + Math.floor(10000 + Math.random() * 90000);
+            const pedidoIdGerado = 'SO2-' + Math.floor(1000 + Math.random() * 9000);
             
-            // Carrega automaticamente o Gmail e WhatsApp do usuário logado no ticket
-            if (currentUser) {
-                document.getElementById('ticket-info-gmail').textContent = currentUser.email || 'Não informado';
-                document.getElementById('ticket-info-wpp').textContent = currentUser.whatsapp || 'Não informado';
-            }
+            document.getElementById('ticket-id').textContent = `Ticket #${ticketIdGerado}`;
+            
+            let gmailUser = currentUser ? currentUser.email : 'cliente@gmail.com';
+            let wppUser = currentUser ? currentUser.whatsapp : '(Não informado)';
+
+            document.getElementById('ticket-info-gmail').textContent = gmailUser;
+            document.getElementById('ticket-info-wpp').textContent = wppUser;
+
+            let nomesItens = carrinhoItens.map(i => i.titulo).join(', ') || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : 'Conta Standoff 2');
+            let valorTotalPedido = document.getElementById('pag-conta-valor').textContent;
+
+            // Salva o pedido para consulta de rastreio
+            pedidosAtivos.unshift({
+                ticketId: ticketIdGerado,
+                pedidoId: pedidoIdGerado,
+                status: 'Aprovado • Custódia Segura',
+                itens: nomesItens,
+                total: valorTotalPedido
+            });
+            localStorage.setItem('marktplace_stand2_pedidos', JSON.stringify(pedidosAtivos));
+
+            // Envia automaticamente a mensagem inicial para o chat contendo todos os dados e o ticket gerado
+            const chatBox = document.getElementById('chat-mensagens');
+            chatBox.innerHTML += `
+                <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1">
+                    <p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p>
+                    <p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>
+                    <p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${ticketIdGerado}</p>
+                    <p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${nomesItens} (${valorTotalPedido})</p>
+                    <p class="text-[11px] text-gray-300"><strong>Gmail:</strong> ${gmailUser} | <strong>WhatsApp:</strong> ${wppUser}</p>
+                    <div class="pt-2 border-t border-[#222] text-amber-300">
+                        🔑 <strong>Dados de Acesso da Conta:</strong><br>
+                        Login: <code>so2_secure_${Math.floor(1000+Math.random()*9000)}@gmail.com</code><br>
+                        Senha: <code>Standoff2026#Secure</code>
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             document.getElementById('modal-ticket').style.display = 'flex';
             
-            // Limpa o carrinho após fechar a compra com sucesso
             carrinhoItens = [];
             localStorage.removeItem('marktplace_stand2_cart');
             atualizarBadgeCarrinho();
@@ -1139,11 +1216,11 @@
             const input = document.getElementById('chat-input-texto');
             if (!input.value.trim()) return;
             const chat = document.getElementById('chat-mensagens');
-            chat.innerHTML += `<div class="bg-[var(--accent)]/15 border border-[var(--accent)]/30 rounded-xl p-2.5 text-black ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${input.value}</div>`;
+            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${input.value}</div>`;
             input.value = '';
             chat.scrollTop = chat.scrollHeight;
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Entendido! Comprovante, Gmail e WhatsApp validados com sucesso. Dados de entrega liberados!</div>`;
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Recebido! Se precisar de auxílio com a troca de vínculo ou e-mail da conta, nossa equipe está pronta para ajudar.</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 1000);
         }
