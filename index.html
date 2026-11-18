@@ -38,7 +38,7 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
-        .input-group input { width: 100%; background: var(--bg-primary); border: 1px solid #1f2937; border-radius: 0.5rem; padding: 0.75rem; color: white; font-size: 0.875rem; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; background: var(--bg-primary); border: 1px solid #1f2937; border-radius: 0.5rem; padding: 0.75rem; color: white; font-size: 0.875rem; }
         .btn-primary { background: var(--accent); color: white; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; text-align: center; cursor: pointer; width: 100%; transition: background 0.2s; }
         .btn-primary:hover { background: #fa3243; }
     </style>
@@ -59,11 +59,11 @@
                     </svg>
                 </button>
 
-                <!-- Menu Hambúrguer Flutuante Posicionado Corretamente -->
+                <!-- Menu Hambúrguer Flutuante -->
                 <div id="mobile-menu" class="hidden bg-[#131b2e] border border-gray-800 rounded-2xl px-5 py-4 space-y-3 shadow-2xl absolute top-12 right-0 w-64 z-50">
                     <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Início</a>
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Termos</a>
-                    <a href="#" onclick="openAnuncioModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
+                    <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
                     
                     <div class="pt-3 border-t border-gray-800" id="authSection">
                         <!-- Painel de Usuário Logado -->
@@ -98,21 +98,7 @@
             <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes:</p>
             
             <div class="accounts-grid" id="catalogo-cards">
-                <!-- Card 1 -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl">
-                    <div>
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Master</span>
-                            <span class="text-lg font-bold text-emerald-400">R$ 150,00</span>
-                        </div>
-                        <h3 class="font-bold text-lg mb-1">Conta com M9 Bayonet & AKR</h3>
-                        <p class="text-xs text-[var(--muted)] mb-2">Vínculo: Google ID</p>
-                        <p class="text-xs text-[var(--muted)] mb-4">Inventário recheado com luvas e skins raras.</p>
-                    </div>
-                    <button onclick="verDetalhes('Conta com M9 Bayonet & AKR', 'R$ 150,00', 'Master', 'Google ID', 'Inventário completo contendo M9 Bayonet Treasure Hunter, AKR Genesis e luvas exclusivas. Acesso total garantido.')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
-                        Ver Detalhes
-                    </button>
-                </div>
+                <!-- Os cards são injetados aqui via JavaScript (incluindo os salvos e o padrão) -->
             </div>
         </section>
     </main>
@@ -155,8 +141,15 @@
             <div id="register-tab" class="tab-content">
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
-                        <label>Gmail (Obrigatório para contato)</label>
+                        <label>Gmail (Obrigatório para contato e verificação)</label>
                         <input type="email" id="reg-email" required placeholder="seuemail@gmail.com" autocomplete="email">
+                    </div>
+                    <div class="input-group flex gap-2 items-end">
+                        <div class="flex-grow">
+                            <label>Código de Verificação</label>
+                            <input type="text" id="reg-code" required placeholder="Digite o código enviado" autocomplete="one-time-code">
+                        </div>
+                        <button type="button" onclick="enviarCodigoGmail()" class="bg-gray-800 hover:bg-gray-700 text-xs text-white px-3 py-3 rounded-lg font-bold transition cursor-pointer h-[42px]">Enviar Código</button>
                     </div>
                     <div class="input-group">
                         <label>Nome de Usuário (Opcional - se vazio, gera aleatório)</label>
@@ -186,13 +179,17 @@
 
     <!-- Modal de Detalhes da Conta -->
     <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <div id="detalhe-img-container" class="mb-4 hidden">
+                <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-48 object-cover rounded-xl border border-gray-800">
+            </div>
             <div class="flex gap-2 mb-3">
                 <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
                 <span id="detalhe-vinculo" class="bg-blue-500/10 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Vínculo</span>
             </div>
             <h3 id="detalhe-titulo" class="text-xl font-bold mb-1">Nome da Conta</h3>
             <p id="detalhe-preco" class="text-lg font-bold text-emerald-400 mb-4">R$ 0,00</p>
+            <p id="detalhe-vendedor" class="text-xs text-gray-400 mb-2">Vendedor: <span></span></p>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6">Descrição detalhada dos itens da conta.</p>
             
             <div class="space-y-3">
@@ -214,11 +211,11 @@
         </div>
     </div>
 
-    <!-- Modal de Anúncio -->
+    <!-- Modal de Anúncio (Com upload de fotos) -->
     <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
-            <p class="text-xs text-[var(--muted)] mb-5">Preencha os campos abaixo para publicar sua conta.</p>
+            <p class="text-xs text-[var(--muted)] mb-5">Preencha os campos abaixo para publicar sua conta no catálogo.</p>
             
             <div class="space-y-4">
                 <div>
@@ -245,6 +242,10 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Adicionar Foto / Print da Conta</label>
+                    <input id="conta-foto" type="file" accept="image/*" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ff4655] file:text-white hover:file:bg-[#fa3243] cursor-pointer">
+                </div>
+                <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição</label>
                     <textarea id="conta-desc" rows="2" placeholder="Detalhes dos itens..." class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ff4655]"></textarea>
                 </div>
@@ -259,9 +260,10 @@
     <!-- Scripts de Lógica e Estado -->
     <script>
         let currentUser = null;
+        let codigoEnviadoSimulado = "";
         const AVATARES = [
             'https://api.dicebear.com/7.x/bottts/svg?seed=user1',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=user2',
+            'https://api.dicebear.com/7.x/bottts/svg?seed-user2',
             'https://api.dicebear.com/7.x/bottts/svg?seed-user3',
             'https://api.dicebear.com/7.x/bottts/svg?seed-user4',
             'https://api.dicebear.com/7.x/bottts/svg?seed-user5'
@@ -274,6 +276,7 @@
                 aplicarEstadoUsuario();
             }
             carregarAvataresRegistro();
+            carregarCatalogo();
 
             // Menu Hambúrguer Flutuante
             const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -333,20 +336,52 @@
         function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
         function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
         
-        function openAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'flex'; }
+        function verificarAutenticacaoAnuncio() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.add('hidden');
+
+            if (!currentUser) {
+                alert('Você precisa estar logado para anunciar uma conta!');
+                openModal();
+                return;
+            }
+            document.getElementById('modal-anuncio').style.display = 'flex';
+        }
+        
         function closeAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'none'; }
 
-        // Registro com Gmail obrigatório, nome opcional/aleatório e senhas
+        // Envio de código de verificação para o Gmail
+        function enviarCodigoGmail() {
+            const email = document.getElementById('reg-email').value.trim();
+            const feedback = document.getElementById('register-feedback');
+            
+            if (!email || !email.endsWith('@gmail.com')) {
+                feedback.textContent = 'Insira um Gmail válido antes de solicitar o código.';
+                return;
+            }
+
+            codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            feedback.style.color = '#10b981';
+            feedback.textContent = `Código simulado enviado para ${email}. (Código: ${codigoEnviadoSimulado})`;
+        }
+
+        // Registro com verificação de código Gmail, nome opcional/aleatório e senhas
         function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('reg-email').value.trim();
+            const codigoInput = document.getElementById('reg-code').value.trim();
             let username = document.getElementById('reg-username').value.trim();
             const password = document.getElementById('reg-password').value;
             const passwordConfirm = document.getElementById('reg-password-confirm').value;
             const feedback = document.getElementById('register-feedback');
+            feedback.style.color = '#f87171';
 
             if (!email.endsWith('@gmail.com')) {
                 feedback.textContent = 'Por favor, insira um Gmail válido (@gmail.com).';
+                return;
+            }
+            if (codigoInput !== codigoEnviadoSimulado) {
+                feedback.textContent = 'Código de verificação incorreto ou não solicitado!';
                 return;
             }
             if (password.length < 6) {
@@ -364,14 +399,12 @@
             }
 
             let users = JSON.parse(localStorage.getItem('standoff2_db_users') || '[]');
-            
             if (users.some(u => u.email === email)) {
                 feedback.textContent = 'Este Gmail já está cadastrado!';
                 return;
             }
 
             const avatar = document.getElementById('selected-avatar').value || AVATARES[0];
-            
             const newUser = { email, username, password, avatar };
             users.push(newUser);
             localStorage.setItem('standoff2_db_users', JSON.stringify(users));
@@ -384,7 +417,7 @@
             feedback.textContent = '';
         }
 
-        // Login aceitando Gmail ou Nome de Usuário + Senha
+        // Login
         function handleLogin(event) {
             event.preventDefault();
             const identifier = document.getElementById('login-identifier').value.trim();
@@ -423,6 +456,7 @@
                 userPanel.classList.add('hidden');
                 loginBtnContainer.classList.remove('hidden');
             }
+            carregarCatalogo();
         }
 
         function logout() {
@@ -433,17 +467,62 @@
             if (menu) menu.classList.add('hidden');
         }
 
-        function verDetalhes(titulo, preco, rank, vinculo, desc) {
-            document.getElementById('detalhe-titulo').textContent = titulo;
-            document.getElementById('detalhe-preco').textContent = preco;
-            document.getElementById('detalhe-badge').textContent = rank;
-            document.getElementById('detalhe-vinculo').textContent = vinculo;
-            document.getElementById('detalhe-desc').textContent = desc;
-            document.getElementById('modal-detalhes').style.display = 'flex';
+        // Sistema de Catálogo e Anúncios com Persistência
+        function obterAnunciosSalvos() {
+            const salvos = localStorage.getItem('standoff2_anuncios');
+            if (salvos) {
+                return JSON.parse(salvos);
+            }
+            // Anúncio padrão inicial
+            return [
+                {
+                    id: 'default_1',
+                    titulo: 'Conta com M9 Bayonet & AKR',
+                    preco: 'R$ 150,00',
+                    rank: 'Master',
+                    vinculo: 'Google ID',
+                    desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
+                    vendedor: 'Sistema',
+                    foto: ''
+                }
+            ];
         }
 
-        function closeDetalhes() { document.getElementById('modal-detalhes').style.display = 'none'; }
-        function comprarConta() { alert('Redirecionando para o chat de atendimento seguro via PIX/Cartão...'); closeDetalhes(); }
+        function carregarCatalogo() {
+            const grid = document.getElementById('catalogo-cards');
+            if (!grid) return;
+            const anuncios = obterAnunciosSalvos();
+            grid.innerHTML = '';
+
+            anuncios.forEach(anuncio => {
+                const card = document.createElement('div');
+                card.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl relative";
+                
+                let botaoRemover = '';
+                // Se o usuário logado for o dono do anúncio, mostra o botão de remover
+                if (currentUser && anuncio.vendedor === currentUser.username) {
+                    botaoRemover = `<button onclick="removerAnuncio('${anuncio.id}')" class="absolute top-4 right-4 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">Remover</button>`;
+                }
+
+                card.innerHTML = `
+                    ${botaoRemover}
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${anuncio.rank}</span>
+                            <span class="text-lg font-bold text-emerald-400">${anuncio.preco}</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1">${anuncio.titulo}</h3>
+                        <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${anuncio.vinculo}</p>
+                        <p class="text-xs text-gray-400 mb-2">Vendedor: ${anuncio.vendedor}</p>
+                        <p class="text-xs text-[var(--muted)] mb-4">${anuncio.desc}</p>
+                    </div>
+                    <button onclick="verDetalhes('${anuncio.titulo}', '${anuncio.preco}', '${anuncio.rank}', '${anuncio.vinculo}', '${anuncio.desc}', '${anuncio.vendedor}', '${anuncio.foto}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
+                        Ver Detalhes
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
 
         function publicarAnuncioFinal() {
             const titulo = document.getElementById('conta-titulo').value.trim();
@@ -451,33 +530,86 @@
             const rank = document.getElementById('conta-rank').value.trim();
             const vinculo = document.getElementById('conta-vinculo').value;
             const desc = document.getElementById('conta-desc').value.trim() || "Sem descrição adicional.";
+            const fotoInput = document.getElementById('conta-foto');
 
             if (!titulo || !preco || !rank) {
                 alert('Preencha os campos obrigatórios!');
                 return;
             }
 
-            const grid = document.getElementById('catalogo-cards');
-            const novoCard = document.createElement('div');
-            novoCard.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl";
-            novoCard.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${rank}</span>
-                        <span class="text-lg font-bold text-emerald-400">${preco}</span>
-                    </div>
-                    <h3 class="font-bold text-lg mb-1">${titulo}</h3>
-                    <p class="text-xs text-[var(--muted)] mb-2">Vínculo: ${vinculo}</p>
-                    <p class="text-xs text-[var(--muted)] mb-4">${desc}</p>
-                </div>
-                <button onclick="verDetalhes('${titulo}', '${preco}', '${rank}', '${vinculo}', '${desc}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
-                    Ver Detalhes
-                </button>
-            `;
-            grid.prepend(novoCard);
+            let precoFormatado = preco.startsWith('R$') ? preco : `R$ ${preco}`;
+
+            if (fotoInput.files && fotoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, e.target.result);
+                };
+                reader.readAsDataURL(fotoInput.files[0]);
+            } else {
+                salvarNovoAnuncio(titulo, precoFormatado, rank, vinculo, desc, '');
+            }
+        }
+
+        function salvarNovoAnuncio(titulo, preco, rank, vinculo, desc, foto) {
+            const novoAnuncio = {
+                id: 'anuncio_' + Date.now(),
+                titulo,
+                preco,
+                rank,
+                vinculo,
+                desc,
+                vendedor: currentUser.username,
+                foto
+            };
+
+            let anuncios = obterAnunciosSalvos();
+            anuncios.unshift(novoAnuncio);
+            localStorage.setItem('standoff2_anuncios', JSON.stringify(anuncios));
+
+            carregarCatalogo();
             closeAnuncioModal();
             alert('Conta publicada com sucesso no catálogo!');
+            
+            // Limpar campos
+            document.getElementById('conta-titulo').value = '';
+            document.getElementById('conta-preco').value = '';
+            document.getElementById('conta-rank').value = '';
+            document.getElementById('conta-desc').value = '';
+            document.getElementById('conta-foto').value = '';
         }
+
+        function removerAnuncio(id) {
+            if (confirm('Tem certeza que deseja retirar este anúncio da venda?')) {
+                let anuncios = obterAnunciosSalvos();
+                anuncios = anuncios.filter(a => a.id !== id);
+                localStorage.setItem('standoff2_anuncios', JSON.stringify(anuncios));
+                carregarCatalogo();
+                alert('Anúncio removido com sucesso!');
+            }
+        }
+
+        function verDetalhes(titulo, preco, rank, vinculo, desc, vendedor, foto) {
+            document.getElementById('detalhe-titulo').textContent = titulo;
+            document.getElementById('detalhe-preco').textContent = preco;
+            document.getElementById('detalhe-badge').textContent = rank;
+            document.getElementById('detalhe-vinculo').textContent = vinculo;
+            document.getElementById('detalhe-desc').textContent = desc;
+            document.getElementById('detalhe-vendedor').querySelector('span').textContent = vendedor;
+            
+            const imgContainer = document.getElementById('detalhe-img-container');
+            const imgElement = document.getElementById('detalhe-imagem');
+            if (foto) {
+                imgElement.src = foto;
+                imgContainer.classList.remove('hidden');
+            } else {
+                imgContainer.classList.add('hidden');
+            }
+
+            document.getElementById('modal-detalhes').style.display = 'flex';
+        }
+
+        function closeDetalhes() { document.getElementById('modal-detalhes').style.display = 'none'; }
+        function comprarConta() { alert('Redirecionando para o chat de atendimento seguro via PIX/Cartão...'); closeDetalhes(); }
     </script>
 </body>
 </html>
