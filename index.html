@@ -16,7 +16,6 @@
             --text-main: #f3f4f6;
             --muted: #9ca3af;
             --success: #10b981;
-            --error: #ef4444;
         }
         body {
             background-color: var(--bg-primary);
@@ -71,16 +70,16 @@
                 width: 32px;
                 height: 32px;
             }
-            /* Área de auth dentro do header móvel */
-            .auth-section {
+            /* Área de auth DENTRO do menu hambúrguer */
+            .auth-mobile-section {
                 order: 3;
                 width: 100%;
                 margin-top: 0.5rem;
             }
-            .auth-section .user-panel {
+            .auth-mobile-section .user-panel {
                 display: none;
             }
-            .auth-section .login-btn {
+            .auth-mobile-section .login-btn {
                 width: 100%;
                 justify-content: center;
                 min-height: 36px;
@@ -91,11 +90,11 @@
                 color: white;
                 border-radius: 0.375rem;
             }
-            .auth-section .login-btn:hover {
+            .auth-mobile-section .login-btn:hover {
                 background: #fa3243;
             }
-            /* Estado: usuário logado */
-            .auth-section.logged-in .user-panel {
+            /* Estado: usuário logado NO menu hambúrguer */
+            .auth-mobile-section.logged-in .user-panel {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -104,24 +103,27 @@
                 border-radius: 0.4rem;
                 margin-top: 0.25rem;
             }
-            .auth-section.logged-in .user-panel .user-avatar {
+            .auth-mobile-section.logged-in .user-panel .user-avatar {
                 width: 28px;
                 height: 28px;
                 border-radius: 50%;
                 object-fit: cover;
                 border: 2px solid var(--accent);
             }
-            .auth-section.logged-in .user-panel .user-name {
+            .auth-mobile-section.logged-in .user-panel .user-name {
                 font-size: 0.7rem;
                 color: var(--fg);
                 white-space: nowrap;
             }
-            .auth-section.logged-in .user-panel .logout-btn {
+            .auth-mobile-section.logged-in .user-panel .logout-btn {
                 margin-left: 0.5rem;
                 font-size: 0.65rem;
                 color: var(--muted);
+                background: transparent;
+                border: none;
+                cursor: pointer;
             }
-            .auth-section.logged-in .user-panel .logout-btn:hover {
+            .auth-mobile-section.logged-in .user-panel .logout-btn:hover {
                 color: var(--accent);
             }
             /* Estilos para grid de avatares */
@@ -174,10 +176,10 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
-    <!-- Header / Navbar -->
+    <!-- Header / Navbar - APENAS logotipo em mobile -->
     <header class="border-b border-gray-800 bg-[#0b0f17]/90 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6">
-            <!-- Linha superior: logotipo isolado -->
+            <!-- Linha superior: apenas o logotipo -->
             <div class="header-top">
                 <span class="logo text-2xl font-black text-[#ff4655] tracking-wider">STANDOFF 2</span>
             </div>
@@ -192,7 +194,7 @@
                 </button>
             </div>
             
-            <!-- Barra de auth (apenas visível quando não logado) -->
+            <!-- Barra de auth móvel (será substituída por painel de usuário quando logado) -->
             <div class="auth-section" id="authSection">
                 <div class="auth-panel">
                     <div class="user-panel" id="userPanel">
@@ -624,7 +626,7 @@
             localStorage.setItem('standoff2_users', JSON.stringify(users));
         }
 
-        // ===== FUNÇÕES PARA EXIBIR/OCULTAR USUÁRIO =====
+        // ===== FUNÇÕES PARA EXIBIR/OCULTAR USUÁRIO NO HEADER =====
 
         function aplicarEstadoUsuario() {
             if (!currentUser) {
