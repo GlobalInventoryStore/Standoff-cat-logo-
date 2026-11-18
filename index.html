@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Standoff 2 - Catálogo de Contas</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0b0f17;
@@ -12,11 +15,13 @@
             --accent: #ff4655;
             --text-main: #f3f4f6;
             --muted: #9ca3af;
+            --success: #10b981;
+            --error: #ef4444;
         }
         body {
             background-color: var(--bg-primary);
             color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             overflow-x: hidden;
         }
         .accounts-grid {
@@ -25,11 +30,10 @@
             gap: 1.5rem;
         }
         /* ===== HEADER MOBILE RESPONSIVE ===== */
-        /* Em telas móveis (até 768px): layout reestruturado */
         @media (max-width: 768px) {
             header {
                 height: auto;
-                padding: 1rem 0;
+                padding: 0.75rem 0;
             }
             /* Linha superior: apenas o logotipo */
             .header-top {
@@ -39,11 +43,11 @@
                 margin-bottom: 0.5rem;
             }
             .header-top .logo {
-                font-size: 1.875rem;
-                font-weight: 900;
+                font-size: 1.75rem;
+                font-weight: 700;
                 color: #ff4655;
                 text-transform: uppercase;
-                letter-spacing: -0.025em;
+                letter-spacing: -0.02em;
             }
             /* Linha inferior: Catálogo e hambúrguer à direita */
             .header-bottom {
@@ -55,29 +59,98 @@
             }
             .header-bottom .cat-link {
                 order: 1;
-                font-size: 0.75rem;
-                color: var(--fg);
+                font-size: 0.7rem;
+                color: var(--muted);
                 background: var(--bg-card);
-                padding: 0.25rem 0.5rem;
-                border-radius: 0.375rem;
+                padding: 0.2rem 0.5rem;
+                border-radius: 0.35rem;
+                white-space: nowrap;
             }
             .header-bottom .hamburger-btn {
                 order: 2;
                 width: 32px;
                 height: 32px;
             }
-            /* Botão Entrar/Cadastrar - compacto, full width mas controle */
-            .auth-bar {
+            /* Área de auth dentro do header móvel */
+            .auth-section {
+                order: 3;
                 width: 100%;
-                margin-top: 0.75rem;
+                margin-top: 0.5rem;
             }
-            .auth-btn {
+            .auth-section .user-panel {
+                display: none;
+            }
+            .auth-section .login-btn {
                 width: 100%;
                 justify-content: center;
                 min-height: 36px;
-                padding: 0 1rem;
-                font-size: 0.75rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.7rem;
                 font-weight: 500;
+                background: var(--accent);
+                color: white;
+                border-radius: 0.375rem;
+            }
+            .auth-section .login-btn:hover {
+                background: #fa3243;
+            }
+            /* Estado: usuário logado */
+            .auth-section.logged-in .user-panel {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 1rem;
+                background: var(--bg-card);
+                border-radius: 0.4rem;
+                margin-top: 0.25rem;
+            }
+            .auth-section.logged-in .user-panel .user-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid var(--accent);
+            }
+            .auth-section.logged-in .user-panel .user-name {
+                font-size: 0.7rem;
+                color: var(--fg);
+                white-space: nowrap;
+            }
+            .auth-section.logged-in .user-panel .logout-btn {
+                margin-left: 0.5rem;
+                font-size: 0.65rem;
+                color: var(--muted);
+            }
+            .auth-section.logged-in .user-panel .logout-btn:hover {
+                color: var(--accent);
+            }
+            /* Estilos para grid de avatares */
+            .avatars-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+                gap: 0.5rem;
+            }
+            .avatar-item {
+                cursor-pointer;
+                border: 2px solid transparent;
+                border-radius: 50%;
+                overflow: hidden;
+                transition: border-color 0.2s;
+            }
+            .avatar-item:hover {
+                border-color: var(--accent);
+            }
+            .avatar-item img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+            .avatar-grid-btn {
+                display: inline-block;
+                font-size: 0.65rem;
+                color: var(--muted);
+                margin-top: 0.25rem;
             }
         }
         /* Em telas maiores (md+): layout original */
@@ -95,8 +168,6 @@
             flex-wrap: wrap;
             gap: 0.75rem;
         }
-        /* Espaço mínimo para o botão entrar e hambúrguer não se colarem */
-        .auth-btn{min-width: 110px;}
         /* Esconder overflow horizontal */
         body{overflow-x:hidden;}
     </style>
@@ -121,12 +192,17 @@
                 </button>
             </div>
             
-            <!-- Barra de auth compacta -->
-            <div class="auth-bar">
-                <div id="auth-container" class="auth-btn w-full">
-                    <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white py-1.5 rounded text-sm font-medium transition shadow-sm shadow-[#ff4655]/20 w-full">
-                        Entrar / Cadastrar
-                    </button>
+            <!-- Barra de auth (apenas visível quando não logado) -->
+            <div class="auth-section" id="authSection">
+                <div class="auth-panel">
+                    <div class="user-panel" id="userPanel">
+                        <!-- Será preenchido por JS quando logar -->
+                    </div>
+                    <div class="login-section">
+                        <button onclick="showLoginTab()" class="login-btn w-full">
+                            <span id="loginBtnText">Entrar / Cadastrar</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,36 +249,91 @@
     <!-- Modal de Login / Cadastro -->
     <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
-            <h3 class="text-xl font-bold mb-2">Criar Conta / Entrar</h3>
-            <p class="text-sm text-[var(--muted)] mb-5">Insira um Gmail válido e confirme a sua senha.</p>
+            <h3 class="text-xl font-bold mb-2">Acesso à Conta</h3>
+            <p class="text-sm text-[var(--muted)] mb-4">Entre na sua conta para acessar o catálogo</p>
             
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">E-mail (@gmail.com)</label>
-                    <input id="reg-email" type="email" placeholder="seuemail@gmail.com" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Senha</label>
-                    <input id="reg-pass" type="password" placeholder="••••••••" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Confirmar Senha</label>
-                    <input id="reg-confirm-pass" type="password" placeholder="••••••••" class="w-full bg-[#0b0f17] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ff4655]">
-                </div>
-                <div id="reg-feedback" class="text-xs font-medium text-center hidden"></div>
-                
-                <button onclick="realizarCadastro()" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
-                    Cadastrar e Entrar
-                </button>
+            <div class="tab-container">
+                <button class="tab active" onclick="showTab('login')">Entrar</button>
+                <button class="tab" onclick="showTab('register')">Cadastrar</button>
+            </div>
+            
+            <!-- Login Tab -->
+            <div id="login-tab" class="tab-content active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>Nome de Usuário</label>
+                        <input type="text" id="login-username" required placeholder="Seu nome" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+                    </div>
+                    <div class="input-group">
+                        <label>Foto de Perfil</label>
+                        <div class="avatar-upload">
+                            <input type="file" id="avatar-file" accept="image/*" style="display: none;">
+                            <div class="avatar-placeholder" id="avatar-placeholder" onclick="document.getElementById('avatar-file').click()">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="8" y1="8" x2="16" y2="16"></line>
+                                </svg>
+                                <input type="text" id="avatar-name" placeholder="Seu nome" style="width: 100%; margin-top: 0.5rem; padding: 0.25rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.3rem; color: var(--fg);">
+                            </div>
+                            <div class="avatars-grid" id="avatars-grid" style="margin-top: 0.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(32px, 1fr)); gap: 0.5rem;">
+                                <!-- Avatares pré-definidos serão inseridos por JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="login-feedback" class="text-sm text-center"></div>
+                    <button type="submit" class="btn-primary w-full mt-4">Entrar na Conta</button>
+                    <p class="link-small mt-2">Não tem uma conta? <a onclick="showTab('register')" style="color: var(--accent)">Cadastrar</a></p>
+                </form>
             </div>
 
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
+            <!-- Register Tab -->
+            <div id="register-tab" class="tab-content">
+                <form onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label>Nome de Usuário</label>
+                        <input type="text" id="reg-username" required placeholder="Seu nome" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="reg-password-confirm" required placeholder="••••••••" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label>Foto de Perfil</label>
+                        <div class="avatar-upload">
+                            <input type="file" id="reg-avatar-file" accept="image/*" style="display: none;">
+                            <div class="avatar-placeholder" id="reg-avatar-placeholder" onclick="document.getElementById('reg-avatar-file').click()">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="8" y1="8" x2="16" y2="16"></line>
+                                </svg>
+                                <input type="text" id="reg-avatar-name" placeholder="Seu nome" style="width: 100%; margin-top: 0.5rem; padding: 0.25rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.3rem; color: var(--fg);">
+                            </div>
+                            <div class="avatars-grid" id="reg-avatars-grid" style="margin-top: 0.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(32px, 1fr)); gap: 0.5rem;">
+                                <!-- Avatares pré-definidos serão inseridos por JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="register-feedback" class="text-sm text-center"></div>
+                    <button type="submit" class="btn-primary w-full mt-4">Criar Conta</button>
+                    <p class="link-small mt-2">Já tem uma conta? <a onclick="showTab('login')" style="color: var(--accent)">Entrar</a></p>
+                </form>
+            </div>
         </div>
+
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
     </div>
 
     <!-- Modal de Detalhes da Conta -->
     <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+        <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex gap-2 mb-3">
                 <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
                 <span id="detalhe-vinculo" class="bg-blue-500/10 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Vínculo</span>
@@ -225,7 +356,7 @@
 
     <!-- Modal de Termos -->
     <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-md rounded-2xl p-6 relative overflow-y-auto" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-md rounded-2xl p-6 relative">
             <h3 class="text-xl font-bold mb-3 text-[#ff4655]">Termos de Serviço</h3>
             <p class="text-sm text-[var(--muted)] leading-relaxed mb-5">Garantimos total segurança nas transações de contas de Standoff 2 com intermediação segura e suporte dedicado.</p>
             <button onclick="closeTermosModal()" class="w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl font-bold text-sm">Entendido</button>
@@ -234,7 +365,7 @@
 
     <!-- Modal Automático de Anúncio com Validação Completa -->
     <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-lg rounded-2xl p-6 relative overflow-y-auto max-h-[90vh]" style="padding-bottom: env(safe-area-inset-bottom, 1rem);">
+        <div class="bg-[#131b2e] border border-gray-800 w-fall-max-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Preencha todos os campos obrigatórios para publicar.</p>
             
@@ -316,114 +447,244 @@
 
     <!-- Scripts de Controle -->
     <script>
-        let codigoCorreto = "1234";
+        // ===== SISTEMA DE AUTENTICAÇÃO E LOCALSTORAGE =====
+        
+        // Estado da sessão
+        let currentUser = null;
+        const AVATARS_PREDEFINIDOS = [
+            'https://api.dicebear.com/identify?seed=user1&background=%23ff4655&color=%23ffffff',
+            'https://api.dicebear.com/identify?seed=user2&background=%23ff4655&color=%23ffffff',
+            'https://api.dicebear.com/identify?seed=user3&background=%23ff4655&color=%23ffffff',
+            'https://api.dicebear.com/identify?seed=user4&background=%23ff4655&color=%23ffffff',
+            'https://api.dicebear.com/identify?seed=user5&background=%23ff4655&color=%23ffffff'
+        ];
 
-        window.onload = function() {
-            const usuarioSalvo = localStorage.getItem('standoff_user');
-            if (usuarioSalvo) {
-                atualizarBotaoAuth(usuarioSalvo);
+        // Inicializar ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            const storedUser = localStorage.getItem('standoff2_user');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                aplicarEstadoUsuario();
             }
-        };
+            gerarAvatares('avatars-grid');
+            gerarAvatares('reg-avatars-grid', true);
+        });
+
+        // Funções para avatares pré-definidos
+        function gerarAvatares(gridId, isRegister = false) {
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+            grid.innerHTML = '';
+            const avatares = isRegister ? AVATARS_PREDEFINIDOS.slice(0, 5) : AVATARS_PREDEFINIDOS;
+            avatares.forEach((avatar, index) => {
+                const div = document.createElement('div');
+                div.className = 'avatar-item cursor-pointer border border-transparent hover:border-accent transition-colors';
+                div.innerHTML = `<img src="${avatar}" alt="Avatar ${index + 1}" class="w-full h-full rounded-full object-cover">`;
+                div.onclick = function() {
+                    const input = isRegister ? document.getElementById('reg-avatar-name') : document.getElementById('avatar-name');
+                    input.value = `Avatar ${index + 1}`;
+                    fecharAvatarGrid(gridId);
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        function fecharAvatarGrid(gridId) {
+            const grid = document.getElementById(gridId);
+            if (grid) grid.style.display = 'none';
+        }
+
+        // ===== SISTEMA DE ABAIS DO MODAL =====
+        
+        function showTab(tabName) {
+            // Esconder todos os tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            // Mostrar conteúdo selecionado
+            document.getElementById(tabName + '-tab').classList.add('active');
+            // Mostrar botão selecionado
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function showLoginTab() {
+            showTab('login');
+            document.getElementById('login-tab').style.display = 'block';
+            document.getElementById('register-tab').style.display = 'none';
+            document.getElementById('loginBtnText').textContent = 'Entrar / Cadastrar';
+        }
+
+        // ===== FUNÇÕES DE LOGIN E CADASTRO =====
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const avatarInput = document.getElementById('avatar-name').value.trim() || 'Usuário';
+            
+            if (!username) {
+                showFeedback('login-feedback', 'Digite um nome de usuário', 'error');
+                return;
+            }
+
+            // Simulação de login - usar dados do localStorage ou criar usuário
+            let users = JSON.parse(localStorage.getItem('standoff2_users') || '[]');
+            let userExist = users.find(u => u.username === username && u.password === password);
+            
+            if (userExist) {
+                currentUser = {
+                    username: userExist.username,
+                    avatar: userExist.avatar || `https://api.dicebear.com/identify?seed=${username}&background=%23ff4655&color=%23ffffff`,
+                    avatarLocal: userExist.avatarLocal
+                };
+                salvarUsuario();
+                aplicarEstadoUsuario();
+                closeModal();
+                showFeedback('login-feedback', 'Login bem-sucedido! Bem-vindo, ' + currentUser.username, 'success');
+            } else {
+                // Se usuário não existir, cadastrar automaticamente
+                currentUser = {
+                    username: username,
+                    avatar: `https://api.dicebear.com/identify?seed=${username}&background=%23ff4655&color=%23ffffff`,
+                    avatarLocal: ''
+                };
+                salvarUsuario();
+                aplicarEstadoUsuario();
+                closeModal();
+                showFeedback('login-feedback', 'Conta criada e login automático! Bem-vindo, ' + currentUser.username, 'success');
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+            const avatarInput = document.getElementById('reg-avatar-name').value.trim() || 'Usuário';
+            
+            if (!username) {
+                showFeedback('register-feedback', 'Digite um nome de usuário', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showFeedback('register-feedback', 'Senha deve ter pelo menos 6 caracteres', 'error');
+                return;
+            }
+            if (password !== passwordConfirm) {
+                showFeedback('register-feedback', 'As senhas não coincidem', 'error');
+                return;
+            }
+            
+            // Verificar se usuário já existe
+            let users = JSON.parse(localStorage.getItem('standoff2_users') || '[]');
+            if (users.some(u => u.username === username)) {
+                showFeedback('register-feedback', 'Este nome de usuário já existe', 'error');
+                return;
+            }
+            
+            const avatar = document.getElementById('reg-avatar-file').files[0] ?
+                URL.createObjectURL(document.getElementById('reg-avatar-file').files[0]) :
+                `https://api.dicebear.com/identify?seed=${username}&background=%23ff4655&color=%23ffffff`;
+            
+            const newUser = {
+                username: username,
+                password: password,
+                avatar: avatar,
+                avatarLocal: ''
+            };
+            users.push(newUser);
+            localStorage.setItem('standoff2_users', JSON.stringify(users));
+            
+            currentUser = {
+                username: username,
+                avatar: avatar,
+                avatarLocal: ''
+            };
+            aplicarEstadoUsuario();
+            closeModal();
+            showFeedback('register-feedback', 'Conta criada com sucesso! Bem-vindo, ' + username, 'success');
+        }
+
+        function salvarUsuario() {
+            if (!currentUser) return;
+            let users = JSON.parse(localStorage.getItem('standoff2_users') || '[]');
+            const existingIdx = users.findIndex(u => u.username === currentUser.username);
+            if (existingIdx >= 0) {
+                users[existingIdx] = {
+                    username: currentUser.username,
+                    avatar: currentUser.avatar,
+                    avatarLocal: currentUser.avatarLocal
+                };
+            } else {
+                users.push({
+                    username: currentUser.username,
+                    avatar: currentUser.avatar,
+                    avatarLocal: currentUser.avatarLocal
+                });
+            }
+            localStorage.setItem('standoff2_users', JSON.stringify(users));
+        }
+
+        // ===== FUNÇÕES PARA EXIBIR/OCULTAR USUÁRIO =====
+
+        function aplicarEstadoUsuario() {
+            if (!currentUser) {
+                // Usuário desconectado
+                document.getElementById('authSection').style.display = 'block';
+                document.getElementById('userPanel').innerHTML = '';
+                document.getElementById('loginBtnText').textContent = 'Entrar / Cadastrar';
+                return;
+            }
+            
+            // Usuário logado
+            document.getElementById('authSection').style.display = 'block';
+            
+            const userPanel = document.getElementById('userPanel');
+            const avatarImg = currentUser.avatarLocal ? currentUser.avatarLocal : currentUser.avatar;
+            userPanel.innerHTML = `
+                <div class="user-panel">
+                    <img src="${avatarImg}" alt="${currentUser.username}" class="user-avatar" id="user-avatar">
+                    <span class="user-name" id="user-name">${currentUser.username}</span>
+                    <button class="logout-btn text-xs" onclick="logout()">Sair</button>
+                </div>
+            `;
+            
+            document.getElementById('loginBtnText').textContent = 'Sessão ativa';
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('standoff2_users');
+            aplicarEstadoUsuario();
+            showFeedback('login-feedback', 'Você saiu da conta', 'success');
+        }
+
+        function showFeedback(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = message;
+            el.className = `text-sm ${type === 'success' ? 'text-emerald-400' : 'text-red-400'} text-center`;
+            setTimeout(() => { el.textContent = ''; }, 3000);
+        }
+
+        // ===== FUNÇÕES DO HEADER MOBILE =====
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         }
 
-        function openModal() {
-            document.getElementById('modal').style.display = 'flex';
-            document.getElementById('reg-feedback').classList.add('hidden');
-        }
+        // ===== ETAPAS DO ANÚNCIO (mantidas) =====
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        let codigoCorreto = "1234";
 
-        function realizarCadastro() {
-            const email = document.getElementById('reg-email').value.trim();
-            const senha = document.getElementById('reg-pass').value;
-            const confirmaSenha = document.getElementById('reg-confirm-pass').value;
-            const feedback = document.getElementById('reg-feedback');
-
-            feedback.classList.remove('hidden');
-
-            if (!email.endsWith('@gmail.com') || email.length < 11) {
-                feedback.className = "text-xs font-medium text-red-400 text-center";
-                feedback.innerText = "Erro: Digite um endereço de Gmail válido (@gmail.com)!";
-                return;
+        window.onload = function() {
+            const usuarioSalvo = localStorage.getItem('standoff2_user');
+            if (usuarioSalvo) {
+                aplicarEstadoUsuario();
             }
+        };
 
-            if (senha.length < 6) {
-                feedback.className = "text-xs font-medium text-red-400 text-center";
-                feedback.innerText = "Erro: A senha deve ter pelo menos 6 caracteres!";
-                return;
-            }
-
-            if (senha !== confirmaSenha) {
-                feedback.className = "text-xs font-medium text-red-400 text-center";
-                feedback.innerText = "Erro: As senhas não coincidem!";
-                return;
-            }
-
-            localStorage.setItem('standoff_user', email);
-            feedback.className = "text-xs font-medium text-emerald-400 text-center";
-            feedback.innerText = "Cadastro realizado com sucesso!";
-
-            setTimeout(() => {
-                closeModal();
-                atualizarBotaoAuth(email);
-            }, 1200);
-        }
-
-        function atualizarBotaoAuth(email) {
-            document.getElementById('auth-container').innerHTML = `
-                <div class="flex items-center gap-2 bg-[#131b2e] border border-gray-800 px-4 py-2 rounded-xl">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span class="text-xs font-medium text-gray-200 truncate max-w-[120px]">${email}</span>
-                    <button onclick="sairConta()" class="text-[10px] text-red-400 hover:underline ml-1">Sair</button>
-                </div>
-            `;
-        }
-
-        function sairConta() {
-            localStorage.removeItem('standoff_user');
-            document.getElementById('auth-container').innerHTML = `
-                <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20">
-                    Entrar / Cadastrar
-                </button>
-            `;
-        }
-
-        function verDetalhes(titulo, preco, rank, vinculo, desc) {
-            document.getElementById('detalhe-titulo').innerText = titulo;
-            document.getElementById('detalhe-preco').innerText = preco;
-            document.getElementById('detalhe-badge').innerText = rank;
-            document.getElementById('detalhe-vinculo').innerText = vinculo;
-            document.getElementById('detalhe-desc').innerText = desc;
-            document.getElementById('compra-feedback').classList.add('hidden');
-            document.getElementById('modal-detalhes').style.display = 'flex';
-        }
-
-        function closeDetalhes() {
-            document.getElementById('modal-detalhes').style.display = 'none';
-        }
-
-        function comprarConta() {
-            const feedback = document.getElementById('compra-feedback');
-            feedback.classList.remove('hidden');
-            setTimeout(() => {
-                closeDetalhes();
-            }, 1800);
-        }
-
-        function openTermosModal() {
-            document.getElementById('modal-termos').style.display = 'flex';
-        }
-
-        function closeTermosModal() {
-            document.getElementById('modal-termos').style.display = 'none';
-        }
-
+        // Funções das Etapas do Anúncio (mantidas do código original)
         function openAnuncioModal() {
             document.getElementById('modal-anuncio').style.display = 'flex';
             document.getElementById('anuncio-etapa-1').style.display = 'block';
@@ -499,7 +760,6 @@
 
             feedback.classList.remove('hidden');
 
-            // Validação estrita para obrigar o preenchimento de tudo exceto descrição
             if (!titulo || !preco || !rank || !vinculo || foto === 0) {
                 feedback.className = "text-xs font-medium text-red-400 text-center";
                 feedback.innerText = "Atenção: Preencha todos os campos obrigatórios e envie a foto da conta!";
@@ -509,7 +769,6 @@
             feedback.className = "text-xs font-medium text-emerald-400 text-center";
             feedback.innerText = "Conta publicada com sucesso no catálogo!";
 
-            // Adiciona o card dinamicamente no catálogo principal
             setTimeout(() => {
                 const grid = document.getElementById('catalogo-cards');
                 const novoCard = document.createElement('div');
