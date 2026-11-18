@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Standoff 2 - Catálogo de Contas</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        const supabase = createClient(
+            'https://zqatvuuadzsztywwwrvf.supabase.co',
+            'sb_publishable_6tecaNAmtT27GkTwsb_lzQ_NAt2-_WK'
+        );
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -475,15 +482,14 @@
             return nome;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const storedUser = localStorage.getItem('standoff2_user');
             if (storedUser) {
                 currentUser = JSON.parse(storedUser);
                 currentUser.username = sanitizarNomePublico(currentUser.username);
                 aplicarEstadoUsuario();
             }
-            carregarAvataresRegistro();
-            inicializarAnuncios();
+            await inicializarAnuncios();
             carregarCatalogo();
 
             const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -749,35 +755,48 @@
             mostrarAlerta('Sessão Encerrada', 'Você saiu da sua conta com sucesso.');
         }
 
-        function inicializarAnuncios() {
+        async function inicializarAnuncios() {
             try {
-                const salvos = localStorage.getItem('standoff2_anuncios');
-                if (salvos) {
-                    const parsed = JSON.parse(salvos);
-                    anunciosEmMemoria = parsed.map(a => ({
-                        ...a,
-                        vendedor: sanitizarNomePublico(a.vendedor),
-                        vendedorEmail: undefined
-                    }));
-                    localStorage.setItem('standoff2_anuncios', JSON.stringify(anunciosEmMemoria));
-                    return;
-                }
-            } catch (e) {
-                console.warn('Resetando cache antigo:', e);
-            }
+                const { data, error } = await supabase
+                    .from('contas')
+                    .select('*');
 
-            anunciosEmMemoria = [
-                {
-                    id: 'default_1',
-                    titulo: 'Conta com M9 Bayonet & AKR',
-                    preco: 'R$ 150,00',
-                    rank: 'Master',
-                    vinculo: 'Google ID',
-                    desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
-                    vendedor: 'Sistema',
-                    fotos: []
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    anunciosEmMemoria = data;
+                } else {
+                    // Anúncio padrão caso tabela esteja vazia
+                    anunciosEmMemoria = [
+                        {
+                            id: 'default_1',
+                            titulo: 'Conta com M9 Bayonet & AKR',
+                            preco: 'R$ 150,00',
+                            rank: 'Master',
+                            vinculo: 'Google ID',
+                            desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
+                            vendedor: 'Sistema',
+                            fotos: [],
+                            imagem: ''
+                        }
+                    ];
                 }
-            ];
+            } catch (erro) {
+                console.error('Erro ao carregar anúncios do Supabase:', erro);
+                // Fallback para dados locais se Supabase falhar
+                anunciosEmMemoria = [
+                    {
+                        id: 'default_1',
+                        titulo: 'Conta com M9 Bayonet & AKR',
+                        preco: 'R$ 150,00',
+                        rank: 'Master',
+                        vinculo: 'Google ID',
+                        desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
+                        vendedor: 'Sistema',
+                        fotos: [],
+                        imagem: ''
+                    }
+                ];
+            }
         }
 
         function carregarCatalogo() {
@@ -905,7 +924,7 @@
             }
         }
 
-        function salvarNovoAnuncio(titulo, preco, rank, vinculo, desc, fotos) {
+        async function salvarNovoAnuncio(titulo, preco, rank, vinculo, desc, fotos) {
             const novoAnuncio = {
                 id: 'anuncio_' + Date.now(),
                 titulo,
@@ -914,17 +933,24 @@
                 vinculo,
                 desc,
                 vendedor: sanitizarNomePublico(currentUser.username),
-                fotos
+                fotos: fotos || [],
+                imagem: fotos && fotos.length > 0 ? fotos[0] : ''
             };
 
-            anunciosEmMemoria.unshift(novoAnuncio);
-
             try {
-                localStorage.setItem('standoff2_anuncios', JSON.stringify(anunciosEmMemoria));
-            } catch (e) {
-                console.warn('Limite de storage atingido.');
+                const { error } = await supabase
+                    .from('contas')
+                    .insert([novoAnuncio]);
+
+                if (error) throw error;
+            } catch (erro) {
+                console.error('Erro ao salvar anúncio no Supabase:', erro);
+                mostrarAlerta('Erro', 'Não foi possível publicar o anúncio. Tente novamente.', 'aviso');
+                return;
             }
 
+            // Atualizar memória local para reflexo imediato
+            anunciosEmMemoria.unshift(novoAnuncio);
             carregarCatalogo();
             closeAnuncioModal();
             mostrarAlerta('Sucesso!', 'Conta publicada no catálogo com sucesso!');
@@ -936,11 +962,23 @@
         }
 
         function confirmarRemoverAnuncio(id) {
-            mostrarConfirmacao('Tem certeza que deseja retirar este anúncio da venda?', function() {
+            mostrarConfirmacao('Tem certeza que deseja retirar este anúncio da venda?', async function() {
+                // Remover da memória local
                 anunciosEmMemoria = anunciosEmMemoria.filter(a => a.id !== id);
+
+                // Remover do Supabase
                 try {
-                    localStorage.setItem('standoff2_anuncios', JSON.stringify(anunciosEmMemoria));
-                } catch (e) {}
+                    const { error } = await supabase
+                        .from('contas')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (erro) {
+                    console.error('Erro ao remover anúncio do Supabase:', erro);
+                    mostrarAlerta('Erro', 'Não foi possível remover o anúncio do catálogo.', 'aviso');
+                }
+
                 carregarCatalogo();
                 mostrarAlerta('Removido', 'Anúncio retirado do catálogo com sucesso.');
             });

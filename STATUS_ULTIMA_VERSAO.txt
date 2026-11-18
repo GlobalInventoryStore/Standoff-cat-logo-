@@ -1,0 +1,50 @@
+STATUS DA ULTIMA VERSAO DO index.html
+
+Commit: 6c8d1f9 - "Atualizar index.html: nova versao com verificacao Gmail, anúncios persistentes e upload de fotos"
+
+DATA: 2026-11-18
+
+NOVIDADES IMPLEMENTADAS:
+1. Sistema de verificacao Gmail - enviarCodigoGmail() + campo reg-code no cadastro
+   - codigo simulado gerado aleatoriamente (100000-999999)
+   - validacao codigoInput !== codigoEnviadoSimulado
+   - requerimento @gmail.com obrigatorio
+
+2. Sistema de anúncios persistentes - localStorage standoff2_anuncios
+   - publicarAnuncioFinal() - publica com foto opcional
+   - salvarNovoAnuncio() - salva com dados do usuario logado
+   - removerAnuncio() - remove se for do usuario logado
+   - carregarCatalogo() - carrega anúncios salvos
+
+3. Upload de foto no anúncio
+   - Input conta-foto aceita image/*
+   - FileReader converte para data URL
+   - Foto salva e exibida nos detalhes
+
+4. Verificacao de autenticacao do anúncio
+   - verificarAutenticacaoAnuncio() impede anunciar se nao logado
+
+5. Info do vendedor nos detalhes
+   - detalhe-vendedor exibe nome do usuario logado
+
+6. Manutenção de todas as funcionalidades anteriores:
+   - Login/cadastro com Gmail obrigatorio
+   - Sistema de avatares DiceBear
+   - Header mobile (logo + catálogo + hambúrguer)
+   - Menu hambúrguer com animação X e fechamento automático
+
+HISTÓRICO DE COMMITS (últimos 5):
+6c8d1f9 - Nova versão com verificacao Gmail, anúncios persistentes e upload de fotos
+5851b4b - sistema de verificacao Gmail + anúncios persistentes
+14f9f87 - Ajustes de posição e painel
+b2026dc - Menu flutuante fixo + click fora
+d9722f5 - absolute menu + margin 0
+
+BACKUPS DISPONIVEIS:
+- index.html.base - backup da versão mais recente
+- index.html.bak.current - backup temporário entre alterações
+
+GitHub Pages: https://seu-usuario.github.io/Standoff-cat-logo-/
+Atualização esperada: 2-3 minutos após push
+
+TOTAL DE COMMITS: 16 versões consecutivas do index.html

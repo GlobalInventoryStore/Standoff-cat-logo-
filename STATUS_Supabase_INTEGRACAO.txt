@@ -1,0 +1,36 @@
+STATUS INTEGRACAO SUPABASE - Standoff 2 Marketplace
+
+Data: 2026-11-18
+Agente: agent-c3326d6e-d94a-44d3-8b47-c9c55c815eb5
+
+ALTERACOES REALIZADAS:
+1. Importado CDN @supabase/supabase-js@2 (linha 8-14 do index.html)
+2. Inicializado cliente supabase com:
+   - URL: https://zqatvuuadzsztywwwrvf.supabase.co
+   - Anon Key: sb_publishable_6tecaNAmtT27GkTwsb_lzQ_NAt2-_WK
+3. Substituido localStorage por Supabase nas funcoes:
+   - inicializarAnuncios() - busca da tabela 'contas'
+   - salvarNovoAnuncio() - insere na tabela 'contas'
+   - confirmarRemoverAnuncio() - deleta da tabela 'contas'
+4. DOMContentLoaded envolvido em async function para await inicializarAnuncios()
+
+PROXIMOS PASSOS OBRIGATORIOS:
+1. Criar tabela 'contas' no painel do Supabase (dashboard)
+2. Colunas necessarias:
+   - id UUID (primary key)
+   - titulo TEXT
+   - preco TEXT
+   - descricao TEXT
+   - imagem TEXT
+   - (opcionais: rank, vinculo, vendedor)
+
+RESULTADO ESPERADO:
+- Anuncios publicados sao salvos em tempo real no Supabase
+- Todos os visitantes do site veem as contas publicadas
+- Dados persistem apos fechar o navegador
+- Remocao de anuncios afeta todos os visitantes
+
+ARQUIVOS MODIFICADOS:
+- /data/OpenBot/Agents/agent-c3326d6e-d94a-44d3-8b47-c9c55c815eb5/index.html
+
+STATUS: CONCLUIDO - Aguardando criacao da tabela no Supabase

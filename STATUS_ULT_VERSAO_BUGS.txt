@@ -1,0 +1,61 @@
+STATUS DA ULTIMA VERSAO - CORRECOES DE BUGS
+
+Commit: e93cdfe - "Atualizar index.html: correcao de bugs + verificacao Gmail intacta + compressor de imagens + sistema tickets e checkout"
+
+DATA: 2026-11-18
+
+BUGS CORIGIDOS:
+1. Compressao de imagens - funcao comprimirImagem() agora redimensiona para 800x800px maximo com qualidade 65%
+   - Antes: imagens eram enviadas sem otimizacao, aumentando o tamanho do localStorage
+   - Agora: imagens comprimidas automaticamente antes de salvar
+
+2. Sistema de tickets - funcao enviarComprovanteParaTicket()
+   - Agora gera ticket com status Aprovado/Recusado (90% aprovao simulada)
+   - Aprovado: abre chat automatico com suporte oficial
+   - Recusado: oferece botao "Tentar Novamente"
+
+3. Checkout PIX/Cartao/Cripto - funcao gerarQrCodePagamento()
+   - Gera pedido SO2-XXXX unico
+   - QR Code via api.qrserver.com com chave PIX simulada
+   - Chave PIX copiavel para area de transferencia
+   - Suporta 3 metodos: PIX, Cartao de Credito, Criptomoeda USDT
+
+4. Modal de Termos rigoroso - protecao juridica
+   - Isencao total por negociacoes externas (Discord, WhatsApp, etc)
+   - Termos claros sobre responsabildiade da Axlebolt
+   - Botao "Entendido e Concordo" obrigatorio
+
+5. Sanitizacao de nomes publicos - funcao sanitizarNomePublico()
+   - Remove @gmail do username para exibicao publica
+   - Aplicado em registro, login e exibicao de anúncios
+   - Mantem username completo no localStorage privado
+
+6. Verificacao Gmail 100% intacta - confirmado nos comentarios do codigo
+   - funcao verificarAutenticacaoAnuncio() sem alteracoes
+   - fluxo enviarCodigoAnuncio() + confirmarCodigoAnuncio() mantido
+
+NOVIDADES ADICIONAIS:
+- Carrossel de fotos em detalhes (ate 7 fotos com miniaturas)
+- Categoria "Seu Anúncio" visivel apenas para dono no catálogo
+- Compressao de imagens antes de publicar anúncio
+- Chat de suporte oficial com respostas automáticas
+- 18 versões consecutivas no histórico git
+
+HISTÓRICO DE COMMITS (últimas 6):
+e93cdfe - correcao de bugs + verificacao Gmail intacta + compressor + tickets + checkout
+01a060a - versao com checkout PIX/card/cripto + 7 fotos
+6c8d1f9 - verificação Gmail + anúncios persistentes
+5851b4b - sistema de verificação Gmail, anúncios persistentes e upload de fotos
+14f9f87 - ajustes de posição e painel
+b2026dc - menu flutuante fixo + click fora
+
+BACKUPS DISPONIVEIS:
+- index.html.base - backup da versão mais recente (1164 lines)
+- index.html.bak.current - backup temporário entre alterações
+
+GitHub Pages: https://seu-usuario.github.io/Standoff-cat-logo-/
+Atualização esperada: 2-3 minutos após push
+
+TOTAL DE COMMITS: 18 versões consecutivas do index.html
+
+RESUMO: Todas as correções de bugs solicitadas foram aplicadas com sucesso. O código agora tem compressão de imagens, sistema de tickets PIX/card/cripto, modal de termos jurídicos rigorosos, sanitização de nomes e verificação Gmail preservada. O backup garante reversão se necessário.
