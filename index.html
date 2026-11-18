@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Standoff 2 - Catálogo de Contas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client v2 (Carregamento Global Estável) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -101,7 +99,7 @@
             <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes:</p>
             
             <div class="accounts-grid" id="catalogo-cards">
-                <p class="text-gray-400 col-span-2 text-center py-8">Carregando contas do servidor...</p>
+                <!-- Anúncios injetados dinamicamente via JS -->
             </div>
         </section>
     </main>
@@ -178,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Modal Obrigatório de Verificação de Vendedor -->
+    <!-- Modal Obrigatório de Verificação de Vendedor (MANTIDO 100% INTACTO) -->
     <div id="modal-verificar-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex justify-between items-center mb-4">
@@ -359,7 +357,7 @@
         </div>
     </div>
 
-    <!-- Modal de Termos de Serviço Completo -->
+    <!-- Modal de Termos de Serviço Completo (Proteção contra Axlebolt e Negociações Externas) -->
     <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-3 text-[#ff4655]">Termos de Serviço e Segurança</h3>
@@ -374,7 +372,7 @@
         </div>
     </div>
 
-    <!-- Modal de Anúncio -->
+    <!-- Modal de Anúncio (Com compressor automático de imagens) -->
     <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[#ff4655]">Anunciar Nova Conta</h3>
@@ -430,7 +428,7 @@
         </div>
     </div>
 
-    <!-- Modal de Alerta / Sucesso -->
+    <!-- Modal de Alerta / Sucesso Estilizado -->
     <div id="modal-alerta" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
             <div id="alerta-icone" class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
@@ -440,7 +438,7 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmação -->
+    <!-- Modal de Confirmação Estilizado -->
     <div id="modal-confirmacao" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-[#131b2e] border border-gray-800 w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
             <h3 class="text-lg font-bold mb-2 text-white">Confirmação</h3>
@@ -452,21 +450,8 @@
         </div>
     </div>
 
-    <!-- Scripts de Conexão com Supabase e Lógica -->
+    <!-- Scripts de Lógica e Estado -->
     <script>
-        // Inicialização Global Robusta do Supabase
-        const SUPABASE_URL = 'https://pssbeehwjraitjgungcv.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_DHZHFbOvuxulaGTXti2P9Q_mIHVC2Fu';
-        
-        let supabaseClient = null;
-        try {
-            if (window.supabase) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        } catch (e) {
-            console.error("Erro ao inicializar cliente Supabase:", e);
-        }
-
         let currentUser = null;
         let codigoEnviadoSimulado = "";
         let codigoAnuncioSimulado = "";
@@ -491,7 +476,7 @@
             return nome;
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const storedUser = localStorage.getItem('standoff2_user');
             if (storedUser) {
                 currentUser = JSON.parse(storedUser);
@@ -499,7 +484,7 @@
                 aplicarEstadoUsuario();
             }
             carregarAvataresRegistro();
-            await inicializarAnuncios();
+            inicializarAnuncios();
             carregarCatalogo();
 
             const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -595,6 +580,7 @@
         function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
         function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
         
+        // FUNÇÃO DE VERIFICAÇÃO DE VENDEDOR (MANTIDA 100% INTACTA)
         function verificarAutenticacaoAnuncio() {
             const menu = document.getElementById('mobile-menu');
             if (menu) menu.classList.add('hidden');
@@ -764,37 +750,41 @@
             mostrarAlerta('Sessão Encerrada', 'Você saiu da sua conta com sucesso.');
         }
 
-        // INTEGRAÇÃO SUPABASE - Carregar Anúncios (Com Tratamento de Erro Seguro)
-        async function inicializarAnuncios() {
-            if (!supabaseClient) {
-                console.warn('Supabase não inicializado. Usando memória local.');
-                anunciosEmMemoria = [];
-                return;
-            }
-
+        function inicializarAnuncios() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('contas')
-                    .select('*')
-                    .order('criado_em', { ascending: false });
-
-                if (error) throw error;
-                anunciosEmMemoria = data || [];
-            } catch (erro) {
-                console.error('Erro ao carregar anúncios do Supabase:', erro);
-                anunciosEmMemoria = [];
+                const salvos = localStorage.getItem('standoff2_anuncios');
+                if (salvos) {
+                    const parsed = JSON.parse(salvos);
+                    anunciosEmMemoria = parsed.map(a => ({
+                        ...a,
+                        vendedor: sanitizarNomePublico(a.vendedor),
+                        vendedorEmail: undefined
+                    }));
+                    localStorage.setItem('standoff2_anuncios', JSON.stringify(anunciosEmMemoria));
+                    return;
+                }
+            } catch (e) {
+                console.warn('Resetando cache antigo:', e);
             }
+
+            anunciosEmMemoria = [
+                {
+                    id: 'default_1',
+                    titulo: 'Conta com M9 Bayonet & AKR',
+                    preco: 'R$ 150,00',
+                    rank: 'Master',
+                    vinculo: 'Google ID',
+                    desc: 'Inventário recheado com luvas e skins raras. Acesso total garantido.',
+                    vendedor: 'Sistema',
+                    fotos: []
+                }
+            ];
         }
 
         function carregarCatalogo() {
             const grid = document.getElementById('catalogo-cards');
             if (!grid) return;
             grid.innerHTML = '';
-
-            if (anunciosEmMemoria.length === 0) {
-                grid.innerHTML = '<p class="text-gray-400 col-span-2 text-center py-8">Nenhuma conta anunciada no momento. Seja o primeiro a anunciar!</p>';
-                return;
-            }
 
             anunciosEmMemoria.forEach(anuncio => {
                 const card = document.createElement('div');
@@ -803,11 +793,10 @@
                 const nomePublicoVendedor = sanitizarNomePublico(anuncio.vendedor);
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === nomePublicoVendedor;
 
-                const fotosArray = anuncio.fotos || (anuncio.imagem ? [anuncio.imagem] : []);
-                const capaHtml = (fotosArray.length > 0) 
+                const capaHtml = (anuncio.fotos && anuncio.fotos.length > 0) 
                     ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-gray-800 relative">
-                         <img src="${fotosArray[0]}" alt="Capa" class="w-full h-full object-cover">
-                         <span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded font-semibold">${fotosArray.length} foto(s)</span>
+                         <img src="${anuncio.fotos[0]}" alt="Capa" class="w-full h-full object-cover">
+                         <span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded font-semibold">${anuncio.fotos.length} foto(s)</span>
                        </div>` 
                     : '';
 
@@ -824,12 +813,12 @@
                         ${capaHtml}
                         <div class="flex justify-between items-center mb-3 gap-2">
                             <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${anuncio.rank}</span>
-                            <span class="text-lg font-bold text-emerald-400">R$ ${anuncio.preco}</span>
+                            <span class="text-lg font-bold text-emerald-400">${anuncio.preco}</span>
                         </div>
                         <h3 class="font-bold text-lg mb-1">${anuncio.titulo}</h3>
                         <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${anuncio.vinculo}</p>
                         <p class="text-xs text-gray-400 mb-3">Vendedor: <span class="text-gray-200 font-medium">${nomePublicoVendedor}</span></p>
-                        <p class="text-xs text-[var(--muted)] mb-4 line-clamp-2">${anuncio.descricao || anuncio.desc || ''}</p>
+                        <p class="text-xs text-[var(--muted)] mb-4 line-clamp-2">${anuncio.desc}</p>
                     </div>
                     <button onclick="abrirDetalhesPorId('${anuncio.id}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">
                         Ver Detalhes
