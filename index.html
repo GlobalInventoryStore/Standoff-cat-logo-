@@ -48,8 +48,9 @@
             
             <div class="flex items-center gap-3">
                 <span class="hidden md:inline-block text-xs bg-[#ff4655]/10 text-[#ff4655] px-2.5 py-1 rounded font-bold uppercase">Catálogo</span>
-                <button onclick="toggleMobileMenu()" class="p-2 text-gray-300 hover:text-white focus:outline-none">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Botão Hambúrguer Funcional -->
+                <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-white focus:outline-none">
+                    <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
@@ -57,11 +58,11 @@
         </div>
     </header>
 
-    <!-- Menu Hambúrguer -->
+    <!-- Menu Hambúrguer (Mobile) -->
     <div id="mobile-menu" class="hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3 shadow-2xl">
-        <a href="#secao-contas" onclick="toggleMobileMenu()" class="block text-sm font-medium hover:text-[#ff4655]">Início</a>
-        <a href="#" onclick="openTermosModal(); toggleMobileMenu();" class="block text-sm font-medium hover:text-[#ff4655]">Termos</a>
-        <a href="#" onclick="openAnuncioModal(); toggleMobileMenu();" class="block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
+        <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Início</a>
+        <a href="#" onclick="openTermosModal();" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Termos</a>
+        <a href="#" onclick="openAnuncioModal();" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
         
         <div class="pt-3 border-t border-gray-800" id="authSection">
             <!-- Painel de Usuário Logado -->
@@ -78,7 +79,7 @@
 
             <!-- Botão de Entrar / Cadastrar -->
             <div id="loginButtonContainer">
-                <button onclick="openModal(); toggleMobileMenu();" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-2.5 rounded-xl text-xs font-bold transition shadow-lg shadow-[#ff4655]/20 flex items-center justify-center gap-2">
+                <button onclick="openModal();" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-2.5 rounded-xl text-xs font-bold transition shadow-lg shadow-[#ff4655]/20 flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Entrar / Cadastrar
                 </button>
