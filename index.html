@@ -25,6 +25,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            margin: 0;
         }
         .accounts-grid {
             display: grid;
@@ -61,8 +62,8 @@
         </div>
     </header>
 
-    <!-- Menu Hambúrguer (Mobile) -->
-    <div id="mobile-menu" class="hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3 shadow-2xl">
+    <!-- Menu Hambúrguer (Mobile) - Flutuante e Oculto por padrão -->
+    <div id="mobile-menu" class="hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3 shadow-2xl absolute top-[73px] left-0 w-full z-40">
         <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Início</a>
         <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Termos</a>
         <a href="#" onclick="openAnuncioModal(); return false;" class="menu-link block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
