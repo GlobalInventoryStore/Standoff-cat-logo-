@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Standoff 2 - Marketplace</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client v2 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-        const supabase = createClient(
+        const supabaseClient = supabase.createClient(
             'https://pssbeehwjraitjgungcv.supabase.co',
             'sb_publishable_DHZHFbOvuxulaGTXti2P9Q_mIHVC2Fu'
         );
@@ -193,8 +190,8 @@
         let anunciosEmMemoria = [];
         let pedidoAtualId = "";
 
-        // === SUPABASE INITIALIZATION Already in head module ===
-        // const supabase already defined via <script type="module"> in head
+        // === SUPABASE CLIENT ALREADY IN HEAD (script type="module") ===
+        // supabaseClient already defined via <script type="module"> in head
 
         // ==========================================
         // FUNÇÕES DO SUPABASE - Anúncios
@@ -203,7 +200,7 @@
         // Carrega todas as contas do Supabase ao iniciar
         async function inicializarAnuncios() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('contas')
                     .select('*')
                     .order('id', { ascending: false });
@@ -266,7 +263,7 @@
             };
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('contas')
                     .insert([novoAnuncio]);
 
@@ -291,7 +288,7 @@
             if (!confirm('Tem certeza que deseja remover este anúncio?')) return;
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('contas')
                     .delete()
                     .eq('id', id);
