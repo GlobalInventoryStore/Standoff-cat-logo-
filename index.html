@@ -24,6 +24,48 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.5rem;
         }
+        /* ===== HEADER MOBILE RESPONSIVE ===== */
+        /* Em telas móveis (até 768px): reorganizar header */
+        @media (max-width: 768px) {
+            header .flex.items-center.gap-2 {
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+            }
+            /* Logo e "Catálogo" ficam à esquerda, alinhados no topo */
+            header .flex.items-center.gap-2 span:first-child {
+                order: 1;
+                margin-bottom: 0.5rem;
+            }
+            header .flex.items-center.gap-2 span:last-child {
+                order: 1;
+                margin-bottom: 0.5rem;
+            }
+            /* Menu hambúrguer no lado direito, linha própria */
+            header .md:hidden.button-hamburger {
+                order: 2;
+                width: 32px;
+                height: 32px;
+            }
+            /* Botão Entrar/Cadastrar - posicionamento relativo, nunca sobrepor */
+            .auth-container {
+                order: 3;
+                width: 100%;
+            }
+            .auth-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        /* Em telas maiores (md+): layout original */
+        @media (min-width: 769px) {
+            header .flex.items-center.gap-2 {
+                flex-wrap: nowrap;
+            }
+            header .flex.items-center.gap-2 span {
+                margin-bottom: 0;
+            }
+        }
         /* Evitar sobreposição no header mobile */
         header .flex.gap-4 {
             align-items: center;
@@ -53,12 +95,12 @@
             </nav>
 
             <div class="flex items-center gap-4">
-                <div id="auth-container" style="flex-shrink: 0;">
-                    <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 flex-shrink-0 min-w-[120px]">
+                <div id="auth-container" class="auth-container w-full md:w-auto">
+                    <button onclick="openModal()" class="bg-[#ff4655] hover:bg-[#fa3243] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-[#ff4655]/20 auth-btn w-full md:w-auto">
                         Entrar / Cadastrar
                     </button>
                 </div>
-                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-300 hover:text-white flex-shrink-0">
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-300 hover:text-white button-hamburger">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
