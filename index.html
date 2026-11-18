@@ -48,7 +48,6 @@
             
             <div class="flex items-center gap-3">
                 <span class="hidden md:inline-block text-xs bg-[#ff4655]/10 text-[#ff4655] px-2.5 py-1 rounded font-bold uppercase">Catálogo</span>
-                <!-- Botão Hambúrguer -->
                 <button onclick="toggleMobileMenu()" class="p-2 text-gray-300 hover:text-white focus:outline-none">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -58,14 +57,14 @@
         </div>
     </header>
 
-    <!-- Menu Hambúrguer (Com tudo dentro: links + autenticação) -->
+    <!-- Menu Hambúrguer -->
     <div id="mobile-menu" class="hidden bg-[#131b2e] border-b border-gray-800 px-6 py-4 space-y-3 shadow-2xl">
         <a href="#secao-contas" onclick="toggleMobileMenu()" class="block text-sm font-medium hover:text-[#ff4655]">Início</a>
         <a href="#" onclick="openTermosModal(); toggleMobileMenu();" class="block text-sm font-medium hover:text-[#ff4655]">Termos</a>
         <a href="#" onclick="openAnuncioModal(); toggleMobileMenu();" class="block text-sm font-medium hover:text-[#ff4655]">Anunciar Conta</a>
         
         <div class="pt-3 border-t border-gray-800" id="authSection">
-            <!-- Painel de Usuário Logado (Escondido por padrão) -->
+            <!-- Painel de Usuário Logado -->
             <div id="userPanel" class="hidden flex items-center justify-between bg-[#0b0f17] p-3 rounded-xl border border-gray-800">
                 <div class="flex items-center gap-3">
                     <img id="user-avatar-img" src="" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-[#ff4655]">
@@ -77,7 +76,7 @@
                 <button onclick="logout()" class="text-xs text-gray-400 hover:text-[#ff4655] bg-gray-800/50 px-3 py-1.5 rounded-lg transition">Sair</button>
             </div>
 
-            <!-- Botão de Entrar / Cadastrar (Fica dentro do hambúrguer) -->
+            <!-- Botão de Entrar / Cadastrar -->
             <div id="loginButtonContainer">
                 <button onclick="openModal(); toggleMobileMenu();" class="w-full bg-[#ff4655] hover:bg-[#fa3243] text-white py-2.5 rounded-xl text-xs font-bold transition shadow-lg shadow-[#ff4655]/20 flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -94,7 +93,7 @@
             <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes:</p>
             
             <div class="accounts-grid" id="catalogo-cards">
-                <!-- Card 1 corrigido com a função verDetalhes correta -->
+                <!-- Card 1 -->
                 <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl">
                     <div>
                         <div class="flex justify-between items-start mb-4">
@@ -135,13 +134,14 @@
             <div id="login-tab" class="tab-content active">
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>Nome de Usuário</label>
-                        <input type="text" id="login-username" required placeholder="Seu nome" autocomplete="username">
+                        <label>Gmail ou Nome de Usuário</label>
+                        <input type="text" id="login-identifier" required placeholder="seuemail@gmail.com ou Nome" autocomplete="username">
                     </div>
                     <div class="input-group">
                         <label>Senha</label>
                         <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
                     </div>
+                    <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
                 </form>
             </div>
@@ -150,12 +150,20 @@
             <div id="register-tab" class="tab-content">
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
-                        <label>Nome de Usuário</label>
-                        <input type="text" id="reg-username" required placeholder="Seu nome" autocomplete="username">
+                        <label>Gmail (Obrigatório para contato)</label>
+                        <input type="email" id="reg-email" required placeholder="seuemail@gmail.com" autocomplete="email">
+                    </div>
+                    <div class="input-group">
+                        <label>Nome de Usuário (Opcional - se vazio, gera aleatório)</label>
+                        <input type="text" id="reg-username" placeholder="Ex: SamukaSF" autocomplete="username">
                     </div>
                     <div class="input-group">
                         <label>Senha</label>
                         <input type="password" id="reg-password" required placeholder="••••••••" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="reg-password-confirm" required placeholder="••••••••" autocomplete="new-password">
                     </div>
                     <div class="input-group">
                         <label>Escolha seu Avatar</label>
@@ -164,6 +172,7 @@
                         </div>
                         <input type="hidden" id="selected-avatar" value="">
                     </div>
+                    <div id="register-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Criar Conta</button>
                 </form>
             </div>
@@ -266,7 +275,7 @@
             const grid = document.getElementById('avatars-grid');
             if (!grid) return;
             grid.innerHTML = '';
-            AVATARES.forEach((url, index) => {
+            AVATARES.forEach((url) => {
                 const img = document.createElement('img');
                 img.src = url;
                 img.className = 'w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-[#ff4655] transition p-1 bg-[#0b0f17]';
@@ -292,127 +301,87 @@
             event.currentTarget.classList.add('active');
         }
 
-        function openModal() {
-            document.getElementById('modal').style.display = 'flex';
-        }
+        function openModal() { document.getElementById('modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
+        function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
+        function openAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'flex'; }
+        function closeAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'none'; }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        function openTermosModal() {
-            document.getElementById('modal-termos').style.display = 'flex';
-        }
-        function closeTermosModal() {
-            document.getElementById('modal-termos').style.display = 'none';
-        }
-
-        function openAnuncioModal() {
-            document.getElementById('modal-anuncio').style.display = 'flex';
-        }
-        function closeAnuncioModal() {
-            document.getElementById('modal-anuncio').style.display = 'none';
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            const username = document.getElementById('login-username').value.trim();
-            if (!username) return;
-
-            currentUser = {
-                username: username,
-                avatar: document.getElementById('selected-avatar').value || AVATARES[0]
-            };
-            localStorage.setItem('standoff2_user', JSON.stringify(currentUser));
-            aplicarEstadoUsuario();
-            closeModal();
-        }
-
+        // Sistema de Registro com Gmail obrigatório, nome opcional/aleatório e confirmação de senha
         function handleRegister(event) {
             event.preventDefault();
-            const username = document.getElementById('reg-username').value.trim();
-            const avatar = document.getElementById('selected-avatar').value || AVATARES[0];
-            if (!username) return;
+            const email = document.getElementById('reg-email').value.trim();
+            let username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+            const feedback = document.getElementById('register-feedback');
 
-            currentUser = { username, avatar };
-            localStorage.setItem('standoff2_user', JSON.stringify(currentUser));
-            aplicarEstadoUsuario();
-            closeModal();
-        }
-
-        function aplicarEstadoUsuario() {
-            const userPanel = document.getElementById('userPanel');
-            const loginBtnContainer = document.getElementById('loginButtonContainer');
-
-            if (currentUser) {
-                userPanel.classList.remove('hidden');
-                loginBtnContainer.classList.add('hidden');
-                document.getElementById('user-avatar-img').src = currentUser.avatar;
-                document.getElementById('user-name-text').textContent = currentUser.username;
-            } else {
-                userPanel.classList.add('hidden');
-                loginBtnContainer.classList.remove('hidden');
+            if (!email.endsWith('@gmail.com')) {
+                feedback.textContent = 'Por favor, insira um Gmail válido (@gmail.com).';
+                return;
             }
-        }
-
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('standoff2_user');
-            aplicarEstadoUsuario();
-            toggleMobileMenu();
-        }
-
-        function verDetalhes(titulo, preco, rank, vinculo, desc) {
-            document.getElementById('detalhe-titulo').textContent = titulo;
-            document.getElementById('detalhe-preco').textContent = preco;
-            document.getElementById('detalhe-badge').textContent = rank;
-            document.getElementById('detalhe-vinculo').textContent = vinculo;
-            document.getElementById('detalhe-desc').textContent = desc;
-            document.getElementById('modal-detalhes').style.display = 'flex';
-        }
-
-        function closeDetalhes() {
-            document.getElementById('modal-detalhes').style.display = 'none';
-        }
-
-        function comprarConta() {
-            alert('Redirecionando para o chat de atendimento seguro via PIX/Cartão...');
-            closeDetalhes();
-        }
-
-        function publicarAnuncioFinal() {
-            const titulo = document.getElementById('conta-titulo').value.trim();
-            const preco = document.getElementById('conta-preco').value.trim();
-            const rank = document.getElementById('conta-rank').value.trim();
-            const vinculo = document.getElementById('conta-vinculo').value;
-            const desc = document.getElementById('conta-desc').value.trim() || "Sem descrição adicional.";
-
-            if (!titulo || !preco || !rank) {
-                alert('Preencha os campos obrigatórios!');
+            if (password.length < 6) {
+                feedback.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+                return;
+            }
+            if (password !== passwordConfirm) {
+                feedback.textContent = 'As senhas não coincidem!';
                 return;
             }
 
-            const grid = document.getElementById('catalogo-cards');
-            const novoCard = document.createElement('div');
-            novoCard.className = "bg-[#131b2e] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between hover:border-[#ff4655]/50 transition shadow-xl";
-            novoCard.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">${rank}</span>
-                        <span class="text-lg font-bold text-emerald-400">${preco}</span>
-                    </div>
-                    <h3 class="font-bold text-lg mb-1">${titulo}</h3>
-                    <p class="text-xs text-[var(--muted)] mb-2">Vínculo: ${vinculo}</p>
-                    <p class="text-xs text-[var(--muted)] mb-4">${desc}</p>
-                </div>
-                <button onclick="verDetalhes('${titulo}', '${preco}', '${rank}', '${vinculo}', '${desc}')" class="w-full bg-gray-800 hover:bg-[#ff4655] hover:text-white py-2.5 rounded-xl text-sm font-bold transition">
-                    Ver Detalhes
-                </button>
-            `;
-            grid.prepend(novoCard);
-            closeAnuncioModal();
-            alert('Conta publicada com sucesso no catálogo!');
+            // Se o usuário não preencheu o nome, gera um aleatório (ex: User_4829)
+            if (!username) {
+                const randomNum = Math.floor(1000 + Math.random() * 9000);
+                username = `Player_${randomNum}`;
+            }
+
+            let users = JSON.parse(localStorage.getItem('standoff2_db_users') || '[]');
+            
+            // Verificar se o email já está cadastrado
+            if (users.some(u => u.email === email)) {
+                feedback.textContent = 'Este Gmail já está cadastrado!';
+                return;
+            }
+
+            const avatar = document.getElementById('selected-avatar').value || AVATARES[0];
+            
+            const newUser = { email, username, password, avatar };
+            users.push(newUser);
+            localStorage.setItem('standoff2_db_users', JSON.stringify(users));
+
+            currentUser = { username, email, avatar };
+            localStorage.setItem('standoff2_user', JSON.stringify(currentUser));
+            
+            aplicarEstadoUsuario();
+            closeModal();
+            feedback.textContent = '';
         }
-    </script>
+
+        // Sistema de Login aceitando Gmail ou Nome de Usuário + Senha
+        function handleLogin(event) {
+            event.preventDefault();
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value;
+            const feedback = document.getElementById('login-feedback');
+
+            let users = JSON.parse(localStorage.getItem('standoff2_db_users') || '[]');
+            
+            // Procura usuário por email ou por nome de usuário
+            const foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
+
+            if (!foundUser) {
+                feedback.textContent = 'Gmail/Nome ou senha incorretos.';
+                return;
+            }
+
+            currentUser = {
+                username: foundUser.username,
+                email: foundUser.email,
+                avatar: foundUser.avatar
+            };
+            localStorage.setItem('standoff2_user', JSON.stringify(currentUser));
+            aplic
+</script>
 </body>
 </html>
