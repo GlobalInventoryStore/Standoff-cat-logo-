@@ -847,24 +847,42 @@
 
         function inicializarAnuncios() {
             try {
+                // Tenta carregar do Supabase primeiro (compartilhado por todos os usuários)
+                supabase.from('anuncios').select('*').then(({ data }) => {
+                    if (data && data.length > 0) {
+                        anunciosEmMemoria = data;
+                        carregarCatalogo();
+                        return;
+                    }
+                }).catch(e => console.error('Erro ao carregar anúncios do Supabase', e));
+            } catch (e) {}
+            
+            // Fallback: tenta localStorage se Supabase falhar ou não tiver dados
+            try {
                 const salvos = localStorage.getItem('marktplace_stand2_anuncios');
                 if (salvos) {
                     anunciosEmMemoria = JSON.parse(salvos);
-                    return;
+                    carregarCatalogo();
+                } else {
+                    // Dados padrão caso não haja nada salvo
+                    anunciosEmMemoria = [{
+                        id: 'default_1',
+                        titulo: 'Conta com M9 Bayonet & AKR',
+                        preco: 'R$ 150,00',
+                        rank: 'Master',
+                        vinculo: 'Google ID',
+                        desc: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
+                        vendedor: 'Sistema',
+                        likes: 12,
+                        curtidoPorMim: false,
+                        fotos: []
+                    }];
+                    carregarCatalogo();
                 }
-            } catch (e) {}
-            anunciosEmMemoria = [{
-                id: 'default_1',
-                titulo: 'Conta com M9 Bayonet & AKR',
-                preco: 'R$ 150,00',
-                rank: 'Master',
-                vinculo: 'Google ID',
-                desc: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
-                vendedor: 'Sistema',
-                likes: 12,
-                curtidoPorMim: false,
-                fotos: []
-            }];
+            } catch (e) {
+                anunciosEmMemoria = [];
+                carregarCatalogo();
+            }
         }
 
         function formatarPrecoMoeda(valorStr) {
@@ -1076,14 +1094,26 @@
 
             let precoFormatado = formatarPrecoMoeda(precoInput);
 
-            anunciosEmMemoria.unshift({
+            const novoAnuncio = {
                 id: 'anuncio_' + Date.now(),
                 titulo, preco: precoFormatado,
                 rank, vinculo, desc: descFinal, vendedor: sanitizarNomePublico(currentUser.username),
                 likes: 0, curtidoPorMim: false, fotos: fotosNovasBase64
-            });
+            };
 
+            // Salva no Supabase (compartilhado por todos os usuários)
+            try {
+                const { error } = await supabase.from('anuncios').insert([novoAnuncio]);
+                if (error) throw error;
+            } catch (e) {
+                console.error('Erro ao salvar no Supabase, usando localStorage fallback', e);
+            }
+
+            // Também salva no localStorage para compatibilidade offline
+            anunciosEmMemoria.unshift(novoAnuncio);
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+            
+            // Atualiza o catálogo imediatamente
             carregarCatalogo();
             closeAnuncioModal();
             mostrarAlerta('Sucesso', 'Conta publicada com sucesso!');
