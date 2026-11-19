@@ -848,7 +848,7 @@
         function inicializarAnuncios() {
             try {
                 // Tenta carregar do Supabase primeiro (compartilhado por todos os usuários)
-                supabase.from('anuncios').select('*').then(({ data }) => {
+                supabase.from('contas').select('*').then(({ data }) => {
                     if (data && data.length > 0) {
                         anunciosEmMemoria = data;
                         carregarCatalogo();
@@ -1103,7 +1103,7 @@
 
             // Salva no Supabase (compartilhado por todos os usuários)
             try {
-                const { error } = await supabase.from('anuncios').insert([novoAnuncio]);
+                const { error } = await supabase.from('contas').insert([novoAnuncio]);
                 if (error) throw error;
             } catch (e) {
                 console.error('Erro ao salvar no Supabase, usando localStorage fallback', e);
