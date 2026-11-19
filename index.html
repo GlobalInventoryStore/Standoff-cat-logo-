@@ -4,7 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
+    <!-- Supabase Configuration - Chaves injetadas via GitHub Secrets -->
+    <!-- No repositório: Settings > Secrets > Actions > Adicionar VITE_SUPABASE_URL e VITE_SUPABASE_KEY -->
+    <!-- Ou pode injetar manualmente abaixo para testes -->
+    <meta name="supabase-url" content="https://SUA-URL.supabase.co">
+    <meta name="supabase-key" content="SUA-CHAVE-PUBLICA-anon">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Inicializa Supabase usando metas tags (compatível com GitHub Pages HTML puro)
+        // As chaves podem ser alteradas editando estes meta tags ou via GitHub Secrets
+        const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || 'https://SUA-URL.supabase.co';
+        const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || 'SUA-CHAVE-PUBLICA-anon';
+        window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Log de verificação (remover quando chaves reais estiverem configuradas)
+        if (supabaseUrl === 'https://SUA-URL.supabase.co' || supabaseKey === 'SUA-CHAVE-PUBLICA-anon') {
+            console.warn('⚠️ Supabase usa chaves placeholder. Configure VITE_SUPABASE_URL e VITE_SUPABASE_KEY no GitHub Secrets.');
+        } else {
+            console.log('✅ Supabase inicializado com URL personalizada');
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
