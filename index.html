@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
-    <!-- Supabase Configuration - Chaves injetadas via GitHub Secrets ou meta tags -->
-    <!-- URL do projeto: https://dumvvprvafzmzqdrenyn.supabase.co -->
-    <!-- Chave pública (anon): sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ -->
-    <!-- NUNCA inserir chave secreta (sb_secret_...) no cliente - ela fica no servidor -->
+    <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Inicializa Supabase usando metas tags (compatível com GitHub Pages HTML puro)
-        // As chaves podem ser alteradas editando estes meta tags ou via GitHub Secrets
-        const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || 'https://SUA-URL.supabase.co';
-        const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || 'SUA-CHAVE-PUBLICA-anon';
-        window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
-        
-        // Log de verificação (remover quando chaves reais estiverem configuradas)
-        if (supabaseUrl === 'https://SUA-URL.supabase.co' || supabaseKey === 'SUA-CHAVE-PUBLICA-anon') {
-            console.warn('⚠️ Supabase usa chaves placeholder. Configure VITE_SUPABASE_URL e VITE_SUPABASE_KEY no GitHub Secrets.');
-        } else {
-            console.log('✅ Supabase inicializado com URL personalizada');
-        }
+        (function initSupabaseSeguro() {
+            const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || 'https://dumvvprvafzmzqdrenyn.supabase.co';
+            const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || 'sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ';
+            window.supabaseClient = null;
+            try {
+                if (window.supabase && typeof window.supabase.createClient === 'function') {
+                    window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log('✅ Supabase inicializado com sucesso');
+                } else {
+                    console.warn('⚠️ SDK do Supabase não carregou; usando modo local/fallback.');
+                }
+            } catch (e) {
+                console.warn('⚠️ Falha ao iniciar cliente Supabase:', e);
+            }
+        })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +43,7 @@
         }
         html {
             box-sizing: border-box;
-            width: 100vw;
+            width: 100%;
             overflow-x: hidden;
         }
         body {
@@ -66,7 +68,6 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
-        /* Forçando fundo escuro absoluto e texto branco em todos os inputs, selects e textareas para corrigir o bug do fundo branco */
         input, select, textarea {
             background-color: #111111 !important;
             color: #ffffff !important;
@@ -107,10 +108,11 @@
                 <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por dentro da plataforma. Isso garante segurança e rastreio para todas as partes envolvidas.</p>
                 <p class="text-amber-400 font-medium bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-                    2. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
+                    2. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.
+                </p>
                 <p>3. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
             </div>
-            <button onclick="concordarTermosEntrada()" class="btn-primary">
+            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary">
                 Concordo com os Termos e Entrar
             </button>
         </div>
@@ -125,11 +127,11 @@
             </div>
             
             <div class="flex items-center gap-3 relative">
-                <button onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
+                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
                     🔍 Rastrear Pedido
                 </button>
 
-                <button onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
+                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
                     🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
                 </button>
 
@@ -154,11 +156,11 @@
                                     <span class="text-[9px] text-emerald-400 font-semibold">● Ativo</span>
                                 </div>
                             </div>
-                            <button onclick="logout()" class="text-xs text-gray-400 hover:text-white bg-[#1a1a1a] px-2 py-1 rounded-lg transition cursor-pointer">Sair</button>
+                            <button type="button" onclick="logout()" class="text-xs text-gray-400 hover:text-white bg-[#1a1a1a] px-2 py-1 rounded-lg transition cursor-pointer">Sair</button>
                         </div>
 
                         <div id="loginButtonContainer">
-                            <button onclick="openModal()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5">
+                            <button type="button" onclick="openModal()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5">
                                 Entrar / Cadastrar
                             </button>
                         </div>
@@ -170,7 +172,7 @@
 
     <!-- Balão Flutuante de Chat no Canto Esquerdo -->
     <div class="fixed bottom-5 left-5 z-[9998]">
-        <button onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)]">
+        <button type="button" onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)]">
             <span class="text-xl">💬</span>
             <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
         </button>
@@ -196,13 +198,13 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
-                <button onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
             
             <div class="input-group flex gap-2">
                 <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
-                <button onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
+                <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
             </div>
 
             <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2"></div>
@@ -214,7 +216,7 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
-                <button onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             
             <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
@@ -225,10 +227,10 @@
             </div>
 
             <div class="space-y-2">
-                <button onclick="finalizarCompraCarrinho()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                <button type="button" onclick="finalizarCompraCarrinho()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Finalizar Compra do Carrinho
                 </button>
-                <button onclick="closeCarrinho()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Continuar Comprando</button>
+                <button type="button" onclick="closeCarrinho()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Continuar Comprando</button>
             </div>
         </div>
     </div>
@@ -238,12 +240,12 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold">Acesso à Conta</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             
             <div class="flex border-b border-[#222] mb-4">
-                <button class="tab active" onclick="showTab('login', event)">Entrar</button>
-                <button class="tab" onclick="showTab('register', event)">Cadastrar</button>
+                <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
+                <button type="button" class="tab" onclick="showTab('register', event)">Cadastrar</button>
             </div>
             
             <div id="login-tab" class="tab-content active">
@@ -307,7 +309,7 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
-                <button onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Confirme seu Gmail para receber o código:</p>
             <form onsubmit="confirmarCodigoAnuncio(event)">
@@ -350,15 +352,15 @@
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
             
             <div class="space-y-3">
-                <button onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
+                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
                     🛒 Adicionar ao Carrinho
                 </button>
-                <button onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
+                <button type="button" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
                     Comprar Agora
                 </button>
-                <button onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#181818] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
+                <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#181818] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
             </div>
-            <button onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            <button type="button" onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
 
@@ -412,12 +414,12 @@
             </div>
 
             <div class="space-y-2">
-                <button onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Prosseguir com Pagamento
                 </button>
-                <button onclick="closeCheckout()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Voltar</button>
+                <button type="button" onclick="closeCheckout()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Voltar</button>
             </div>
-            <button onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            <button type="button" onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
 
@@ -426,17 +428,17 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3">
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
-                <button onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
 
             <div id="pag-conteudo" class="bg-[#050505] border border-[#222] rounded-xl p-4 mb-4 text-center"></div>
 
-            <button onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
+            <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
                 Já Paguei • Enviar Comprovante e Gerar Ticket
             </button>
-            <button onclick="closePagamentoDetalhes()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2a2a2a]">Cancelar</button>
+            <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2a2a2a]">Cancelar</button>
         </div>
     </div>
 
@@ -445,7 +447,7 @@
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
                 <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
-                <button onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
@@ -459,7 +461,7 @@
             </div>
 
             <div class="space-y-2">
-                <button onclick="abrirChatSuporte()" class="btn-primary py-3 text-xs">
+                <button type="button" onclick="abrirChatSuporte()" class="btn-primary py-3 text-xs">
                     Abrir Chat com o Bot / Ver Dados da Conta
                 </button>
             </div>
@@ -477,7 +479,7 @@
                         <span class="text-[10px] text-emerald-400 font-medium">● Online</span>
                     </div>
                 </div>
-                <button onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
             <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-1">
                 <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[85%]">
@@ -487,7 +489,7 @@
             </div>
             <div class="pt-3 border-t border-[#222] flex gap-2">
                 <input type="text" id="chat-input-texto" placeholder="Digite sua mensagem..." class="flex-grow bg-[#050505] border border-[#222] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)]">
-                <button onclick="enviarMensagemSuporte()" class="btn-primary px-4 py-2.5 text-xs">Enviar</button>
+                <button type="button" onclick="enviarMensagemSuporte()" class="btn-primary px-4 py-2.5 text-xs">Enviar</button>
             </div>
         </div>
     </div>
@@ -503,7 +505,7 @@
                 </p>
                 <p>3. <strong>Diretrizes da Axlebolt:</strong> O comércio de contas está sujeito às políticas da desenvolvedora.</p>
             </div>
-            <button onclick="closeTermosModal()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Entendido e Concordo</button>
+            <button type="button" onclick="closeTermosModal()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Entendido e Concordo</button>
         </div>
     </div>
 
@@ -558,7 +560,7 @@
                     Publicar Conta
                 </button>
             </div>
-            <button onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
 
@@ -568,7 +570,7 @@
             <div id="alerta-icone" class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
             <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
-            <button onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
+            <button type="button" onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
         </div>
     </div>
 
@@ -600,7 +602,7 @@
         // Mapeamento estrito com o schema do Supabase:
         // Colunas reais na tabela `contas`: `descricao` e `curtidoPormim` (apenas o P maiúsculo)
         function normalizarAnuncio(row) {
-            const curtidoFlag = Boolean(row.curtidoPormim);
+            const curtidoFlag = Boolean(row.curtidoPormim ?? row.curtidoPorMim ?? false);
             const fotosNormalizadas = Array.isArray(row.fotos) ? row.fotos : [];
             const textoDesc = row.descricao ?? row.desc ?? '• Inventário verificado e garantido.';
             return {
@@ -634,63 +636,71 @@
             };
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
-                if (!termosAceitos) {
-                    document.getElementById('modal-boas-vindas').style.display = 'flex';
-                }
+        function carregarEstadoLocalSeguro() {
+            const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
+            if (!termosAceitos) {
+                const modalBoasVindas = document.getElementById('modal-boas-vindas');
+                if (modalBoasVindas) modalBoasVindas.style.display = 'flex';
+            }
 
-                const storedUser = localStorage.getItem('marktplace_stand2_user');
-                if (storedUser) {
-                    try {
-                        currentUser = JSON.parse(storedUser);
-                        if (currentUser) {
-                            currentUser.username = sanitizarNomePublico(currentUser.username);
-                            aplicarEstadoUsuario();
-                        }
-                    } catch (e) {
-                        localStorage.removeItem('marktplace_stand2_user');
+            const storedUser = localStorage.getItem('marktplace_stand2_user');
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    if (currentUser) {
+                        currentUser.username = sanitizarNomePublico(currentUser.username);
+                        aplicarEstadoUsuario();
                     }
+                } catch (e) {
+                    localStorage.removeItem('marktplace_stand2_user');
                 }
+            }
 
-                const storedCart = localStorage.getItem('marktplace_stand2_cart');
-                if (storedCart) {
-                    try { carrinhoItens = JSON.parse(storedCart); } catch(e){}
-                    atualizarBadgeCarrinho();
+            const storedCart = localStorage.getItem('marktplace_stand2_cart');
+            if (storedCart) {
+                try {
+                    carrinhoItens = JSON.parse(storedCart) || [];
+                } catch (e) {
+                    carrinhoItens = [];
                 }
+                atualizarBadgeCarrinho();
+            }
 
-                const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
-                if (storedPedidos) {
-                    try { pedidosAtivos = JSON.parse(storedPedidos); } catch(e){}
+            const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
+            if (storedPedidos) {
+                try {
+                    pedidosAtivos = JSON.parse(storedPedidos) || [];
+                } catch (e) {
+                    pedidosAtivos = [];
                 }
+            }
+        }
 
-                carregarAvataresRegistro();
-                await inicializarAnuncios();
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarEstadoLocalSeguro();
+            carregarAvataresRegistro();
+            carregarCatalogo();
+            inicializarAnuncios();
 
-                const hamburgerBtn = document.getElementById('hamburger-btn');
-                const mobileMenu = document.getElementById('mobile-menu');
-                if (hamburgerBtn && mobileMenu) {
-                    hamburgerBtn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        mobileMenu.classList.toggle('hidden');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (hamburgerBtn && mobileMenu) {
+                hamburgerBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+
+                mobileMenu.querySelectorAll('.menu-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
                     });
-
-                    document.addEventListener('click', function(e) {
-                        if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                            mobileMenu.classList.add('hidden');
-                        }
-                    });
-
-                    mobileMenu.querySelectorAll('.menu-link').forEach(link => {
-                        link.addEventListener('click', function() {
-                            mobileMenu.classList.add('hidden');
-                        });
-                    });
-                }
-            } catch (err) {
-                console.error('Erro na inicialização do DOM:', err);
-                carregarCatalogo();
+                });
             }
         });
 
@@ -889,53 +899,56 @@
             mostrarAlerta('Sessão Encerrada', 'Você saiu com sucesso.');
         }
 
+        function carregarFallbackAnuncios() {
+            try {
+                const salvos = localStorage.getItem('marktplace_stand2_anuncios');
+                if (salvos) {
+                    const parsed = JSON.parse(salvos);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        anunciosEmMemoria = parsed.map(normalizarAnuncio);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            anunciosEmMemoria = [normalizarAnuncio({
+                id: 'default_1',
+                titulo: 'Conta com M9 Bayonet & AKR',
+                preco: 'R$ 150,00',
+                rank: 'Master',
+                vinculo: 'Google ID',
+                descricao: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
+                vendedor: 'Sistema',
+                likes: 12,
+                curtidoPormim: false,
+                fotos: []
+            })];
+        }
+
         async function inicializarAnuncios() {
-            let carregouDoBanco = false;
-
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('contas')
-                        .select('*');
-
-                    if (error) {
-                        console.error('Erro ao carregar anúncios do Supabase:', error);
-                    } else if (Array.isArray(data) && data.length > 0) {
-                        anunciosEmMemoria = data.map(normalizarAnuncio);
-                        localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
-                        carregouDoBanco = true;
-                    }
-                } catch (e) {
-                    console.error('Exceção ao consultar Supabase:', e);
-                }
-            }
-
-            if (!carregouDoBanco) {
-                try {
-                    const salvos = localStorage.getItem('marktplace_stand2_anuncios');
-                    if (salvos) {
-                        const parsed = JSON.parse(salvos);
-                        anunciosEmMemoria = Array.isArray(parsed) ? parsed.map(normalizarAnuncio) : [];
-                    } else {
-                        anunciosEmMemoria = [normalizarAnuncio({
-                            id: 'default_1',
-                            titulo: 'Conta com M9 Bayonet & AKR',
-                            preco: 'R$ 150,00',
-                            rank: 'Master',
-                            vinculo: 'Google ID',
-                            descricao: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
-                            vendedor: 'Sistema',
-                            likes: 12,
-                            curtidoPormim: false,
-                            fotos: []
-                        })];
-                    }
-                } catch (e) {
-                    anunciosEmMemoria = [];
-                }
-            }
-
+            carregarFallbackAnuncios();
             carregarCatalogo();
+
+            if (!window.supabaseClient) return;
+
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('contas')
+                    .select('*');
+
+                if (error) {
+                    console.warn('⚠️ Erro ao carregar anúncios do Supabase:', error);
+                    return;
+                }
+
+                if (Array.isArray(data) && data.length > 0) {
+                    anunciosEmMemoria = data.map(normalizarAnuncio);
+                    localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+                    carregarCatalogo();
+                }
+            } catch (e) {
+                console.warn('⚠️ Exceção ao consultar Supabase:', e);
+            }
         }
 
         function formatarPrecoMoeda(valorStr) {
@@ -965,7 +978,6 @@
                 const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : '';
                 const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${item.id}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
 
-                // Botão de Joinha: Cinza (#777777) por padrão, branco gelo (#ffffff) com brilho quando curtido (curtidoPormim)
                 const corJoinha = item.curtidoPormim ? 'text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'text-[#777777]';
 
                 card.innerHTML = `
@@ -1008,9 +1020,9 @@
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
-            if (supabaseClient && !String(anuncio.id).startsWith('default_')) {
+            if (window.supabaseClient && !String(anuncio.id).startsWith('default_')) {
                 try {
-                    const { error } = await supabaseClient
+                    const { error } = await window.supabaseClient
                         .from('contas')
                         .update({
                             curtidoPormim: proximoCurtido,
@@ -1019,10 +1031,10 @@
                         .eq('id', anuncio.id);
 
                     if (error) {
-                        console.error('Erro ao atualizar curtida no Supabase:', error);
+                        console.warn('⚠️ Erro ao atualizar curtida no Supabase:', error);
                     }
                 } catch (e) {
-                    console.error('Exceção ao atualizar curtida no Supabase:', e);
+                    console.warn('⚠️ Exceção ao atualizar curtida no Supabase:', e);
                 }
             }
         }
@@ -1173,22 +1185,22 @@
                 rank,
                 vinculo,
                 descricao: descFinal,
-                vendedor: sanitizarNomePublico(currentUser.username),
+                vendedor: sanitizarNomePublico(currentUser ? currentUser.username : 'Jogador'),
                 likes: 0,
                 curtidoPormim: false,
                 fotos: fotosNovasBase64
             });
 
-            if (supabaseClient) {
+            if (window.supabaseClient) {
                 try {
-                    const { error } = await supabaseClient
+                    const { error } = await window.supabaseClient
                         .from('contas')
                         .insert([prepararPayloadSupabase(novoAnuncio)]);
                     if (error) {
-                        console.error('Erro ao salvar no Supabase:', error);
+                        console.warn('⚠️ Erro ao salvar no Supabase:', error);
                     }
                 } catch (e) {
-                    console.error('Exceção ao salvar no Supabase:', e);
+                    console.warn('⚠️ Exceção ao salvar no Supabase:', e);
                 }
             }
 
@@ -1201,22 +1213,22 @@
             mostrarAlerta('Sucesso', 'Conta publicada com sucesso!');
         }
 
-        function removerAnuncio(id) {
+        async function removerAnuncio(id) {
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
-            if (supabaseClient && !String(id).startsWith('default_')) {
+            if (window.supabaseClient && !String(id).startsWith('default_')) {
                 try {
-                    const { error } = await supabaseClient
+                    const { error } = await window.supabaseClient
                         .from('contas')
                         .delete()
                         .eq('id', id);
                     if (error) {
-                        console.error('Erro ao remover anúncio no Supabase:', error);
+                        console.warn('⚠️ Erro ao remover anúncio no Supabase:', error);
                     }
                 } catch (e) {
-                    console.error('Exceção ao remover anúncio no Supabase:', e);
+                    console.warn('⚠️ Exceção ao remover anúncio no Supabase:', e);
                 }
             }
         }
