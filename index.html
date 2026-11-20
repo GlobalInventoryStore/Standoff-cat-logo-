@@ -593,26 +593,37 @@
             'https://api.dicebear.com/7.x/bottts/svg?seed=SpecialForce5'
         ];
 
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/"/g, '"')
+                .replace(/'/g, ''');
+        }
+
         function sanitizarNomePublico(nome) {
             if (!nome) return 'Jogador';
             if (nome.includes('@')) return nome.split('@')[0];
             return nome;
         }
 
-        // Mapeamento estrito com o schema do Supabase:
-        // Colunas reais na tabela `contas`: `descricao` e `curtidoPormim` (apenas o P maiúsculo)
+        function ehIdNumerico(id) {
+            return typeof id === 'number' && Number.isFinite(id) || (typeof id === 'string' && /^\d+$/.test(id.trim()));
+        }
+
         function normalizarAnuncio(row) {
             const curtidoFlag = Boolean(row.curtidoPormim ?? row.curtidoPorMim ?? false);
             const fotosNormalizadas = Array.isArray(row.fotos) ? row.fotos : [];
-            const textoDesc = row.descricao ?? row.desc ?? '• Inventário verificado e garantido.';
+            const rawId = row.id ?? ('local_' + Date.now());
             return {
-                id: String(row.id ?? ('anuncio_' + Date.now())),
+                id: ehIdNumerico(rawId) ? Number(rawId) : String(rawId),
                 titulo: row.titulo || 'Conta Standoff 2',
                 preco: row.preco || 'R$ 0,00',
                 rank: row.rank || 'Master',
                 vinculo: row.vinculo || 'Google ID',
-                descricao: textoDesc,
-                desc: textoDesc,
+                descricao: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
+                desc: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
                 vendedor: row.vendedor || 'Sistema',
                 likes: Number(row.likes ?? 0),
                 curtidoPormim: curtidoFlag,
@@ -620,20 +631,22 @@
             };
         }
 
-        function prepararPayloadSupabase(anuncio) {
-            const textoDescricao = anuncio.descricao ?? anuncio.desc ?? '• Inventário verificado e garantido.';
-            return {
-                id: anuncio.id,
+        function prepararPayloadSupabase(anuncio, incluirId = false) {
+            const payload = {
                 titulo: anuncio.titulo,
                 preco: anuncio.preco,
                 rank: anuncio.rank,
                 vinculo: anuncio.vinculo,
-                descricao: textoDescricao,
+                descricao: anuncio.descricao,
                 vendedor: anuncio.vendedor,
                 likes: Number(anuncio.likes ?? 0),
                 curtidoPormim: Boolean(anuncio.curtidoPormim),
                 fotos: Array.isArray(anuncio.fotos) ? anuncio.fotos : []
             };
+            if (incluirId && ehIdNumerico(anuncio.id)) {
+                payload.id = Number(anuncio.id);
+            }
+            return payload;
         }
 
         function carregarEstadoLocalSeguro() {
@@ -773,15 +786,15 @@
 
             if (pedidoEncontrado) {
                 resBox.innerHTML = `
-                    <p class="text-white font-bold">Status: <span class="text-emerald-400">● ${pedidoEncontrado.status}</span></p>
-                    <p class="text-gray-400">Itens: ${pedidoEncontrado.itens}</p>
-                    <p class="text-gray-400">Total: <span class="text-white">${pedidoEncontrado.total}</span></p>
-                    <p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${pedidoEncontrado.ticketId}</strong></p>
+                    <p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedidoEncontrado.status)}</span></p>
+                    <p class="text-gray-400">Itens: ${escapeHtml(pedidoEncontrado.itens)}</p>
+                    <p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedidoEncontrado.total)}</span></p>
+                    <p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedidoEncontrado.ticketId)}</strong></p>
                 `;
             } else {
                 resBox.innerHTML = `
                     <p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p>
-                    <p class="text-gray-400">Código consultado: ${codigo}</p>
+                    <p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p>
                     <p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>
                 `;
             }
@@ -976,7 +989,7 @@
                 card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
                 const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : '';
-                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${item.id}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
+                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
 
                 const corJoinha = item.curtidoPormim ? 'text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'text-[#777777]';
 
@@ -985,21 +998,21 @@
                         ${barraSuperior}
                         ${capaHtml}
                         <div class="flex justify-between items-center mb-3 gap-2">
-                            <span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${item.rank}</span>
+                            <span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span>
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="curtirAnuncio('${item.id}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+                                <button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
                                     <span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span>
                                 </button>
-                                <span class="text-lg font-bold text-emerald-400">${item.preco}</span>
+                                <span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span>
                             </div>
                         </div>
-                        <h3 class="font-bold text-lg mb-1 text-white">${item.titulo}</h3>
-                        <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${item.vinculo}</p>
-                        <p class="text-xs text-gray-400 mb-3">Vendedor: ${sanitizarNomePublico(item.vendedor)}</p>
+                        <h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3>
+                        <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p>
+                        <p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p>
                     </div>
                     <div class="space-y-2 mt-4">
-                        <button type="button" onclick="abrirDetalhes('${item.id}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
-                        <button type="button" onclick="adicionarAoCarrinho('${item.id}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
+                        <button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
+                        <button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -1020,7 +1033,7 @@
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
-            if (window.supabaseClient && !String(anuncio.id).startsWith('default_')) {
+            if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
                 try {
                     const { error } = await window.supabaseClient
                         .from('contas')
@@ -1028,7 +1041,7 @@
                             curtidoPormim: proximoCurtido,
                             likes: proximoLikes
                         })
-                        .eq('id', anuncio.id);
+                        .eq('id', Number(anuncio.id));
 
                     if (error) {
                         console.warn('⚠️ Erro ao atualizar curtida no Supabase:', error);
@@ -1081,8 +1094,8 @@
                     div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
                     div.innerHTML = `
                         <div>
-                            <p class="text-xs font-bold text-white">${item.titulo}</p>
-                            <span class="text-xs text-emerald-400 font-semibold">${item.preco}</span>
+                            <p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p>
+                            <span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span>
                         </div>
                         <button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>
                     `;
@@ -1157,12 +1170,12 @@
                 if (comp) fotosNovasBase64.push(comp);
             }
 
-            // Gera a descrição exata com nomes de skins e patterns instantaneamente no campo
             const descricaoAutomatizada = "🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch";
             document.getElementById('conta-desc').value = descricaoAutomatizada;
         }
 
         async function publicarAnuncioFinal() {
+            const btnPublicar = document.getElementById('btn-publicar-anuncio');
             const titulo = document.getElementById('conta-titulo').value.trim();
             const precoInput = document.getElementById('conta-preco').value.trim();
             const rank = document.getElementById('conta-rank').value;
@@ -1178,8 +1191,8 @@
 
             const precoFormatado = formatarPrecoMoeda(precoInput);
 
-            const novoAnuncio = normalizarAnuncio({
-                id: 'anuncio_' + Date.now(),
+            let anuncioParaSalvar = normalizarAnuncio({
+                id: 'local_' + Date.now(),
                 titulo,
                 preco: precoFormatado,
                 rank,
@@ -1188,42 +1201,77 @@
                 vendedor: sanitizarNomePublico(currentUser ? currentUser.username : 'Jogador'),
                 likes: 0,
                 curtidoPormim: false,
-                fotos: fotosNovasBase64
+                fotos: [...fotosNovasBase64]
             });
+
+            if (btnPublicar) {
+                btnPublicar.disabled = true;
+                btnPublicar.textContent = 'Publicando...';
+            }
+
+            let salvoNoBanco = false;
 
             if (window.supabaseClient) {
                 try {
-                    const { error } = await window.supabaseClient
+                    const { data: inseridos, error } = await window.supabaseClient
                         .from('contas')
-                        .insert([prepararPayloadSupabase(novoAnuncio)]);
+                        .insert([prepararPayloadSupabase(anuncioParaSalvar, false)])
+                        .select('*');
+
                     if (error) {
-                        console.warn('⚠️ Erro ao salvar no Supabase:', error);
+                        console.error('Erro ao salvar no Supabase:', error);
+                        mostrarAlerta('Erro ao Salvar no Banco', `O Supabase recusou o anúncio (${error.code || 'erro'}): ${error.message}`, 'aviso');
+                    } else {
+                        salvoNoBanco = true;
+                        if (Array.isArray(inseridos) && inseridos.length > 0) {
+                            anuncioParaSalvar = normalizarAnuncio(inseridos[0]);
+                        }
                     }
                 } catch (e) {
-                    console.warn('⚠️ Exceção ao salvar no Supabase:', e);
+                    console.error('Exceção ao salvar no Supabase:', e);
+                    mostrarAlerta('Erro de Conexão', 'Não foi possível comunicar com o Supabase.', 'aviso');
                 }
+            } else {
+                mostrarAlerta('Modo Local', 'Cliente Supabase indisponível; anúncio salvo apenas neste navegador.', 'aviso');
             }
 
-            anunciosEmMemoria.unshift(novoAnuncio);
+            if (btnPublicar) {
+                btnPublicar.disabled = false;
+                btnPublicar.textContent = 'Publicar Conta';
+            }
+
+            if (!salvoNoBanco && window.supabaseClient) {
+                return;
+            }
+
+            anunciosEmMemoria.unshift(anuncioParaSalvar);
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             fotosNovasBase64 = [];
 
+            document.getElementById('conta-titulo').value = '';
+            document.getElementById('conta-preco').value = '';
+            document.getElementById('conta-desc').value = '';
+            document.getElementById('conta-fotos').value = '';
+
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta('Sucesso', 'Conta publicada com sucesso!');
+            mostrarAlerta('Sucesso', 'Conta publicada e salva no banco com sucesso!');
         }
 
         async function removerAnuncio(id) {
+            const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
-            if (window.supabaseClient && !String(id).startsWith('default_')) {
+            const idBanco = alvo && ehIdNumerico(alvo.id) ? Number(alvo.id) : (ehIdNumerico(id) ? Number(id) : null);
+
+            if (window.supabaseClient && idBanco !== null) {
                 try {
                     const { error } = await window.supabaseClient
                         .from('contas')
                         .delete()
-                        .eq('id', id);
+                        .eq('id', idBanco);
                     if (error) {
                         console.warn('⚠️ Erro ao remover anúncio no Supabase:', error);
                     }
@@ -1339,9 +1387,9 @@
                 <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1">
                     <p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p>
                     <p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>
-                    <p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${ticketIdGerado}</p>
-                    <p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${nomesItens} (${valorTotalPedido})</p>
-                    <p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${gmailUser} | <strong>WhatsApp:</strong> ${wppUser}</p>
+                    <p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${escapeHtml(ticketIdGerado)}</p>
+                    <p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${escapeHtml(nomesItens)} (${escapeHtml(valorTotalPedido)})</p>
+                    <p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${escapeHtml(gmailUser)} | <strong>WhatsApp:</strong> ${escapeHtml(wppUser)}</p>
                     <div class="pt-2 border-t border-[#222] text-amber-300">
                         🔑 <strong>Dados de Acesso da Conta Adquirida:</strong><br>
                         Login: <code>so2_account_${Math.floor(1000+Math.random()*9000)}@gmail.com</code><br>
@@ -1371,7 +1419,7 @@
             const input = document.getElementById('chat-input-texto');
             if (!input.value.trim()) return;
             const chat = document.getElementById('chat-mensagens');
-            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${input.value}</div>`;
+            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(input.value)}</div>`;
             input.value = '';
             chat.scrollTop = chat.scrollHeight;
             setTimeout(() => {
