@@ -451,10 +451,10 @@
             </div>
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
-            <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O bot enviou os dados exclusivos da conta para o seu chat.</p>
+            <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
 
             <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
-                <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Custódia Segura • Dados Liberados</span></p>
+                <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Pagamento confirmado — aguardando envio dos dados da conta</span></p>
                 <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
                 <p class="text-gray-400"><strong>Comprador (Gmail):</strong> <span id="ticket-info-gmail" class="text-white"></span></p>
                 <p class="text-gray-400"><strong>WhatsApp:</strong> <span id="ticket-info-wpp" class="text-white"></span></p>
@@ -584,6 +584,29 @@
         let pedidosAtivos = [];
         let anuncioSelecionadoAtual = null;
         let fotosNovasBase64 = [];
+
+        const STATUS_PEDIDO = {
+            aguardando_pagamento: 'Aguardando confirmação do pagamento',
+            aguardando_conta_vendedor: 'Pagamento confirmado — aguardando envio dos dados da conta',
+            em_conferencia: 'Dados recebidos — suporte conferindo a conta antes da entrega',
+            entregue_finalizado: 'Conta entregue e confirmada — repasse liberado'
+        };
+
+        function montarResumoRapidoTicket({ ticketId, statusKey, itensResumo, compradorEmail, compradorWhats }) {
+            const statusTexto = STATUS_PEDIDO[statusKey] || STATUS_PEDIDO.aguardando_pagamento;
+
+            return `
+🎫 **Ticket:** ${ticketId}
+📌 **Status atual:** ${statusTexto}
+🛒 **Itens:** ${itensResumo}
+👤 **Comprador:** ${compradorEmail} | ${compradorWhats}
+
+⚡ **Como funciona a entrega rápida:**
+1. Pagamento validado fica em custódia com o suporte.
+2. Solicitamos os dados da conta ao vendedor e conferimos o anúncio.
+3. Liberamos os dados aqui no suporte e, após sua confirmação, o repasse ao vendedor é concluído.
+  `.trim();
+        }
 
         const AVATARES = [
             "https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1",
@@ -1339,8 +1362,17 @@
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
 
+            const statusKey = "aguardando_conta_vendedor"; // Pagamento confirmado — aguardando envio dos dados da conta
+            const resumoRapido = montarResumoRapidoTicket({
+                ticketId: ticketIdGerado,
+                statusKey,
+                itensResumo: nomesItens.join(", ") || "Conta Standoff 2",
+                compradorEmail: gmailUser,
+                compradorWhats: wppUser
+            });
+
             const chatBox = document.getElementById("chat-mensagens");
-            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p><p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${escapeHtml(ticketIdGerado)}</p><p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${escapeHtml(nomesItens)} (${escapeHtml(valorTotalPedido)})</p><p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${escapeHtml(gmailUser)} | <strong>WhatsApp:</strong> ${escapeHtml(wppUser)}</p><div class="pt-2 border-t border-[#222] text-amber-300">🛡️ Suporte intermediará a entrega e conferência da conta antes da liberação final dos dados de acesso.</div></div>`;
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
             document.getElementById("modal-ticket").style.display = "flex";
