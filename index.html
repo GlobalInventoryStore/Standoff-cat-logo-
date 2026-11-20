@@ -1421,26 +1421,47 @@
             document.body.style.overflow = '';
         }
     
-// Header scroll hide/show (apenas transform/opacity)
+// Header scroll hide/show (apenas transform/opacity - otimizado para mobile)
 (function() {
     const header = document.querySelector("header.sticky");
     if (!header) return;
     let lastScrollY = window.scrollY;
     const hideThreshold = 80;
+    const showMinDelta = 20; // pixels to count as real scroll up
+    const showNearTop = 120; // show only when within 120px from top
 
     const updateHeader = () => {
         const currentScrollY = window.scrollY;
+        const scrollDelta = lastScrollY - currentScrollY;
+
+        // Scrolling down past threshold: hide
         if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
             header.style.transform = "translateY(-100%)";
             header.style.opacity = "0";
-        } else {
+        }
+        // Scrolling up minimum delta AND near top: show
+        else if (scrollDelta > showMinDelta && currentScrollY < showNearTop) {
             header.style.transform = "translateY(0)";
             header.style.opacity = "1";
         }
+
         lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
     };
 
-    window.addEventListener("scroll", updateHeader, { passive: true });
+    // Debounce: only run every 15ms to avoid flood during drag
+    let ticking = false;
+    window.addEventListener("scroll", () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                updateHeader();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+
+    // Initialize header position
+    updateHeader();
 })();
 
 </script>
