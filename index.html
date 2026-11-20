@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:,">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
@@ -652,8 +651,7 @@
         function carregarEstadoLocalSeguro() {
             const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
             if (!termosAceitos) {
-                const modalBoasVindas = document.getElementById('modal-boas-vindas');
-                if (modalBoasVindas) modalBoasVindas.style.display = 'flex';
+                document.getElementById('modal-boas-vindas').style.display = 'flex';
             }
 
             const storedUser = localStorage.getItem('marktplace_stand2_user');
@@ -671,21 +669,13 @@
 
             const storedCart = localStorage.getItem('marktplace_stand2_cart');
             if (storedCart) {
-                try {
-                    carrinhoItens = JSON.parse(storedCart) || [];
-                } catch (e) {
-                    carrinhoItens = [];
-                }
+                try { carrinhoItens = JSON.parse(storedCart); } catch(e){}
                 atualizarBadgeCarrinho();
             }
 
             const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
             if (storedPedidos) {
-                try {
-                    pedidosAtivos = JSON.parse(storedPedidos) || [];
-                } catch (e) {
-                    pedidosAtivos = [];
-                }
+                try { pedidosAtivos = JSON.parse(storedPedidos); } catch(e){}
             }
         }
 
@@ -730,7 +720,7 @@
                 icone.className = 'w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
                 icone.textContent = '✓';
             } else {
-                icone.className = 'w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
+                icone.className = 'w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
                 icone.textContent = '!';
             }
             document.getElementById('modal-alerta').style.display = 'flex';
@@ -785,18 +775,9 @@
             resBox.classList.remove('hidden');
 
             if (pedidoEncontrado) {
-                resBox.innerHTML = `
-                    <p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedidoEncontrado.status)}</span></p>
-                    <p class="text-gray-400">Itens: ${escapeHtml(pedidoEncontrado.itens)}</p>
-                    <p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedidoEncontrado.total)}</span></p>
-                    <p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedidoEncontrado.ticketId)}</strong></p>
-                `;
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${pedidoEncontrado.status}</span></p><p class="text-gray-400">Itens: ${pedidoEncontrado.itens}</p><p class="text-gray-400">Total: <span class="text-white">${pedidoEncontrado.total}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${pedidoEncontrado.ticketId}</strong></p>`;
             } else {
-                resBox.innerHTML = `
-                    <p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p>
-                    <p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p>
-                    <p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>
-                `;
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p><p class="text-gray-400">Código consultado: ${codigo}</p><p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>`;
             }
         }
         
@@ -965,15 +946,15 @@
         }
 
         function formatarPrecoMoeda(valorStr) {
-            let limpo = valorStr.replace(/[^\d,.]/g, '').trim();
+            let limpo = valorStr.replace(/[^\d,.]/g, "").trim();
             if (!limpo) return 'R$ 0,00';
             limpo = limpo.replace('.', ',');
-            if (!limpo.includes(',')) {
+            if (!limpo.includes(",")) {
                 limpo = limpo + ',00';
             } else {
-                let partes = limpo.split(',');
+                let partes = limpo.split(",");
                 if (partes[1].length === 1) {
-                    limpo = partes[0] + ',' + partes[1] + '0';
+                    limpo = partes[0] + "," + partes[1] + "0";
                 }
             }
             return `R$ ${limpo}`;
@@ -986,35 +967,14 @@
             anunciosEmMemoria.forEach(anuncio => {
                 const item = normalizarAnuncio(anuncio);
                 const card = document.createElement('div');
-                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
+                card.className = 'bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative';
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
-                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : '';
-                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : "";
 
-                const corJoinha = item.curtidoPormim ? 'text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'text-[#777777]';
+                const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
 
-                card.innerHTML = `
-                    <div>
-                        ${barraSuperior}
-                        ${capaHtml}
-                        <div class="flex justify-between items-center mb-3 gap-2">
-                            <span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span>
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
-                                    <span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span>
-                                </button>
-                                <span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span>
-                            </div>
-                        </div>
-                        <h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3>
-                        <p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p>
-                        <p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p>
-                    </div>
-                    <div class="space-y-2 mt-4">
-                        <button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
-                        <button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
-                    </div>
-                `;
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
                 grid.appendChild(card);
             });
         }
@@ -1087,21 +1047,15 @@
             } else {
                 let totalSoma = 0;
                 carrinhoItens.forEach((item, index) => {
-                    let numPreco = parseFloat(item.preco.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+                    let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                     totalSoma += numPreco;
 
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
-                    div.innerHTML = `
-                        <div>
-                            <p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p>
-                            <span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span>
-                        </div>
-                        <button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>
-                    `;
+                    div.className = 'flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]';
+                    div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
                     container.appendChild(div);
                 });
-                totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace('.', ',')}`;
+                totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace(".", ",")}`;
             }
             document.getElementById('modal-carrinho').style.display = 'flex';
         }
@@ -1160,7 +1114,6 @@
             });
         }
 
-        // Leitura instantânea do inventário direto ao selecionar a foto
         async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
@@ -1170,7 +1123,7 @@
                 if (comp) fotosNovasBase64.push(comp);
             }
 
-            const descricaoAutomatizada = "🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch";
+            const descricaoAutomatizada = '🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch';
             document.getElementById('conta-desc').value = descricaoAutomatizada;
         }
 
@@ -1186,7 +1139,7 @@
             if (fotosNovasBase64.length === 0) { mostrarAlerta('Aviso', 'Adicione pelo menos um print do inventário.', 'aviso'); return; }
 
             if (!descFinal) {
-                descFinal = "• Inventário verificado e garantido.";
+                descFinal = '• Inventário verificado e garantido.';
             }
 
             const precoFormatado = formatarPrecoMoeda(precoInput);
@@ -1220,7 +1173,7 @@
 
                     if (error) {
                         console.error('Erro ao salvar no Supabase:', error);
-                        mostrarAlerta('Erro ao Salvar no Banco', `O Supabase recusou o anúncio (${error.code || 'erro'}): ${error.message}`, 'aviso');
+                        mostrarAlerta('Erro ao Salvar no Banco', `O Supabase recusou o anúncio (${error.code || "erro"}): ${error.message}`, 'aviso');
                     } else {
                         salvoNoBanco = true;
                         if (Array.isArray(inseridos) && inseridos.length > 0) {
@@ -1258,7 +1211,7 @@
             mostrarAlerta('Sucesso', 'Conta publicada e salva no banco com sucesso!');
         }
 
-        async function removerAnuncio(id) {
+        function removerAnuncio(id) {
             const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
             localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
@@ -1304,7 +1257,7 @@
                 anuncioSelecionadoAtual.fotos.forEach((url, idx) => {
                     const thumb = document.createElement('img');
                     thumb.src = url;
-                    thumb.className = `w-12 h-12 object-cover rounded cursor-pointer border-2 ${idx === 0 ? 'border-[var(--accent)]' : 'border-transparent'}`;
+                    thumb.className = `w-12 h-12 object-cover rounded cursor-pointer border-2 ${idx === 0 ? "border-[var(--accent)]" : "border-transparent"}`;
                     thumb.onclick = () => { imgElement.src = url; };
                     minis.appendChild(thumb);
                 });
@@ -1318,19 +1271,19 @@
 
         function gerarQrCodePagamento() {
             closeCheckout();
-            let totalCarrinhoStr = "R$ 0,00";
-            let nomesContas = carrinhoItens.map(i => i.titulo).join(', ');
+            let totalCarrinhoStr = 'R$ 0,00';
+            let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
 
             let somaTotal = 0;
             carrinhoItens.forEach(item => {
-                let p = parseFloat(item.preco.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+                let p = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                 somaTotal += p;
             });
             if (somaTotal === 0 && anuncioSelecionadoAtual) {
-                somaTotal = parseFloat(anuncioSelecionadoAtual.preco.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+                somaTotal = parseFloat(anuncioSelecionadoAtual.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
             }
-            totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace('.', ',')}`;
+            totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
 
             const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
             document.getElementById('pedido-codigo').textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1340,17 +1293,9 @@
             const conteudoPag = document.getElementById('pag-conteudo');
             if (metodoEscolhido === 'pix') {
                 const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
-                conteudoPag.innerHTML = `
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2">
-                    <p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>
-                `;
+                conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
             } else {
-                conteudoPag.innerHTML = `
-                    <div class="py-4 text-emerald-400 font-bold text-sm">
-                        💳 Cartão de Crédito Autorizado com Sucesso!
-                    </div>
-                    <p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>
-                `;
+                conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
             document.getElementById('modal-pagamento-detalhes').style.display = 'flex';
         }
@@ -1370,7 +1315,7 @@
             document.getElementById('ticket-info-gmail').textContent = gmailUser;
             document.getElementById('ticket-info-wpp').textContent = wppUser;
 
-            let nomesItens = carrinhoItens.map(i => i.titulo).join(', ') || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : 'Conta Standoff 2');
+            let nomesItens = carrinhoItens.map(i => i.titulo).join(", ") || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : 'Conta Standoff 2');
             let valorTotalPedido = document.getElementById('pag-conta-valor').textContent;
 
             pedidosAtivos.unshift({
@@ -1383,20 +1328,7 @@
             localStorage.setItem('marktplace_stand2_pedidos', JSON.stringify(pedidosAtivos));
 
             const chatBox = document.getElementById('chat-mensagens');
-            chatBox.innerHTML += `
-                <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1">
-                    <p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p>
-                    <p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>
-                    <p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${escapeHtml(ticketIdGerado)}</p>
-                    <p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${escapeHtml(nomesItens)} (${escapeHtml(valorTotalPedido)})</p>
-                    <p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${escapeHtml(gmailUser)} | <strong>WhatsApp:</strong> ${escapeHtml(wppUser)}</p>
-                    <div class="pt-2 border-t border-[#222] text-amber-300">
-                        🔑 <strong>Dados de Acesso da Conta Adquirida:</strong><br>
-                        Login: <code>so2_account_${Math.floor(1000+Math.random()*9000)}@gmail.com</code><br>
-                        Senha Provisória: <code>Standoff2026#Secure</code>
-                    </div>
-                </div>
-            `;
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p><p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${escapeHtml(ticketIdGerado)}</p><p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${escapeHtml(nomesItens)} (${escapeHtml(valorTotalPedido)})</p><p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${escapeHtml(gmailUser)} | <strong>WhatsApp:</strong> ${escapeHtml(wppUser)}</p><div class="pt-2 border-t border-[#222] text-amber-300">🔑 <strong>Dados de Acesso da Conta Adquirida:</strong><br>Login: <code>so2_account_${Math.floor(1000+Math.random()*9000)}@gmail.com</code><br>Senha Provisória: <code>Standoff2026#Secure</code></div></div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             
             document.getElementById('modal-ticket').style.display = 'flex';
@@ -1420,7 +1352,7 @@
             if (!input.value.trim()) return;
             const chat = document.getElementById('chat-mensagens');
             chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(input.value)}</div>`;
-            input.value = '';
+            input.value = "";
             chat.scrollTop = chat.scrollHeight;
             setTimeout(() => {
                 chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Recebido! Nossa equipe de suporte está à disposição para auxiliar na transferência segura.</div>`;
