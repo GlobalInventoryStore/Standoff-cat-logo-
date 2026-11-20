@@ -88,6 +88,9 @@
         }
         .btn-primary { background: var(--accent); color: #000; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; text-align: center; cursor: pointer; width: 100%; transition: background 0.2s; }
         .btn-primary:hover { background: var(--accent-hover); }
+        header.sticky {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
     </style>
 </head>
 
@@ -1417,7 +1420,31 @@
             document.getElementById("modal-como-funcionamos").style.display = "none";
             document.body.style.overflow = '';
         }
-    </script>
+    
+// Header scroll hide/show (apenas transform/opacity)
+(function() {
+    const header = document.querySelector("header.sticky");
+    if (!header) return;
+    let lastScrollY = window.scrollY;
+    const hideThreshold = 80;
+
+    const updateHeader = () => {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
+            header.style.transform = "translateY(-100%)";
+            header.style.opacity = "0";
+        } else {
+            header.style.transform = "translateY(0)";
+            header.style.opacity = "1";
+        }
+        lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+    };
+
+    window.addEventListener("scroll", updateHeader, { passive: true });
+})();
+
+</script>
+<!-- Modal Como Funcionamos -->
 <!-- Modal Como Funcionamos -->
 <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
     <div class="bg-[#121212] border border-gray-800 w-full max-w-2xl rounded-2xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
