@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23d4ff00'/></svg>">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
@@ -11,18 +12,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         (function initSupabaseSeguro() {
-            const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || 'https://dumvvprvafzmzqdrenyn.supabase.co';
-            const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || 'sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ';
+            const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || "https://dumvvprvafzmzqdrenyn.supabase.co";
+            const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || "sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ";
             window.supabaseClient = null;
             try {
-                if (window.supabase && typeof window.supabase.createClient === 'function') {
+                if (window.supabase && typeof window.supabase.createClient === "function") {
                     window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    console.log('✅ Supabase inicializado com sucesso');
+                    console.log("✅ Supabase inicializado com sucesso");
                 } else {
-                    console.warn('⚠️ SDK do Supabase não carregou; usando modo local/fallback.');
+                    console.warn("⚠️ SDK do Supabase não carregou; usando modo local/fallback.");
                 }
             } catch (e) {
-                console.warn('⚠️ Falha ao iniciar cliente Supabase:', e);
+                console.warn("⚠️ Falha ao iniciar cliente Supabase:", e);
             }
         })();
     </script>
@@ -48,7 +49,7 @@
         body {
             background-color: var(--bg-primary);
             color: var(--text-main);
-            font-family: 'Inter', sans-serif;
+            font-family: "Inter", sans-serif;
             width: 100%;
             min-height: 100vh;
             display: flex;
@@ -585,45 +586,46 @@
         let fotosNovasBase64 = [];
 
         const AVATARES = [
-            'https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=GhostSkull2',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=OperatorAlpha3',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=ShadowSniper4',
-            'https://api.dicebear.com/7.x/bottts/svg?seed=SpecialForce5'
+            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostSkull2",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=OperatorAlpha3",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowSniper4",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=SpecialForce5"
         ];
 
         function escapeHtml(str) {
-            return String(str ?? '')
-                .replace(/&/g, '&')
-                .replace(/</g, '<')
-                .replace(/>/g, '>')
-                .replace(/"/g, '"')
-                .replace(/'/g, ''');
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
         }
 
         function sanitizarNomePublico(nome) {
-            if (!nome) return 'Jogador';
-            if (nome.includes('@')) return nome.split('@')[0];
+            if (!nome) return "Jogador";
+            if (nome.includes("@")) return nome.split("@")[0];
             return nome;
         }
 
         function ehIdNumerico(id) {
-            return typeof id === 'number' && Number.isFinite(id) || (typeof id === 'string' && /^\d+$/.test(id.trim()));
+            return (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && /^\d+$/.test(id.trim()));
         }
 
         function normalizarAnuncio(row) {
             const curtidoFlag = Boolean(row.curtidoPormim ?? row.curtidoPorMim ?? false);
             const fotosNormalizadas = Array.isArray(row.fotos) ? row.fotos : [];
-            const rawId = row.id ?? ('local_' + Date.now());
+            const textoDesc = row.descricao ?? row.desc ?? "• Inventário verificado e garantido.";
+            const rawId = row.id ?? ("local_" + Date.now());
             return {
                 id: ehIdNumerico(rawId) ? Number(rawId) : String(rawId),
-                titulo: row.titulo || 'Conta Standoff 2',
-                preco: row.preco || 'R$ 0,00',
-                rank: row.rank || 'Master',
-                vinculo: row.vinculo || 'Google ID',
-                descricao: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
-                desc: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
-                vendedor: row.vendedor || 'Sistema',
+                titulo: row.titulo || "Conta Standoff 2",
+                preco: row.preco || "R$ 0,00",
+                rank: row.rank || "Master",
+                vinculo: row.vinculo || "Google ID",
+                descricao: textoDesc,
+                desc: textoDesc,
+                vendedor: row.vendedor || "Sistema",
                 likes: Number(row.likes ?? 0),
                 curtidoPormim: curtidoFlag,
                 fotos: fotosNormalizadas
@@ -631,12 +633,13 @@
         }
 
         function prepararPayloadSupabase(anuncio, incluirId = false) {
+            const textoDescricao = anuncio.descricao ?? anuncio.desc ?? "• Inventário verificado e garantido.";
             const payload = {
                 titulo: anuncio.titulo,
                 preco: anuncio.preco,
                 rank: anuncio.rank,
                 vinculo: anuncio.vinculo,
-                descricao: anuncio.descricao,
+                descricao: textoDescricao,
                 vendedor: anuncio.vendedor,
                 likes: Number(anuncio.likes ?? 0),
                 curtidoPormim: Boolean(anuncio.curtidoPormim),
@@ -649,12 +652,13 @@
         }
 
         function carregarEstadoLocalSeguro() {
-            const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
+            const termosAceitos = localStorage.getItem("marktplace_stand2_termos");
             if (!termosAceitos) {
-                document.getElementById('modal-boas-vindas').style.display = 'flex';
+                const modalBoasVindas = document.getElementById("modal-boas-vindas");
+                if (modalBoasVindas) modalBoasVindas.style.display = "flex";
             }
 
-            const storedUser = localStorage.getItem('marktplace_stand2_user');
+            const storedUser = localStorage.getItem("marktplace_stand2_user");
             if (storedUser) {
                 try {
                     currentUser = JSON.parse(storedUser);
@@ -663,85 +667,93 @@
                         aplicarEstadoUsuario();
                     }
                 } catch (e) {
-                    localStorage.removeItem('marktplace_stand2_user');
+                    localStorage.removeItem("marktplace_stand2_user");
                 }
             }
 
-            const storedCart = localStorage.getItem('marktplace_stand2_cart');
+            const storedCart = localStorage.getItem("marktplace_stand2_cart");
             if (storedCart) {
-                try { carrinhoItens = JSON.parse(storedCart); } catch(e){}
+                try {
+                    carrinhoItens = JSON.parse(storedCart) || [];
+                } catch (e) {
+                    carrinhoItens = [];
+                }
                 atualizarBadgeCarrinho();
             }
 
-            const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
+            const storedPedidos = localStorage.getItem("marktplace_stand2_pedidos");
             if (storedPedidos) {
-                try { pedidosAtivos = JSON.parse(storedPedidos); } catch(e){}
+                try {
+                    pedidosAtivos = JSON.parse(storedPedidos) || [];
+                } catch (e) {
+                    pedidosAtivos = [];
+                }
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener("DOMContentLoaded", function() {
             carregarEstadoLocalSeguro();
             carregarAvataresRegistro();
             carregarCatalogo();
             inicializarAnuncios();
 
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
+            const hamburgerBtn = document.getElementById("hamburger-btn");
+            const mobileMenu = document.getElementById("mobile-menu");
             if (hamburgerBtn && mobileMenu) {
-                hamburgerBtn.addEventListener('click', function(e) {
+                hamburgerBtn.addEventListener("click", function(e) {
                     e.stopPropagation();
-                    mobileMenu.classList.toggle('hidden');
+                    mobileMenu.classList.toggle("hidden");
                 });
 
-                document.addEventListener('click', function(e) {
+                document.addEventListener("click", function(e) {
                     if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                        mobileMenu.classList.add('hidden');
+                        mobileMenu.classList.add("hidden");
                     }
                 });
 
-                mobileMenu.querySelectorAll('.menu-link').forEach(link => {
-                    link.addEventListener('click', function() {
-                        mobileMenu.classList.add('hidden');
+                mobileMenu.querySelectorAll(".menu-link").forEach(link => {
+                    link.addEventListener("click", function() {
+                        mobileMenu.classList.add("hidden");
                     });
                 });
             }
         });
 
         function concordarTermosEntrada() {
-            localStorage.setItem('marktplace_stand2_termos', 'true');
-            document.getElementById('modal-boas-vindas').style.display = 'none';
+            localStorage.setItem("marktplace_stand2_termos", "true");
+            document.getElementById("modal-boas-vindas").style.display = "none";
         }
 
-        function mostrarAlerta(titulo, texto, tipo = 'sucesso') {
-            document.getElementById('alerta-titulo').textContent = titulo;
-            document.getElementById('alerta-texto').textContent = texto;
-            const icone = document.getElementById('alerta-icone');
-            if (tipo === 'sucesso') {
-                icone.className = 'w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
-                icone.textContent = '✓';
+        function mostrarAlerta(titulo, texto, tipo = "sucesso") {
+            document.getElementById("alerta-titulo").textContent = titulo;
+            document.getElementById("alerta-texto").textContent = texto;
+            const icone = document.getElementById("alerta-icone");
+            if (tipo === "sucesso") {
+                icone.className = "w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.textContent = "✓";
             } else {
-                icone.className = 'w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold';
-                icone.textContent = '!';
+                icone.className = "w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.textContent = "!";
             }
-            document.getElementById('modal-alerta').style.display = 'flex';
+            document.getElementById("modal-alerta").style.display = "flex";
         }
 
         function fecharAlerta() {
-            document.getElementById('modal-alerta').style.display = 'none';
+            document.getElementById("modal-alerta").style.display = "none";
         }
 
         function carregarAvataresRegistro() {
-            const grid = document.getElementById('avatars-grid');
+            const grid = document.getElementById("avatars-grid");
             if (!grid) return;
-            grid.innerHTML = '';
+            grid.innerHTML = "";
             AVATARES.forEach((url) => {
-                const img = document.createElement('img');
+                const img = document.createElement("img");
                 img.src = url;
-                img.className = 'w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-[var(--accent)] transition p-1 bg-[#050505]';
+                img.className = "w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-[var(--accent)] transition p-1 bg-[#050505]";
                 img.onclick = function() {
-                    document.querySelectorAll('#avatars-grid img').forEach(i => i.classList.remove('border-[var(--accent)]'));
-                    img.classList.add('border-[var(--accent)]');
-                    document.getElementById('selected-avatar').value = url;
+                    document.querySelectorAll("#avatars-grid img").forEach(i => i.classList.remove("border-[var(--accent)]"));
+                    img.classList.add("border-[var(--accent)]");
+                    document.getElementById("selected-avatar").value = url;
                 };
                 grid.appendChild(img);
             });
@@ -749,153 +761,153 @@
         }
 
         function showTab(tab, event) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(tab + '-tab').classList.add('active');
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+            document.getElementById(tab + "-tab").classList.add("active");
+            if (event && event.currentTarget) event.currentTarget.classList.add("active");
         }
 
-        function openModal() { document.getElementById('mobile-menu').classList.add('hidden'); document.getElementById('modal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        function openTermosModal() { document.getElementById('modal-termos').style.display = 'flex'; }
-        function closeTermosModal() { document.getElementById('modal-termos').style.display = 'none'; }
-        
+        function openModal() { document.getElementById("mobile-menu").classList.add("hidden"); document.getElementById("modal").style.display = "flex"; }
+        function closeModal() { document.getElementById("modal").style.display = "none"; }
+        function openTermosModal() { document.getElementById("modal-termos").style.display = "flex"; }
+        function closeTermosModal() { document.getElementById("modal-termos").style.display = "none"; }
+
         function abrirRastreioPedido() {
-            document.getElementById('mobile-menu').classList.add('hidden');
-            document.getElementById('modal-rastreio').style.display = 'flex';
+            document.getElementById("mobile-menu").classList.add("hidden");
+            document.getElementById("modal-rastreio").style.display = "flex";
         }
-        function closeRastreio() { document.getElementById('modal-rastreio').style.display = 'none'; }
+        function closeRastreio() { document.getElementById("modal-rastreio").style.display = "none"; }
 
         function consultarStatusPedido() {
-            const codigo = document.getElementById('input-codigo-rastreio').value.trim().toUpperCase();
-            const resBox = document.getElementById('resultado-rastreio');
-            if (!codigo) { resBox.classList.remove('hidden'); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
+            const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
+            const resBox = document.getElementById("resultado-rastreio");
+            if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = "<span class=\"text-red-400\">Insira um código válido.</span>"; return; }
 
             const pedidoEncontrado = pedidosAtivos.find(p => p.ticketId.toUpperCase() === codigo || p.pedidoId.toUpperCase() === codigo);
-            resBox.classList.remove('hidden');
+            resBox.classList.remove("hidden");
 
             if (pedidoEncontrado) {
-                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${pedidoEncontrado.status}</span></p><p class="text-gray-400">Itens: ${pedidoEncontrado.itens}</p><p class="text-gray-400">Total: <span class="text-white">${pedidoEncontrado.total}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${pedidoEncontrado.ticketId}</strong></p>`;
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedidoEncontrado.status)}</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedidoEncontrado.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedidoEncontrado.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedidoEncontrado.ticketId)}</strong></p>`;
             } else {
-                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p><p class="text-gray-400">Código consultado: ${codigo}</p><p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>`;
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>`;
             }
         }
-        
+
         function verificarAutenticacaoAnuncio() {
-            document.getElementById('mobile-menu').classList.add('hidden');
+            document.getElementById("mobile-menu").classList.add("hidden");
             if (!currentUser) {
-                mostrarAlerta('Atenção', 'Você precisa estar logado para anunciar uma conta!', 'aviso');
+                mostrarAlerta("Atenção", "Você precisa estar logado para anunciar uma conta!", "aviso");
                 openModal();
                 return;
             }
-            document.getElementById('anuncio-email').value = currentUser.email || '';
-            document.getElementById('modal-verificar-anuncio').style.display = 'flex';
+            document.getElementById("anuncio-email").value = currentUser.email || "";
+            document.getElementById("modal-verificar-anuncio").style.display = "flex";
         }
-        function closeVerificarAnuncio() { document.getElementById('modal-verificar-anuncio').style.display = 'none'; }
+        function closeVerificarAnuncio() { document.getElementById("modal-verificar-anuncio").style.display = "none"; }
 
         function enviarCodigoAnuncio() {
-            const email = document.getElementById('anuncio-email').value.trim();
-            const feedback = document.getElementById('anuncio-feedback');
-            if (!email || !email.endsWith('@gmail.com')) { feedback.textContent = 'Insira um Gmail válido.'; return; }
+            const email = document.getElementById("anuncio-email").value.trim();
+            const feedback = document.getElementById("anuncio-feedback");
+            if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
             codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
-            feedback.style.color = '#10b981';
+            feedback.style.color = "#10b981";
             feedback.textContent = `Código enviado! (Código: ${codigoAnuncioSimulado})`;
         }
 
         function confirmarCodigoAnuncio(event) {
             event.preventDefault();
-            const codigoInput = document.getElementById('anuncio-code').value.trim();
-            const feedback = document.getElementById('anuncio-feedback');
+            const codigoInput = document.getElementById("anuncio-code").value.trim();
+            const feedback = document.getElementById("anuncio-feedback");
             if (!codigoAnuncioSimulado || codigoInput !== codigoAnuncioSimulado) {
-                feedback.textContent = 'Código incorreto!';
+                feedback.textContent = "Código incorreto!";
                 return;
             }
             closeVerificarAnuncio();
-            document.getElementById('anuncio-code').value = '';
-            feedback.textContent = '';
-            document.getElementById('preview-vendedor-nome').textContent = sanitizarNomePublico(currentUser.username);
-            document.getElementById('modal-anuncio').style.display = 'flex';
+            document.getElementById("anuncio-code").value = "";
+            feedback.textContent = "";
+            document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
+            document.getElementById("modal-anuncio").style.display = "flex";
         }
-        function closeAnuncioModal() { document.getElementById('modal-anuncio').style.display = 'none'; }
+        function closeAnuncioModal() { document.getElementById("modal-anuncio").style.display = "none"; }
 
         function enviarCodigoGmail() {
-            const email = document.getElementById('reg-email').value.trim();
-            const feedback = document.getElementById('register-feedback');
-            if (!email || !email.endsWith('@gmail.com')) { feedback.textContent = 'Insira um Gmail válido.'; return; }
+            const email = document.getElementById("reg-email").value.trim();
+            const feedback = document.getElementById("register-feedback");
+            if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
             codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
-            feedback.style.color = '#10b981';
+            feedback.style.color = "#10b981";
             feedback.textContent = `Código enviado! (Código: ${codigoEnviadoSimulado})`;
         }
 
         function handleRegister(event) {
             event.preventDefault();
-            const email = document.getElementById('reg-email').value.trim();
-            const whatsapp = document.getElementById('reg-whatsapp').value.trim();
-            const codigoInput = document.getElementById('reg-code').value.trim();
-            let username = document.getElementById('reg-username').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const passwordConfirm = document.getElementById('reg-password-confirm').value;
-            const feedback = document.getElementById('register-feedback');
+            const email = document.getElementById("reg-email").value.trim();
+            const whatsapp = document.getElementById("reg-whatsapp").value.trim();
+            const codigoInput = document.getElementById("reg-code").value.trim();
+            let username = document.getElementById("reg-username").value.trim();
+            const password = document.getElementById("reg-password").value;
+            const passwordConfirm = document.getElementById("reg-password-confirm").value;
+            const feedback = document.getElementById("register-feedback");
 
-            if (codigoInput !== codigoEnviadoSimulado) { feedback.textContent = 'Código incorreto!'; return; }
-            if (password.length < 6 || password !== passwordConfirm) { feedback.textContent = 'Senhas inválidas ou não conferem.'; return; }
+            if (codigoInput !== codigoEnviadoSimulado) { feedback.textContent = "Código incorreto!"; return; }
+            if (password.length < 6 || password !== passwordConfirm) { feedback.textContent = "Senhas inválidas ou não conferem."; return; }
 
             if (!username) username = `Player_${Math.floor(1000 + Math.random() * 9000)}`;
-            let users = JSON.parse(localStorage.getItem('marktplace_stand2_db_users') || '[]');
-            if (users.some(u => u.email === email)) { feedback.textContent = 'Gmail já cadastrado.'; return; }
+            let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+            if (users.some(u => u.email === email)) { feedback.textContent = "Gmail já cadastrado."; return; }
 
-            const avatar = document.getElementById('selected-avatar').value || AVATARES[0];
+            const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
             users.push({ email, whatsapp, username, password, avatar });
-            localStorage.setItem('marktplace_stand2_db_users', JSON.stringify(users));
+            localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
 
             currentUser = { username, email, whatsapp, password, avatar };
-            localStorage.setItem('marktplace_stand2_user', JSON.stringify(currentUser));
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
-            mostrarAlerta('Sucesso!', 'Conta criada e salva com segurança!');
+            mostrarAlerta("Sucesso!", "Conta criada e salva com segurança!");
         }
 
         function handleLogin(event) {
             event.preventDefault();
-            const identifier = document.getElementById('login-identifier').value.trim();
-            const password = document.getElementById('login-password').value;
-            const feedback = document.getElementById('login-feedback');
-            let users = JSON.parse(localStorage.getItem('marktplace_stand2_db_users') || '[]');
+            const identifier = document.getElementById("login-identifier").value.trim();
+            const password = document.getElementById("login-password").value;
+            const feedback = document.getElementById("login-feedback");
+            let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
             const foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
 
-            if (!foundUser) { feedback.textContent = 'Dados incorretos.'; return; }
-            currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || '(Não informado)', password: foundUser.password, avatar: foundUser.avatar };
-            localStorage.setItem('marktplace_stand2_user', JSON.stringify(currentUser));
+            if (!foundUser) { feedback.textContent = "Dados incorretos."; return; }
+            currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || "(Não informado)", password: foundUser.password, avatar: foundUser.avatar };
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
         }
 
         function aplicarEstadoUsuario() {
-            const userPanel = document.getElementById('userPanel');
-            const loginBtnContainer = document.getElementById('loginButtonContainer');
+            const userPanel = document.getElementById("userPanel");
+            const loginBtnContainer = document.getElementById("loginButtonContainer");
             if (currentUser) {
-                userPanel.classList.remove('hidden');
-                loginBtnContainer.classList.add('hidden');
-                document.getElementById('user-avatar-img').src = currentUser.avatar;
-                document.getElementById('user-name-text').textContent = sanitizarNomePublico(currentUser.username);
+                userPanel.classList.remove("hidden");
+                loginBtnContainer.classList.add("hidden");
+                document.getElementById("user-avatar-img").src = currentUser.avatar;
+                document.getElementById("user-name-text").textContent = sanitizarNomePublico(currentUser.username);
             } else {
-                userPanel.classList.add('hidden');
-                loginBtnContainer.classList.remove('hidden');
+                userPanel.classList.add("hidden");
+                loginBtnContainer.classList.remove("hidden");
             }
             carregarCatalogo();
         }
 
         function logout() {
             currentUser = null;
-            localStorage.removeItem('marktplace_stand2_user');
+            localStorage.removeItem("marktplace_stand2_user");
             aplicarEstadoUsuario();
-            document.getElementById('mobile-menu').classList.add('hidden');
-            mostrarAlerta('Sessão Encerrada', 'Você saiu com sucesso.');
+            document.getElementById("mobile-menu").classList.add("hidden");
+            mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
         }
 
         function carregarFallbackAnuncios() {
             try {
-                const salvos = localStorage.getItem('marktplace_stand2_anuncios');
+                const salvos = localStorage.getItem("marktplace_stand2_anuncios");
                 if (salvos) {
                     const parsed = JSON.parse(salvos);
                     if (Array.isArray(parsed) && parsed.length > 0) {
@@ -906,13 +918,13 @@
             } catch (e) {}
 
             anunciosEmMemoria = [normalizarAnuncio({
-                id: 'default_1',
-                titulo: 'Conta com M9 Bayonet & AKR',
-                preco: 'R$ 150,00',
-                rank: 'Master',
-                vinculo: 'Google ID',
-                descricao: '• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch',
-                vendedor: 'Sistema',
+                id: "default_1",
+                titulo: "Conta com M9 Bayonet & AKR",
+                preco: "R$ 150,00",
+                rank: "Master",
+                vinculo: "Google ID",
+                descricao: "• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch",
+                vendedor: "Sistema",
                 likes: 12,
                 curtidoPormim: false,
                 fotos: []
@@ -927,30 +939,30 @@
 
             try {
                 const { data, error } = await window.supabaseClient
-                    .from('contas')
-                    .select('*');
+                    .from("contas")
+                    .select("*");
 
                 if (error) {
-                    console.warn('⚠️ Erro ao carregar anúncios do Supabase:', error);
+                    console.warn("⚠️ Erro ao carregar anúncios do Supabase:", error);
                     return;
                 }
 
                 if (Array.isArray(data) && data.length > 0) {
                     anunciosEmMemoria = data.map(normalizarAnuncio);
-                    localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+                    localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
                     carregarCatalogo();
                 }
             } catch (e) {
-                console.warn('⚠️ Exceção ao consultar Supabase:', e);
+                console.warn("⚠️ Exceção ao consultar Supabase:", e);
             }
         }
 
         function formatarPrecoMoeda(valorStr) {
             let limpo = valorStr.replace(/[^\d,.]/g, "").trim();
-            if (!limpo) return 'R$ 0,00';
-            limpo = limpo.replace('.', ',');
+            if (!limpo) return "R$ 0,00";
+            limpo = limpo.replace(".", ",");
             if (!limpo.includes(",")) {
-                limpo = limpo + ',00';
+                limpo = limpo + ",00";
             } else {
                 let partes = limpo.split(",");
                 if (partes[1].length === 1) {
@@ -961,13 +973,13 @@
         }
 
         function carregarCatalogo() {
-            const grid = document.getElementById('catalogo-cards');
+            const grid = document.getElementById("catalogo-cards");
             if (!grid) return;
-            grid.innerHTML = '';
+            grid.innerHTML = "";
             anunciosEmMemoria.forEach(anuncio => {
                 const item = normalizarAnuncio(anuncio);
-                const card = document.createElement('div');
-                card.className = 'bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative';
+                const card = document.createElement("div");
+                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
                 const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
                 const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : "";
@@ -990,24 +1002,24 @@
             anuncio.curtidoPormim = proximoCurtido;
             anuncio.likes = proximoLikes;
 
-            localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
             if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
                 try {
                     const { error } = await window.supabaseClient
-                        .from('contas')
+                        .from("contas")
                         .update({
                             curtidoPormim: proximoCurtido,
                             likes: proximoLikes
                         })
-                        .eq('id', Number(anuncio.id));
+                        .eq("id", Number(anuncio.id));
 
                     if (error) {
-                        console.warn('⚠️ Erro ao atualizar curtida no Supabase:', error);
+                        console.warn("⚠️ Erro ao atualizar curtida no Supabase:", error);
                     }
                 } catch (e) {
-                    console.warn('⚠️ Exceção ao atualizar curtida no Supabase:', e);
+                    console.warn("⚠️ Exceção ao atualizar curtida no Supabase:", e);
                 }
             }
         }
@@ -1016,13 +1028,13 @@
             const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
             if (!anuncio) return;
             if (carrinhoItens.some(item => String(item.id) === String(id))) {
-                mostrarAlerta('Carrinho', 'Este item já está no seu carrinho!', 'aviso');
+                mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
                 return;
             }
             carrinhoItens.push(anuncio);
-            localStorage.setItem('marktplace_stand2_cart', JSON.stringify(carrinhoItens));
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
             atualizarBadgeCarrinho();
-            mostrarAlerta('Sucesso', 'Conta adicionada ao carrinho!');
+            mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
         }
 
         function adicionarAoCarrinhoAtual() {
@@ -1032,66 +1044,66 @@
         }
 
         function atualizarBadgeCarrinho() {
-            const badge = document.getElementById('cart-badge');
+            const badge = document.getElementById("cart-badge");
             if (badge) badge.textContent = carrinhoItens.length;
         }
 
         function abrirCarrinho() {
-            const container = document.getElementById('carrinho-itens');
-            const totalEl = document.getElementById('carrinho-total');
-            container.innerHTML = '';
+            const container = document.getElementById("carrinho-itens");
+            const totalEl = document.getElementById("carrinho-total");
+            container.innerHTML = "";
 
             if (carrinhoItens.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Seu carrinho está vazio.</p>';
-                totalEl.textContent = 'R$ 0,00';
+                container.innerHTML = "<p class=\"text-xs text-gray-400 text-center py-6\">Seu carrinho está vazio.</p>";
+                totalEl.textContent = "R$ 0,00";
             } else {
                 let totalSoma = 0;
                 carrinhoItens.forEach((item, index) => {
                     let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                     totalSoma += numPreco;
 
-                    const div = document.createElement('div');
-                    div.className = 'flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]';
+                    const div = document.createElement("div");
+                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
                     div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
                     container.appendChild(div);
                 });
                 totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace(".", ",")}`;
             }
-            document.getElementById('modal-carrinho').style.display = 'flex';
+            document.getElementById("modal-carrinho").style.display = "flex";
         }
 
-        function closeCarrinho() { document.getElementById('modal-carrinho').style.display = 'none'; }
+        function closeCarrinho() { document.getElementById("modal-carrinho").style.display = "none"; }
 
         function removerDoCarrinho(index) {
             carrinhoItens.splice(index, 1);
-            localStorage.setItem('marktplace_stand2_cart', JSON.stringify(carrinhoItens));
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
             atualizarBadgeCarrinho();
             abrirCarrinho();
         }
 
         function finalizarCompraCarrinho() {
-            if (carrinhoItens.length === 0) { mostrarAlerta('Aviso', 'Seu carrinho está vazio.', 'aviso'); return; }
+            if (carrinhoItens.length === 0) { mostrarAlerta("Aviso", "Seu carrinho está vazio.", "aviso"); return; }
             closeCarrinho();
-            if (!currentUser) { mostrarAlerta('Login Necessário', 'Entre na sua conta para finalizar o pagamento.', 'aviso'); openModal(); return; }
-            document.getElementById('modal-checkout').style.display = 'flex';
+            if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
+            document.getElementById("modal-checkout").style.display = "flex";
         }
 
         function abrirCheckoutDireto() {
-            if (!currentUser) { closeDetalhes(); mostrarAlerta('Login Necessário', 'Entre para comprar.', 'aviso'); openModal(); return; }
+            if (!currentUser) { closeDetalhes(); mostrarAlerta("Login Necessário", "Entre para comprar.", "aviso"); openModal(); return; }
             closeDetalhes();
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
                 carrinhoItens = [anuncioSelecionadoAtual];
             }
-            document.getElementById('modal-checkout').style.display = 'flex';
+            document.getElementById("modal-checkout").style.display = "flex";
         }
-        function closeCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+        function closeCheckout() { document.getElementById("modal-checkout").style.display = "none"; }
 
         function mudarMetodoPagamento(metodo) {
-            const caixaCartao = document.getElementById('container-campos-cartao');
-            if (metodo === 'cartao') {
-                caixaCartao.classList.remove('hidden');
+            const caixaCartao = document.getElementById("container-campos-cartao");
+            if (metodo === "cartao") {
+                caixaCartao.classList.remove("hidden");
             } else {
-                caixaCartao.classList.add('hidden');
+                caixaCartao.classList.add("hidden");
             }
         }
 
@@ -1101,12 +1113,12 @@
                 reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
-                        const canvas = document.createElement('canvas');
+                        const canvas = document.createElement("canvas");
                         let w = img.width, h = img.height;
                         if (w > 800) { h *= 800 / w; w = 800; }
                         canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", 0.6));
                     };
                     img.src = e.target.result;
                 };
@@ -1117,41 +1129,41 @@
         async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
-            
+
             for (let i = 0; i < Math.min(input.files.length, 7); i++) {
                 const comp = await comprimirImagem(input.files[i]);
                 if (comp) fotosNovasBase64.push(comp);
             }
 
-            const descricaoAutomatizada = '🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch';
-            document.getElementById('conta-desc').value = descricaoAutomatizada;
+            const descricaoAutomatizada = "🎒 **Inventário Verificado (Skins & Patterns):**\n• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch";
+            document.getElementById("conta-desc").value = descricaoAutomatizada;
         }
 
         async function publicarAnuncioFinal() {
-            const btnPublicar = document.getElementById('btn-publicar-anuncio');
-            const titulo = document.getElementById('conta-titulo').value.trim();
-            const precoInput = document.getElementById('conta-preco').value.trim();
-            const rank = document.getElementById('conta-rank').value;
-            const vinculo = document.getElementById('conta-vinculo').value;
-            let descFinal = document.getElementById('conta-desc').value.trim();
+            const btnPublicar = document.getElementById("btn-publicar-anuncio");
+            const titulo = document.getElementById("conta-titulo").value.trim();
+            const precoInput = document.getElementById("conta-preco").value.trim();
+            const rank = document.getElementById("conta-rank").value;
+            const vinculo = document.getElementById("conta-vinculo").value;
+            let descFinal = document.getElementById("conta-desc").value.trim();
 
-            if (!titulo || !precoInput) { mostrarAlerta('Aviso', 'Preencha título e preço.', 'aviso'); return; }
-            if (fotosNovasBase64.length === 0) { mostrarAlerta('Aviso', 'Adicione pelo menos um print do inventário.', 'aviso'); return; }
+            if (!titulo || !precoInput) { mostrarAlerta("Aviso", "Preencha título e preço.", "aviso"); return; }
+            if (fotosNovasBase64.length === 0) { mostrarAlerta("Aviso", "Adicione pelo menos um print do inventário.", "aviso"); return; }
 
             if (!descFinal) {
-                descFinal = '• Inventário verificado e garantido.';
+                descFinal = "• Inventário verificado e garantido.";
             }
 
             const precoFormatado = formatarPrecoMoeda(precoInput);
 
             let anuncioParaSalvar = normalizarAnuncio({
-                id: 'local_' + Date.now(),
+                id: "local_" + Date.now(),
                 titulo,
                 preco: precoFormatado,
                 rank,
                 vinculo,
                 descricao: descFinal,
-                vendedor: sanitizarNomePublico(currentUser ? currentUser.username : 'Jogador'),
+                vendedor: sanitizarNomePublico(currentUser ? currentUser.username : "Jogador"),
                 likes: 0,
                 curtidoPormim: false,
                 fotos: [...fotosNovasBase64]
@@ -1159,7 +1171,7 @@
 
             if (btnPublicar) {
                 btnPublicar.disabled = true;
-                btnPublicar.textContent = 'Publicando...';
+                btnPublicar.textContent = "Publicando...";
             }
 
             let salvoNoBanco = false;
@@ -1167,13 +1179,13 @@
             if (window.supabaseClient) {
                 try {
                     const { data: inseridos, error } = await window.supabaseClient
-                        .from('contas')
+                        .from("contas")
                         .insert([prepararPayloadSupabase(anuncioParaSalvar, false)])
-                        .select('*');
+                        .select("*");
 
                     if (error) {
-                        console.error('Erro ao salvar no Supabase:', error);
-                        mostrarAlerta('Erro ao Salvar no Banco', `O Supabase recusou o anúncio (${error.code || "erro"}): ${error.message}`, 'aviso');
+                        console.error("Erro ao salvar no Supabase:", error);
+                        mostrarAlerta("Erro ao Salvar no Banco", `O Supabase recusou o anúncio (${error.code || "erro"}): ${error.message}`, "aviso");
                     } else {
                         salvoNoBanco = true;
                         if (Array.isArray(inseridos) && inseridos.length > 0) {
@@ -1181,16 +1193,16 @@
                         }
                     }
                 } catch (e) {
-                    console.error('Exceção ao salvar no Supabase:', e);
-                    mostrarAlerta('Erro de Conexão', 'Não foi possível comunicar com o Supabase.', 'aviso');
+                    console.error("Exceção ao salvar no Supabase:", e);
+                    mostrarAlerta("Erro de Conexão", "Não foi possível comunicar com o Supabase.", "aviso");
                 }
             } else {
-                mostrarAlerta('Modo Local', 'Cliente Supabase indisponível; anúncio salvo apenas neste navegador.', 'aviso');
+                mostrarAlerta("Modo Local", "Cliente Supabase indisponível; anúncio salvo apenas neste navegador.", "aviso");
             }
 
             if (btnPublicar) {
                 btnPublicar.disabled = false;
-                btnPublicar.textContent = 'Publicar Conta';
+                btnPublicar.textContent = "Publicar Conta";
             }
 
             if (!salvoNoBanco && window.supabaseClient) {
@@ -1198,23 +1210,23 @@
             }
 
             anunciosEmMemoria.unshift(anuncioParaSalvar);
-            localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             fotosNovasBase64 = [];
 
-            document.getElementById('conta-titulo').value = '';
-            document.getElementById('conta-preco').value = '';
-            document.getElementById('conta-desc').value = '';
-            document.getElementById('conta-fotos').value = '';
+            document.getElementById("conta-titulo").value = "";
+            document.getElementById("conta-preco").value = "";
+            document.getElementById("conta-desc").value = "";
+            document.getElementById("conta-fotos").value = "";
 
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta('Sucesso', 'Conta publicada e salva no banco com sucesso!');
+            mostrarAlerta("Sucesso", "Conta publicada e salva no banco com sucesso!");
         }
 
-        function removerAnuncio(id) {
+        async function removerAnuncio(id) {
             const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
-            localStorage.setItem('marktplace_stand2_anuncios', JSON.stringify(anunciosEmMemoria));
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
 
             const idBanco = alvo && ehIdNumerico(alvo.id) ? Number(alvo.id) : (ehIdNumerico(id) ? Number(id) : null);
@@ -1222,14 +1234,14 @@
             if (window.supabaseClient && idBanco !== null) {
                 try {
                     const { error } = await window.supabaseClient
-                        .from('contas')
+                        .from("contas")
                         .delete()
-                        .eq('id', idBanco);
+                        .eq("id", idBanco);
                     if (error) {
-                        console.warn('⚠️ Erro ao remover anúncio no Supabase:', error);
+                        console.warn("⚠️ Erro ao remover anúncio no Supabase:", error);
                     }
                 } catch (e) {
-                    console.warn('⚠️ Exceção ao remover anúncio no Supabase:', e);
+                    console.warn("⚠️ Exceção ao remover anúncio no Supabase:", e);
                 }
             }
         }
@@ -1239,39 +1251,39 @@
             if (!encontrado) return;
             anuncioSelecionadoAtual = normalizarAnuncio(encontrado);
 
-            document.getElementById('detalhe-titulo').textContent = anuncioSelecionadoAtual.titulo;
-            document.getElementById('detalhe-preco').textContent = anuncioSelecionadoAtual.preco;
-            document.getElementById('detalhe-badge').textContent = anuncioSelecionadoAtual.rank;
-            document.getElementById('detalhe-vinculo').textContent = anuncioSelecionadoAtual.vinculo;
-            document.getElementById('detalhe-desc').textContent = anuncioSelecionadoAtual.descricao ?? anuncioSelecionadoAtual.desc;
-            document.getElementById('detalhe-vendedor').textContent = sanitizarNomePublico(anuncioSelecionadoAtual.vendedor);
+            document.getElementById("detalhe-titulo").textContent = anuncioSelecionadoAtual.titulo;
+            document.getElementById("detalhe-preco").textContent = anuncioSelecionadoAtual.preco;
+            document.getElementById("detalhe-badge").textContent = anuncioSelecionadoAtual.rank;
+            document.getElementById("detalhe-vinculo").textContent = anuncioSelecionadoAtual.vinculo;
+            document.getElementById("detalhe-desc").textContent = anuncioSelecionadoAtual.descricao ?? anuncioSelecionadoAtual.desc;
+            document.getElementById("detalhe-vendedor").textContent = sanitizarNomePublico(anuncioSelecionadoAtual.vendedor);
 
-            const imgContainer = document.getElementById('detalhe-img-container');
-            const imgElement = document.getElementById('detalhe-imagem');
-            const minis = document.getElementById('detalhe-miniaturas');
-            minis.innerHTML = '';
+            const imgContainer = document.getElementById("detalhe-img-container");
+            const imgElement = document.getElementById("detalhe-imagem");
+            const minis = document.getElementById("detalhe-miniaturas");
+            minis.innerHTML = "";
 
             if (anuncioSelecionadoAtual.fotos && anuncioSelecionadoAtual.fotos.length > 0) {
                 imgElement.src = anuncioSelecionadoAtual.fotos[0];
-                imgContainer.classList.remove('hidden');
+                imgContainer.classList.remove("hidden");
                 anuncioSelecionadoAtual.fotos.forEach((url, idx) => {
-                    const thumb = document.createElement('img');
+                    const thumb = document.createElement("img");
                     thumb.src = url;
                     thumb.className = `w-12 h-12 object-cover rounded cursor-pointer border-2 ${idx === 0 ? "border-[var(--accent)]" : "border-transparent"}`;
                     thumb.onclick = () => { imgElement.src = url; };
                     minis.appendChild(thumb);
                 });
             } else {
-                imgContainer.classList.add('hidden');
+                imgContainer.classList.add("hidden");
             }
-            document.getElementById('modal-detalhes').style.display = 'flex';
+            document.getElementById("modal-detalhes").style.display = "flex";
         }
 
-        function closeDetalhes() { document.getElementById('modal-detalhes').style.display = 'none'; }
+        function closeDetalhes() { document.getElementById("modal-detalhes").style.display = "none"; }
 
         function gerarQrCodePagamento() {
             closeCheckout();
-            let totalCarrinhoStr = 'R$ 0,00';
+            let totalCarrinhoStr = "R$ 0,00";
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
 
@@ -1285,72 +1297,72 @@
             }
             totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
 
-            const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
-            document.getElementById('pedido-codigo').textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
-            document.getElementById('pag-conta-nome').textContent = nomesContas || 'Conta Standoff 2';
-            document.getElementById('pag-conta-valor').textContent = totalCarrinhoStr;
-            
-            const conteudoPag = document.getElementById('pag-conteudo');
-            if (metodoEscolhido === 'pix') {
+            const metodoEscolhido = document.querySelector("input[name=\"pagamento\"]:checked").value;
+            document.getElementById("pedido-codigo").textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
+            document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
+
+            const conteudoPag = document.getElementById("pag-conteudo");
+            if (metodoEscolhido === "pix") {
                 const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
                 conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
-            document.getElementById('modal-pagamento-detalhes').style.display = 'flex';
+            document.getElementById("modal-pagamento-detalhes").style.display = "flex";
         }
 
-        function closePagamentoDetalhes() { document.getElementById('modal-pagamento-detalhes').style.display = 'none'; }
+        function closePagamentoDetalhes() { document.getElementById("modal-pagamento-detalhes").style.display = "none"; }
 
         function enviarComprovanteParaTicket() {
             closePagamentoDetalhes();
-            const ticketIdGerado = 'TICK-' + Math.floor(10000 + Math.random() * 90000);
-            const pedidoIdGerado = 'SO2-' + Math.floor(1000 + Math.random() * 9000);
-            
-            document.getElementById('ticket-id').textContent = `Ticket #${ticketIdGerado}`;
-            
-            let gmailUser = currentUser ? currentUser.email : 'cliente@gmail.com';
-            let wppUser = currentUser ? currentUser.whatsapp : '(Não informado)';
+            const ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
+            const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
 
-            document.getElementById('ticket-info-gmail').textContent = gmailUser;
-            document.getElementById('ticket-info-wpp').textContent = wppUser;
+            document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
 
-            let nomesItens = carrinhoItens.map(i => i.titulo).join(", ") || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : 'Conta Standoff 2');
-            let valorTotalPedido = document.getElementById('pag-conta-valor').textContent;
+            let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
+            let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
+
+            document.getElementById("ticket-info-gmail").textContent = gmailUser;
+            document.getElementById("ticket-info-wpp").textContent = wppUser;
+
+            let nomesItens = carrinhoItens.map(i => i.titulo).join(", ") || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : "Conta Standoff 2");
+            let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
 
             pedidosAtivos.unshift({
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
-                status: 'Aprovado • Custódia Segura',
+                status: "Aprovado • Custódia Segura",
                 itens: nomesItens,
                 total: valorTotalPedido
             });
-            localStorage.setItem('marktplace_stand2_pedidos', JSON.stringify(pedidosAtivos));
+            localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
 
-            const chatBox = document.getElementById('chat-mensagens');
+            const chatBox = document.getElementById("chat-mensagens");
             chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p><p class="text-[11px] text-white"><strong>Ticket de Rastreio:</strong> ${escapeHtml(ticketIdGerado)}</p><p class="text-[11px] text-gray-300"><strong>Itens:</strong> ${escapeHtml(nomesItens)} (${escapeHtml(valorTotalPedido)})</p><p class="text-[11px] text-gray-300"><strong>Comprador (Gmail):</strong> ${escapeHtml(gmailUser)} | <strong>WhatsApp:</strong> ${escapeHtml(wppUser)}</p><div class="pt-2 border-t border-[#222] text-amber-300">🔑 <strong>Dados de Acesso da Conta Adquirida:</strong><br>Login: <code>so2_account_${Math.floor(1000+Math.random()*9000)}@gmail.com</code><br>Senha Provisória: <code>Standoff2026#Secure</code></div></div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-            
-            document.getElementById('modal-ticket').style.display = 'flex';
-            
+
+            document.getElementById("modal-ticket").style.display = "flex";
+
             carrinhoItens = [];
-            localStorage.removeItem('marktplace_stand2_cart');
+            localStorage.removeItem("marktplace_stand2_cart");
             atualizarBadgeCarrinho();
         }
 
-        function closeTicketModal() { document.getElementById('modal-ticket').style.display = 'none'; }
+        function closeTicketModal() { document.getElementById("modal-ticket").style.display = "none"; }
 
         function abrirChatSuporte() {
             closeTicketModal();
-            document.getElementById('modal-chat-suporte').style.display = 'flex';
+            document.getElementById("modal-chat-suporte").style.display = "flex";
         }
 
-        function closeChatSuporte() { document.getElementById('modal-chat-suporte').style.display = 'none'; }
+        function closeChatSuporte() { document.getElementById("modal-chat-suporte").style.display = "none"; }
 
         function enviarMensagemSuporte() {
-            const input = document.getElementById('chat-input-texto');
+            const input = document.getElementById("chat-input-texto");
             if (!input.value.trim()) return;
-            const chat = document.getElementById('chat-mensagens');
+            const chat = document.getElementById("chat-mensagens");
             chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(input.value)}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
