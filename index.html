@@ -107,8 +107,7 @@
                 <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por dentro da plataforma. Isso garante segurança e rastreio para todas as partes envolvidas.</p>
                 <p class="text-amber-400 font-medium bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-                    2. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.
-                </p>
+                    2. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
                 <p>3. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
             </div>
             <button onclick="concordarTermosEntrada()" class="btn-primary">
@@ -603,14 +602,15 @@
         function normalizarAnuncio(row) {
             const curtidoFlag = Boolean(row.curtidoPormim);
             const fotosNormalizadas = Array.isArray(row.fotos) ? row.fotos : [];
+            const textoDesc = row.descricao ?? row.desc ?? '• Inventário verificado e garantido.';
             return {
                 id: String(row.id ?? ('anuncio_' + Date.now())),
                 titulo: row.titulo || 'Conta Standoff 2',
                 preco: row.preco || 'R$ 0,00',
                 rank: row.rank || 'Master',
                 vinculo: row.vinculo || 'Google ID',
-                descricao: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
-                desc: row.descricao ?? row.desc ?? '• Inventário verificado e garantido.',
+                descricao: textoDesc,
+                desc: textoDesc,
                 vendedor: row.vendedor || 'Sistema',
                 likes: Number(row.likes ?? 0),
                 curtidoPormim: curtidoFlag,
@@ -635,55 +635,62 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function() {
-            const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
-            if (!termosAceitos) {
-                document.getElementById('modal-boas-vindas').style.display = 'flex';
-            }
-
-            const storedUser = localStorage.getItem('marktplace_stand2_user');
-            if (storedUser) {
-                try {
-                    currentUser = JSON.parse(storedUser);
-                    currentUser.username = sanitizarNomePublico(currentUser.username);
-                    aplicarEstadoUsuario();
-                } catch (e) {
-                    localStorage.removeItem('marktplace_stand2_user');
+            try {
+                const termosAceitos = localStorage.getItem('marktplace_stand2_termos');
+                if (!termosAceitos) {
+                    document.getElementById('modal-boas-vindas').style.display = 'flex';
                 }
-            }
 
-            const storedCart = localStorage.getItem('marktplace_stand2_cart');
-            if (storedCart) {
-                try { carrinhoItens = JSON.parse(storedCart); } catch(e){}
-                atualizarBadgeCarrinho();
-            }
-
-            const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
-            if (storedPedidos) {
-                try { pedidosAtivos = JSON.parse(storedPedidos); } catch(e){}
-            }
-
-            carregarAvataresRegistro();
-            await inicializarAnuncios();
-
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (hamburgerBtn && mobileMenu) {
-                hamburgerBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    mobileMenu.classList.toggle('hidden');
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                        mobileMenu.classList.add('hidden');
+                const storedUser = localStorage.getItem('marktplace_stand2_user');
+                if (storedUser) {
+                    try {
+                        currentUser = JSON.parse(storedUser);
+                        if (currentUser) {
+                            currentUser.username = sanitizarNomePublico(currentUser.username);
+                            aplicarEstadoUsuario();
+                        }
+                    } catch (e) {
+                        localStorage.removeItem('marktplace_stand2_user');
                     }
-                });
+                }
 
-                mobileMenu.querySelectorAll('.menu-link').forEach(link => {
-                    link.addEventListener('click', function() {
-                        mobileMenu.classList.add('hidden');
+                const storedCart = localStorage.getItem('marktplace_stand2_cart');
+                if (storedCart) {
+                    try { carrinhoItens = JSON.parse(storedCart); } catch(e){}
+                    atualizarBadgeCarrinho();
+                }
+
+                const storedPedidos = localStorage.getItem('marktplace_stand2_pedidos');
+                if (storedPedidos) {
+                    try { pedidosAtivos = JSON.parse(storedPedidos); } catch(e){}
+                }
+
+                carregarAvataresRegistro();
+                await inicializarAnuncios();
+
+                const hamburgerBtn = document.getElementById('hamburger-btn');
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (hamburgerBtn && mobileMenu) {
+                    hamburgerBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        mobileMenu.classList.toggle('hidden');
                     });
-                });
+
+                    document.addEventListener('click', function(e) {
+                        if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                    });
+
+                    mobileMenu.querySelectorAll('.menu-link').forEach(link => {
+                        link.addEventListener('click', function() {
+                            mobileMenu.classList.add('hidden');
+                        });
+                    });
+                }
+            } catch (err) {
+                console.error('Erro na inicialização do DOM:', err);
+                carregarCatalogo();
             }
         });
 
@@ -956,7 +963,7 @@
                 card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
                 const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : '';
-                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button onclick="removerAnuncio('${item.id}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
+                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${item.id}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : '';
 
                 // Botão de Joinha: Cinza (#777777) por padrão, branco gelo (#ffffff) com brilho quando curtido (curtidoPormim)
                 const corJoinha = item.curtidoPormim ? 'text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'text-[#777777]';
@@ -968,7 +975,7 @@
                         <div class="flex justify-between items-center mb-3 gap-2">
                             <span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${item.rank}</span>
                             <div class="flex items-center gap-2">
-                                <button onclick="curtirAnuncio('${item.id}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+                                <button type="button" onclick="curtirAnuncio('${item.id}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
                                     <span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span>
                                 </button>
                                 <span class="text-lg font-bold text-emerald-400">${item.preco}</span>
@@ -979,8 +986,8 @@
                         <p class="text-xs text-gray-400 mb-3">Vendedor: ${sanitizarNomePublico(item.vendedor)}</p>
                     </div>
                     <div class="space-y-2 mt-4">
-                        <button onclick="abrirDetalhes('${item.id}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
-                        <button onclick="adicionarAoCarrinho('${item.id}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
+                        <button type="button" onclick="abrirDetalhes('${item.id}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button>
+                        <button type="button" onclick="adicionarAoCarrinho('${item.id}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -1065,10 +1072,10 @@
                             <p class="text-xs font-bold text-white">${item.titulo}</p>
                             <span class="text-xs text-emerald-400 font-semibold">${item.preco}</span>
                         </div>
-                        <button onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>
+                        <button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>
                     `;
                     container.appendChild(div);
-                );
+                });
                 totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace('.', ',')}`;
             }
             document.getElementById('modal-carrinho').style.display = 'flex';
@@ -1093,7 +1100,7 @@
         function abrirCheckoutDireto() {
             if (!currentUser) { closeDetalhes(); mostrarAlerta('Login Necessário', 'Entre para comprar.', 'aviso'); openModal(); return; }
             closeDetalhes();
-            if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id)) {
+            if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
                 carrinhoItens = [anuncioSelecionadoAtual];
             }
             document.getElementById('modal-checkout').style.display = 'flex';
