@@ -1350,7 +1350,10 @@
             document.getElementById("ticket-info-gmail").textContent = gmailUser;
             document.getElementById("ticket-info-wpp").textContent = wppUser;
 
-            let nomesItens = carrinhoItens.map(i => i.titulo).join(", ") || (anuncioSelecionadoAtual ? anuncioSelecionadoAtual.titulo : "Conta Standoff 2");
+            let nomesItens = carrinhoItens.map(i => i.titulo) || [];
+            const listaItensFormatada = Array.isArray(nomesItens)
+                ? nomesItens.filter(Boolean).join(', ')
+                : String(nomesItens || '').trim();
             let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
 
             pedidosAtivos.unshift({
@@ -1366,7 +1369,7 @@
             const resumoRapido = montarResumoRapidoTicket({
                 ticketId: ticketIdGerado,
                 statusKey,
-                itensResumo: nomesItens.join(", ") || "Conta Standoff 2",
+                itensResumo: listaItensFormatada || "Item do catálogo",
                 compradorEmail: gmailUser,
                 compradorWhats: wppUser
             });
