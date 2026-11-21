@@ -26,7 +26,38 @@
                 console.warn("⚠️ Falha ao iniciar cliente Supabase:", e);
             }
         })();
-    </script>
+    </script>        window.setModalVisivel = function(modalId, aberto) {
+            // Safe fallback: check if modal exists before trying to use it
+            const modal = document.getElementById(modalId);
+            if (!modal) {
+                console.warn(`Modal with ID "${modalId}" not found in DOM`);
+                return;
+            }
+            
+            if (aberto) {
+                modal.style.display = "flex";
+                // Block body scroll and add overscroll containment
+                document.body.style.overflow = "hidden";
+                document.body.style.overscrollBehavior = "contains";
+                // Add overscroll containment to modal containers with overflow-y-auto
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "contains";
+                });
+            } else {
+                modal.style.display = "none";
+                // Release body scroll
+                document.body.style.overflow = "";
+                document.body.style.overscrollBehavior = "";
+                // Release overscroll containment
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "";
+                });
+            }
+        };
+
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1419,32 +1450,7 @@
 
         function closeModalComoFunciona() {
 
-        window.setModalVisivel = function(modalId, aberto) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-            
-            if (aberto) {
-                modal.style.display = "flex";
-                // Block body scroll and add overscroll containment
-                document.body.style.overflow = "hidden";
-                document.body.style.overscrollBehavior = "contains";
-                // Add overscroll containment to modal containers with overflow-y-auto
-                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
-                containers.forEach(el => {
-                    el.style.overscrollBehavior = "contains";
-                });
-            } else {
-                modal.style.display = "none";
-                // Release body scroll
-                document.body.style.overflow = "";
-                document.body.style.overscrollBehavior = "";
-                // Release overscroll containment
-                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
-                containers.forEach(el => {
-                    el.style.overscrollBehavior = "";
-                });
-            }
-        }
+
 
             document.getElementById("modal-como-funcionamos").style.display = "none";
             document.body.style.overflow = '';
