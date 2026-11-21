@@ -119,19 +119,15 @@
             try {
                 if (window.supabase && typeof window.supabase.createClient === "function") {
                     window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    console.log("✅ Supabase inicializado com sucesso");
                 } else {
-                    console.warn("⚠️ SDK do Supabase não carregou; usando modo local/fallback.");
                 }
             } catch (e) {
-                console.warn("⚠️ Falha ao iniciar cliente Supabase:", e);
             }
         })();
 
         window.setModalVisivel = function(modalId, aberto) {
             const modal = document.getElementById(modalId);
             if (!modal) {
-                console.warn(`Modal with ID "${modalId}" not found in DOM`);
                 return;
             }
 
@@ -1026,7 +1022,6 @@
                             carregarCatalogo();
                             return;
                         } else {
-                            console.info("ℹ️ Tabela public.contas retornou 0 linhas.");
                         }
                     }
                 } catch (e) {
@@ -1044,7 +1039,6 @@
                         return;
                     }
                 } catch (e) {
-                    console.warn("⚠️ Erro ao ler localStorage de anúncios:", e);
                 }
             }
 
@@ -1122,10 +1116,8 @@
                         .eq("id", Number(anuncio.id));
 
                     if (error) {
-                        console.warn("⚠️ Erro ao atualizar curtida no Supabase:", error);
                     }
                 } catch (e) {
-                    console.warn("⚠️ Exceção ao atualizar curtida no Supabase:", e);
                 }
             }
         }
@@ -1262,14 +1254,44 @@
     "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
 ];
 
+        function canonizarParaOCR(valor) {
+            return (valor || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+                .replace(/0/g, "o")
+                .replace(/[1i]/g, "l")
+                .replace(/5/g, "s");
+        }
+
+        const ARMAS_STANDOFF2_CANON = ARMAS_STANDOFF2_NOMES.map(nome => ({ nome: nome, canon: canonizarParaOCR(nome) }));
+
+        function diferencaNoMaximoUm(a, b) {
+            if (a === b) return true;
+            const menor = a.length <= b.length ? a : b;
+            const maior = a.length <= b.length ? b : a;
+            if (maior.length - menor.length > 1) return false;
+            let i = 0, j = 0, difs = 0;
+            while (i < menor.length && j < maior.length) {
+                if (menor[i] === maior[j]) { i++; j++; continue; }
+                difs++;
+                if (difs > 1) return false;
+                if (menor.length === maior.length) { i++; j++; } else { j++; }
+            }
+            return true;
+        }
+
         function extrairApenasNomesArmas(textoBruto) {
             if (!textoBruto) return [];
-            const normalizado = textoBruto.toLowerCase().replace(/[^a-z0-9\s\-\/]/g, " ");
+            const tokens = textoBruto.toLowerCase().split(/[^a-z0-9]+/).map(canonizarParaOCR).filter(Boolean);
             const encontradas = [];
-            for (const arma of ARMAS_STANDOFF2_NOMES) {
-                const padrao = arma.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/[-\/]/g, "[-\\/ ]?");
-                const re = new RegExp("(^|[^a-z0-9])" + padrao + "($|[^a-z0-9])", "i");
-                if (re.test(normalizado) && !encontradas.includes(arma)) encontradas.push(arma);
+            for (let i = 0; i < tokens.length; i++) {
+                let janela = "";
+                for (let k = i; k < Math.min(tokens.length, i + 3); k++) {
+                    janela += tokens[k];
+                    for (const arma of ARMAS_STANDOFF2_CANON) {
+                        if (arma.canon.length < 2) continue;
+                        const confere = janela === arma.canon || (arma.canon.length >= 5 && diferencaNoMaximoUm(janela, arma.canon));
+                        if (confere && !encontradas.includes(arma.nome)) encontradas.push(arma.nome);
+                    }
+                }
             }
             return encontradas;
         }
@@ -1350,24 +1372,25 @@
 
             // OCR roda a partir dos arquivos originais (input.files);
             // fotosNovasBase64 permanece comprimida em cor natural para o Supabase
-            const nomesArmasEncontrados = new Set();
-            const tarefasOCR = [];
-            for (let i = 0; i < Math.min(input.files.length, 7); i++) {
-                tarefasOCR.push(
-                    reconhecerArmasEmFoto(input.files[i])
-                        .then(armas => { for (const a of armas) nomesArmasEncontrados.add(a); })
-                        .catch(() => {})
-                );
-            }
-            await Promise.all(tarefasOCR);
-
-            // Preencher #conta-desc com os nomes das armas encontradas
             const campoDesc = document.getElementById("conta-desc");
-            if (campoDesc) {
-                if (nomesArmasEncontrados.size > 0) {
-                    campoDesc.value = Array.from(nomesArmasEncontrados).join(", ");
-                } else {
-                    campoDesc.value = ""
+            const nomesArmasEncontrados = new Set();
+            if (campoDesc) campoDesc.value = "Lendo nomes das armas nas imagens...";
+            try {
+                const tarefasOCR = [];
+                for (let i = 0; i < Math.min(input.files.length, 7); i++) {
+                    tarefasOCR.push(
+                        reconhecerArmasEmFoto(input.files[i])
+                            .then(armas => { for (const a of armas) nomesArmasEncontrados.add(a); })
+                            .catch(() => {})
+                    );
+                }
+                await Promise.all(tarefasOCR);
+            } finally {
+                // Remove a mensagem de carregamento e preenche apenas com nomes de armas encontradas
+                if (campoDesc) {
+                    campoDesc.value = nomesArmasEncontrados.size > 0
+                        ? Array.from(nomesArmasEncontrados).join(", ")
+                        : "";
                 }
             }
         }
@@ -1487,10 +1510,8 @@
                         .delete()
                         .eq("id", idBanco);
                     if (error) {
-                        console.warn("⚠️ Erro ao remover anúncio no Supabase:", error);
                     }
                 } catch (e) {
-                    console.warn("⚠️ Exceção ao remover anúncio no Supabase:", e);
                 }
             }
         }
