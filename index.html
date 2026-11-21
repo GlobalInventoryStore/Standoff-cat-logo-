@@ -1606,7 +1606,7 @@
                     const ordemArmas = ['m9_bayonet', 'karambit', 'butterfly', 'm4a4', 'm4a1_s', 'ak_47', 'awp', 'gloves', 'usp_s', 'p250', 'glock_18'];
                     for (let i = 0; i < ordemArmas.length; i++) {
                         const key = ordemArmas[i];
-                        const nome = ordArmaKey[i];
+                        const nome = key;
                         if (porArma[key]) {
                             const paddings = porArma[key].join(', ');
                             desc += '• ' + nome.replace(/_/g, ' ') + ': ' + paddings + '\n';
