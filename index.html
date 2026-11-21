@@ -110,6 +110,28 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
         }
+
+        .alerta-icone-ok, .alerta-icone-aviso {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem auto;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .alerta-icone-ok {
+            background-color: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+        }
+
+        .alerta-icone-aviso {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
     </style>
     <script>
         (function initSupabaseSeguro() {
@@ -636,7 +658,7 @@
     <!-- Modal Alerta -->
     <div id="modal-alerta" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
-            <div id="alerta-icone" class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
+            <div id="alerta-icone" class="alerta-icone-ok">✓</div>
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
             <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
             <button type="button" onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
@@ -821,10 +843,10 @@
             document.getElementById("alerta-texto").textContent = texto;
             const icone = document.getElementById("alerta-icone");
             if (tipo === "sucesso") {
-                icone.className = "w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.className = "alerta-icone-ok";
                 icone.textContent = "✓";
             } else {
-                icone.className = "w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.className = "alerta-icone-aviso";
                 icone.textContent = "!";
             }
             document.getElementById("modal-alerta").style.display = "flex";
@@ -1249,7 +1271,7 @@
         const ARMAS_STANDOFF2_NOMES = [
     "M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe",
     "AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60",
-    "FAMAS", "VAL", "Akimbo Uzi", "F/S", "Berettas",
+    "FAMAS", "VAL", "Akimbo Uzi", "F/S", "Berettas", "Gloves",
     "USP-S", "USP", "G22", "Glock-18", "Desert Eagle", "Deagle", "P350", "P250", "Five-SeveN",
     "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
 ];
@@ -1349,7 +1371,7 @@
                         for (const a of novas) {
                             if (!armas.includes(a)) armas.push(a);
                         }
-                        if (armas.length >= 3) break;
+                        if (armas.length >= 6) break;
                     } catch (e) {
                         // Variante falhou; tenta a proxima
                     }
