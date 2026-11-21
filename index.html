@@ -218,6 +218,7 @@
     <!-- Modal de Carrinho -->
     <div id="modal-carrinho" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#111111] text-white text-xs mb-3">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
                 <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -337,6 +338,7 @@
     <!-- Modal Detalhes -->
     <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#111111] text-white text-xs mb-3">Detalhes da Conta</div>
             <div id="detalhe-img-container" class="mb-4 hidden">
                 <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#222] flex items-center justify-center">
                     <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-full object-contain">
@@ -371,6 +373,7 @@
     <!-- Modal Checkout -->
     <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative">
+        <div class="bg-[#111111] text-white text-xs mb-3">Etapa 1 de 2 - Pagamento</div>
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
             
@@ -430,6 +433,7 @@
     <!-- Modal Pagamento Detalhes -->
     <div id="modal-pagamento-detalhes" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#111111] text-white text-xs mb-3">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
                 <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
@@ -794,16 +798,16 @@
             if (event && event.currentTarget) event.currentTarget.classList.add("active");
         }
 
-        function openModal() { document.getElementById("mobile-menu").classList.add("hidden"); document.getElementById("modal").style.display = "flex"; }
-        function closeModal() { document.getElementById("modal").style.display = "none"; }
-        function openTermosModal() { document.getElementById("modal-termos").style.display = "flex"; }
-        function closeTermosModal() { document.getElementById("modal-termos").style.display = "none"; }
+        function openModal() { setModalVisivel("modal", true); document.getElementById("mobile-menu").classList.add("hidden"); }
+        function closeModal() { setModalVisivel("modal", false); }
+        function openTermosModal() { setModalVisivel("modal-termos", true); }
+        function closeTermosModal() { setModalVisivel("modal-termos", false); }
 
         function abrirRastreioPedido() {
             document.getElementById("mobile-menu").classList.add("hidden");
             document.getElementById("modal-rastreio").style.display = "flex";
         }
-        function closeRastreio() { document.getElementById("modal-rastreio").style.display = "none"; }
+        function closeRastreio() { setModalVisivel("modal-rastreio", false); }
 
         function consultarStatusPedido() {
             const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
@@ -828,9 +832,9 @@
                 return;
             }
             document.getElementById("anuncio-email").value = currentUser.email || "";
-            document.getElementById("modal-verificar-anuncio").style.display = "flex";
+            setModalVisivel("modal-verificar-anuncio", true);
         }
-        function closeVerificarAnuncio() { document.getElementById("modal-verificar-anuncio").style.display = "none"; }
+        function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
         function enviarCodigoAnuncio() {
             const email = document.getElementById("anuncio-email").value.trim();
@@ -853,9 +857,9 @@
             document.getElementById("anuncio-code").value = "";
             feedback.textContent = "";
             document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
-            document.getElementById("modal-anuncio").style.display = "flex";
+            setModalVisivel("modal-anuncio", true);
         }
-        function closeAnuncioModal() { document.getElementById("modal-anuncio").style.display = "none"; }
+        function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
 
         function enviarCodigoGmail() {
             const email = document.getElementById("reg-email").value.trim();
@@ -1099,7 +1103,7 @@
             document.getElementById("modal-carrinho").style.display = "flex";
         }
 
-        function closeCarrinho() { document.getElementById("modal-carrinho").style.display = "none"; }
+        function closeCarrinho() { setModalVisivel("modal-carrinho", false); }
 
         function removerDoCarrinho(index) {
             carrinhoItens.splice(index, 1);
@@ -1123,7 +1127,7 @@
             }
             document.getElementById("modal-checkout").style.display = "flex";
         }
-        function closeCheckout() { document.getElementById("modal-checkout").style.display = "none"; }
+        function closeCheckout() { setModalVisivel("modal-checkout", false); }
 
         function mudarMetodoPagamento(metodo) {
             const caixaCartao = document.getElementById("container-campos-cartao");
@@ -1306,7 +1310,7 @@
             document.getElementById("modal-detalhes").style.display = "flex";
         }
 
-        function closeDetalhes() { document.getElementById("modal-detalhes").style.display = "none"; }
+        function closeDetalhes() { setModalVisivel("modal-detalhes", false); }
 
         function gerarQrCodePagamento() {
             closeCheckout();
@@ -1411,12 +1415,37 @@
             }, 1000);
         }
 
-        function openModalComoFunciona() {
-            document.getElementById("modal-como-funcionamos").style.display = "flex";
-            document.body.style.overflow = 'hidden';
-        }
+        function openModalComoFunciona() { setModalVisivel("modal-como-funcionamos", true); }
 
         function closeModalComoFunciona() {
+
+        function setModalVisivel(modalId, aberto) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            
+            if (aberto) {
+                modal.style.display = "flex";
+                // Block body scroll and add overscroll containment
+                document.body.style.overflow = "hidden";
+                document.body.style.overscrollBehavior = "contains";
+                // Add overscroll containment to modal containers with overflow-y-auto
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "contains";
+                });
+            } else {
+                modal.style.display = "none";
+                // Release body scroll
+                document.body.style.overflow = "";
+                document.body.style.overscrollBehavior = "";
+                // Release overscroll containment
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "";
+                });
+            }
+        }
+
             document.getElementById("modal-como-funcionamos").style.display = "none";
             document.body.style.overflow = '';
         }
