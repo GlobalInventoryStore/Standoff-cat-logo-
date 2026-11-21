@@ -1574,7 +1574,8 @@
         function limparAvisoConfianca() {
             const existentes = document.querySelectorAll('.confianca-avisos');
             existentes.forEach(el => el.remove());
-        }\n        async function publicarAnuncioFinal() {
+        }
+        async function publicarAnuncioFinal() {
             const btnPublicar = document.getElementById("btn-publicar-anuncio");
             const titulo = document.getElementById("conta-titulo").value.trim();
             const precoInput = document.getElementById("conta-preco").value.trim();
