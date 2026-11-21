@@ -877,7 +877,12 @@
             const email = document.getElementById("anuncio-email").value.trim();
             const feedback = document.getElementById("anuncio-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            // Código fixo para teste: scruzsamuka@gmail.com sempre recebe 111111
+            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
+                codigoAnuncioSimulado = "111111";
+            } else {
+                codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            }
             feedback.style.color = "#10b981";
             feedback.textContent = `Código enviado! (Código: ${codigoAnuncioSimulado})`;
         }
@@ -902,7 +907,12 @@
             const email = document.getElementById("reg-email").value.trim();
             const feedback = document.getElementById("register-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            // Código fixo para teste: scruzsamuka@gmail.com sempre recebe 111111
+            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
+                codigoEnviadoSimulado = "111111";
+            } else {
+                codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            }
             feedback.style.color = "#10b981";
             feedback.textContent = `Código enviado! (Código: ${codigoEnviadoSimulado})`;
         }
