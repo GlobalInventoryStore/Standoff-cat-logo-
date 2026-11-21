@@ -1515,7 +1515,7 @@
                     });
 
                     const ordemArmas = ['m9_bayonet', 'karambit', 'butterfly', 'm4a4', 'm4a1_s', 'ak_47', 'awp', 'gloves', 'usp_s', 'p250', 'glock_18'];
-                    for (constarma of ordemArmas) {
+                    for (const arma of ordemArmas) {
                         if (porTipo['skin'] && porTipo['skin'].some(s => s.nome ===arma)) {
                             const variacoes = porTipo['skin'].filter(s => s.nome ===arma).map(s => s.variacao);
                             desc += '• ' +arma.replace(/_/g, ' ') + ': ' + variacoes.join(', ') + '\n';
