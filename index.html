@@ -138,10 +138,10 @@
             if (aberto) {
                 modal.style.display = "flex";
                 document.body.style.overflow = "hidden";
-                document.body.style.overscrollBehavior = "contains";
+                document.body.style.overscrollBehavior = "contain";
                 const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
                 containers.forEach(el => {
-                    el.style.overscrollBehavior = "contains";
+                    el.style.overscrollBehavior = "contain";
                 });
             } else {
                 modal.style.display = "none";
@@ -1254,34 +1254,66 @@
             itens_especiais: ["Tie Dye", "Jade Stone"]
         };
 
-        async function processarFotosInventario(input) {
-            if (!input.files || input.files.length === 0) return;
-            fotosNovasBase64 = [];
+        const ARMAS_STANDOFF2_NOMES = [
+    "M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe",
+    "AKR", "AK-47", "AK-74U", "M4", "M4A4", "M4A1", "M16", "AWM", "AWP", "M40", "M110",
+    "USP", "USP-S", "G22", "Glock-18", "Deagle", "Desert Eagle", "P350", "P250", "Five-SeveN", "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
+];
 
-            const totalFotos = Math.min(input.files.length, 7);
-            for (let i = 0; i < totalFotos; i++) {
-                const comp = await comprimirImagem(input.files[i]);
-                if (comp) fotosNovasBase64.push(comp);
-                const campoDesc = document.getElementById("conta-desc");
-                if (campoDesc) {
-                    campoDesc.value = `📸 Processando foto ${i + 1} de ${totalFotos}...`;
-                }
-            }
+function extrairApenasNomesArmas(textoBruto) {
+    if (!textoBruto) return [];
+    const normalizado = textoBruto
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-            if (fotosNovasBase64.length > 0) {
-                const campoDesc = document.getElementById("conta-desc");
-                if (campoDesc) {
-                    campoDesc.value = `${fotosNovasBase64.length} foto(s) comprimida(s) em cor natural. Descreva manualmente os itens abaixo.`;
-                    limparAvisoConfianca();
-                }
-            } else {
-                limparAvisoConfianca();
-                const campoDesc = document.getElementById("conta-desc");
-                if (campoDesc) {
-                    campoDesc.value = "📸 Nenhuma foto selecionada.";
-                }
+    if (!normalizado) return [];
+
+    const encontradas = [];
+    for (const arma of ARMAS_STANDOFF2_NOMES) {
+        const alvo = arma.toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
+        const escapado = alvo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`(^|\\s)${escapado}(\\s|$)`, "i");
+        if (regex.test(normalizado) && !encontradas.includes(arma)) {
+            encontradas.push(arma);
+        }
+    }
+    return encontradas;
+}
+
+async function processarFotosInventario(input) {
+    if (!input.files || input.files.length === 0) return;
+    fotosNovasBase64 = [];
+
+    const totalFotos = Math.min(input.files.length, 7);
+    const campoDesc = document.getElementById("conta-desc");
+    const armasDetectadas = new Set();
+
+    for (let i = 0; i < totalFotos; i++) {
+        const comp = await comprimirImagem(input.files[i]);
+        if (comp) fotosNovasBase64.push(comp);
+
+        if (comp && window.Tesseract && typeof window.Tesseract.recognize === "function") {
+            try {
+                const res = await window.Tesseract.recognize(comp, "eng");
+                const textoLido = res?.data?.text || "";
+                extrairApenasNomesArmas(textoLido).forEach(nomeArma => armasDetectadas.add(nomeArma));
+            } catch (e) {
+                console.warn("⚠️ Leitura OCR de arma ignorada para a foto:", e);
             }
         }
+    }
+
+    limparAvisoConfianca();
+
+    if (campoDesc) {
+        const listaArmas = Array.from(armasDetectadas);
+        if (listaArmas.length > 0) {
+            campoDesc.value = listaArmas.join("\n");
+        }
+    }
+}
 
         function limparAvisoConfianca() {
             const existentes = document.querySelectorAll(".confianca-avisos");
