@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23d4ff00'/></svg>">
+    <title>MARKTPLACE stand2 - Catálogo de Contas</title>
+    <!-- Supabase Configuration -->
+    <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
+    <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg: #080808;
+            --card: #121212;
+            --accent: #d4ff00;
+            --accent-hover: #c2eb00;
+            --muted: #a1a1aa;
+        }
+
+        html, body {
+            background-color: #080808;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, textarea {
+            background-color: #111111 !important;
+            color: #ffffff !important;
+            border: 1px solid #262626;
+            border-radius: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .input-group {
+            margin-bottom: 0.85rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--accent);
+            color: #000000;
+            font-weight: 800;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 640px) {
+            .accounts-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .accounts-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+    </style>
+    <script>
+        (function initSupabaseSeguro() {
+            const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || "https://dumvvprvafzmzqdrenyn.supabase.co";
+            const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || "sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ";
+            window.supabaseClient = null;
+            try {
+                if (window.supabase && typeof window.supabase.createClient === "function") {
+                    window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log("✅ Supabase inicializado com sucesso");
+                } else {
+                    console.warn("⚠️ SDK do Supabase não carregou; usando modo local/fallback.");
+                }
+            } catch (e) {
+                console.warn("⚠️ Falha ao iniciar cliente Supabase:", e);
+            }
+        })();
+
+        window.setModalVisivel = function(modalId, aberto) {
+            const modal = document.getElementById(modalId);
+            if (!modal) {
+                console.warn(`Modal with ID "${modalId}" not found in DOM`);
+                return;
+            }
+
+            if (aberto) {
+                modal.style.display = "flex";
+                document.body.style.overflow = "hidden";
+                document.body.style.overscrollBehavior = "contains";
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "contains";
+                });
+            } else {
+                modal.style.display = "none";
+                document.body.style.overflow = "";
+                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                containers.forEach(el => {
+                    el.style.overscrollBehavior = "";
+                });
+            }
+        };
+    </script>
+</head>
+
+<body>
+
+    <!-- Aviso de Alerta de Golpe (Compacto) -->
+    <div class="bg-[#121212] border-b border-yellow-500/20 text-yellow-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
+        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. NUNCA pede senhas por mensagem privada.</span>
+    </div>
+
+    <!-- Modal Obrigatório de Entrada / Termos -->
+    <div id="modal-boas-vindas" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden items-center justify-center z-[999999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative shadow-2xl">
+            <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Bem-vindo ao MARKTPLACE stand2</h3>
+            <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-6 max-h-[50vh] overflow-y-auto pr-2">
+                <p>O <strong>MARKTPLACE stand2</strong> é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2.</p>
+                <p>Nosso objetivo é proporcionar um ambiente seguro e organizado para transações entre jogadores, garantindo que ambas as partes sejam protegidas.</p>
+                <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
+                <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por dentro da plataforma. Isso garante segurança e rastreio para todas as partes envolvidas.</p>
+                <p>2. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
+                <p>3. <strong>Custódia Protegida:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes.</p>
+                <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
+                <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
+                <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
+            </div>
+            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary">
+                Concordo com os Termos e Entrar
+            </button>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-[#222] bg-[#080808]/95 backdrop-blur sticky top-[28px] z-50 w-full">
+        <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center relative">
+            <div class="flex flex-col cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+                <span class="text-xl font-black text-white tracking-wider uppercase leading-none">MARKTPLACE</span>
+                <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase mt-0.5">stand2</span>
+            </div>
+
+            <div class="flex items-center gap-3 relative">
+                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
+                    🔍 Rastrear Pedido
+                </button>
+
+                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
+                    🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                </button>
+
+                <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-white focus:outline-none cursor-pointer relative z-[10000]">
+                    <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
+                <div id="mobile-menu" class="hidden bg-[#121212] border border-[#222] rounded-2xl px-5 py-4 space-y-3 shadow-2xl absolute top-14 right-0 w-64 z-[9999]">
+                    <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Início</a>
+                    <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
+                    <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
+                    <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
+                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Funcionamos</a>
+
+                    <div class="pt-3 border-t border-[#222]" id="authSection">
+                        <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
+                            <div class="flex items-center gap-2">
+                                <img id="user-avatar-img" src="" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-[var(--accent)]">
+                                <div>
+                                    <p id="user-name-text" class="text-xs font-bold text-white truncate max-w-[90px]"></p>
+                                    <span class="text-[9px] text-emerald-400 font-semibold">● Ativo</span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="logout()" class="text-xs text-gray-400 hover:text-white bg-[#1a1a1a] px-2 py-1 rounded-lg transition cursor-pointer">Sair</button>
+                        </div>
+
+                        <div id="loginButtonContainer">
+                            <button type="button" onclick="openModal()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5">
+                                Entrar / Cadastrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Balão Flutuante de Chat no Canto Esquerdo -->
+    <div class="fixed bottom-5 left-5 z-[9998]">
+        <button type="button" onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)]">
+            <span class="text-xl">💬</span>
+            <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
+        </button>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6">
+        <section id="secao-contas" class="pb-12 pt-12">
+            <h2 class="text-3xl font-bold mb-2 text-white">Catálogo de Contas</h2>
+            <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes ou adicionar ao carrinho:</p>
+
+            <div class="accounts-grid" id="catalogo-cards"></div>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="border-t border-[#222] py-6 text-center text-xs text-[var(--muted)] w-full bg-[#050505]">
+        MARKTPLACE stand2 &copy; 2026 - Todos os direitos reservados. Intermediação Segura. Plataforma independente, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2.
+    </footer>
+
+    <!-- Modal de Rastreio -->
+    <div id="modal-rastreio" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
+                <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
+
+            <div class="input-group flex gap-2">
+                <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
+                <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
+            </div>
+
+            <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Carrinho -->
+    <div id="modal-carrinho" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
+                <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+
+            <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
+
+            <div class="bg-[#050505] p-3.5 rounded-xl border border-[#222] mb-4 flex justify-between items-center">
+                <span class="text-xs text-gray-400">Total do Pedido:</span>
+                <span id="carrinho-total" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
+            </div>
+
+            <div class="space-y-2">
+                <button type="button" onclick="finalizarCompraCarrinho()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                    Finalizar Compra do Carrinho
+                </button>
+                <button type="button" onclick="closeCarrinho()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Continuar Comprando</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Login / Cadastro -->
+    <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Acesso à Conta</h3>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+
+            <div class="flex border-b border-[#222] mb-4">
+                <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
+                <button type="button" class="tab" onclick="showTab('register', event)">Cadastrar</button>
+            </div>
+
+            <div id="login-tab" class="tab-content active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>Gmail ou Nome de Usuário</label>
+                        <input type="text" id="login-identifier" required placeholder="seuemail@gmail.com ou Nome">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
+                    <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
+                </form>
+            </div>
+
+            <div id="register-tab" class="tab-content">
+                <form onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label>Gmail</label>
+                        <input type="email" id="reg-email" required placeholder="seuemail@gmail.com">
+                    </div>
+                    <div class="input-group">
+                        <label>WhatsApp (Com DDD)</label>
+                        <input type="text" id="reg-whatsapp" placeholder="Ex: 11999999999">
+                    </div>
+                    <div class="input-group">
+                        <label>Código de Verificação</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="reg-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
+                            <button type="button" onclick="enviarCodigoGmail()" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer flex-grow h-[42px]">Enviar</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Nome de Usuário Público (ou Nametag)</label>
+                        <input type="text" id="reg-username" placeholder="Ex: [TAG] SamukaSF">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="reg-password-confirm" required placeholder="••••••••">
+                    </div>
+                    <div class="input-group">
+                        <label>Escolha seu Avatar (Ghost / Operador)</label>
+                        <div class="grid grid-cols-5 gap-2 pt-1" id="avatars-grid"></div>
+                        <input type="hidden" id="selected-avatar" value="">
+                    </div>
+                    <div id="register-feedback" class="text-xs text-center text-red-400 mb-2"></div>
+                    <button type="submit" class="btn-primary mt-2">Criar Conta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Verificação Vendedor -->
+    <div id="modal-verificar-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
+                <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-[var(--muted)] mb-4">Confirme seu Gmail para receber o código:</p>
+            <form onsubmit="confirmarCodigoAnuncio(event)">
+                <div class="input-group">
+                    <label>Gmail de Contato</label>
+                    <input type="email" id="anuncio-email" required placeholder="seuemail@gmail.com">
+                </div>
+                <div class="input-group">
+                    <label>Código de Verificação</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="anuncio-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
+                        <button type="button" onclick="enviarCodigoAnuncio()" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer flex-grow h-[42px]">Enviar</button>
+                    </div>
+                </div>
+                <div id="anuncio-feedback" class="text-xs text-center text-red-400 mb-2"></div>
+                <button type="submit" class="btn-primary mt-2">Confirmar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes -->
+    <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
+            <div id="detalhe-img-container" class="mb-4 hidden">
+                <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#222] flex items-center justify-center">
+                    <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-full object-contain">
+                </div>
+                <div id="detalhe-miniaturas" class="flex gap-2 mt-2 overflow-x-auto pb-1"></div>
+            </div>
+            <div class="flex gap-2 mb-3">
+                <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
+                <span id="detalhe-vinculo" class="bg-blue-500/10 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Vínculo</span>
+            </div>
+            <h3 id="detalhe-titulo" class="text-xl font-bold mb-1">Nome da Conta</h3>
+            <p id="detalhe-preco" class="text-lg font-bold text-emerald-400 mb-3">R$ 0,00</p>
+            <div class="bg-[#050505] border border-[#222] rounded-xl px-3 py-2 mb-4 flex items-center justify-between">
+                <span class="text-xs text-gray-400">Vendedor: <strong id="detalhe-vendedor" class="text-white"></strong></span>
+                <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-semibold">Protegido</span>
+            </div>
+            <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
+
+            <div class="space-y-3">
+                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
+                    🛒 Adicionar ao Carrinho
+                </button>
+                <button type="button" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
+                    Comprar Agora
+                </button>
+                <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#181818] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
+            </div>
+            <button type="button" onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal Checkout -->
+    <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
+            <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
+            <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
+
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
+                    <div class="flex items-center gap-3">
+                        <span class="text-emerald-400 font-bold text-lg">⚡</span>
+                        <div><p class="text-sm font-bold text-white">PIX</p><span class="text-[10px] text-emerald-400">Aprovação imediata</span></div>
+                    </div>
+                    <input type="radio" name="pagamento" value="pix" checked class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('pix')">
+                </label>
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
+                    <div class="flex items-center gap-3">
+                        <span class="text-blue-400 font-bold text-lg">💳</span>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
+                    </div>
+                    <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
+                </label>
+            </div>
+
+            <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#222]">
+                <div class="input-group mb-0">
+                    <label>Número do Cartão</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="input-group mb-0">
+                        <label>Validade</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5">
+                    </div>
+                    <div class="input-group mb-0">
+                        <label>CVV</label>
+                        <input type="password" placeholder="123" maxlength="4">
+                    </div>
+                </div>
+                <div class="input-group mb-0">
+                    <label>Parcelamento</label>
+                    <select class="w-full">
+                        <option>1x sem juros</option>
+                        <option>3x no cartão</option>
+                        <option>6x no cartão</option>
+                        <option>12x no cartão</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                    Prosseguir com Pagamento
+                </button>
+                <button type="button" onclick="closeCheckout()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Voltar</button>
+            </div>
+            <button type="button" onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal Pagamento Detalhes -->
+    <div id="modal-pagamento-detalhes" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
+            <div class="flex justify-between items-center mb-3">
+                <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
+                <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            </div>
+            <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
+            <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
+
+            <div id="pag-conteudo" class="bg-[#050505] border border-[#222] rounded-xl p-4 mb-4 text-center"></div>
+
+            <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
+                Já Paguei • Enviar Comprovante e Gerar Ticket
+            </button>
+            <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2a2a2a]">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Ticket / Suporte / Bot -->
+    <div id="modal-ticket" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative text-center">
+            <div class="flex justify-between items-center mb-3">
+                <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
+                <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            </div>
+            <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
+            <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
+            <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
+
+            <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
+                <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Pagamento confirmado - aguardando envio dos dados da conta</span></p>
+                <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
+                <p class="text-gray-400"><strong>Comprador (Gmail):</strong> <span id="ticket-info-gmail" class="text-white"></span></p>
+                <p class="text-gray-400"><strong>WhatsApp:</strong> <span id="ticket-info-wpp" class="text-white"></span></p>
+            </div>
+
+            <div class="space-y-2">
+                <button type="button" onclick="abrirChatSuporte()" class="btn-primary py-3 text-xs">
+                    Abrir Chat com o Bot / Ver Dados da Conta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chat Bot / Suporte -->
+    <div id="modal-chat-suporte" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-5 sm:p-6 relative flex flex-col h-[500px]">
+            <div class="flex justify-between items-center pb-3 border-b border-[#222]">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Bot de Atendimento & Entrega</h3>
+                        <span class="text-[10px] text-emerald-400 font-medium">● Online</span>
+                    </div>
+                </div>
+                <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            </div>
+            <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-3">
+                <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[85%]">
+                    <p class="font-bold text-[var(--accent)] mb-0.5">Bot Oficial</p>
+                    Olá! Bem-vindo ao suporte automatizado do MARKTPLACE stand2.
+                </div>
+            </div>
+            <div class="pt-3 border-t border-[#222] flex gap-2">
+                <input type="text" id="chat-input-texto" placeholder="Digite sua mensagem..." class="flex-grow bg-[#050505] border border-[#222] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)]">
+                <button type="button" onclick="enviarMensagemSuporte()" class="btn-primary px-4 py-2.5 text-xs">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Termos e Segurança -->
+    <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Termos de Serviço e Isenção Legal</h3>
+            <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
+                <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por meio do sistema oficial desta plataforma.</p>
+                <p class="text-amber-400 font-medium bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 leading-relaxed">
+                    2. <strong>Isenção Total por Negociações Externas (Proteção Jurídica):</strong> O MARKTPLACE stand2 <strong>NÃO SE RESPONSABILIZA</strong> por acordos feitos por fora da plataforma (Discord, WhatsApp, Telegram). Isso inclui riscos de golpes, perda de dados e falta de proteção jurídica para transações não registradas no sistema.
+                </p>
+                <p>3. <strong>Independência da Plataforma:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todas as regras e políticas aplicáveis são exclusivamente da desenvolvedora do jogo.</p>
+                <p>4. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
+                <p>5. <strong>Custódia e Entrega:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes. Mantenha sempre provas do seu pedido/ticket e não compartilhe dados sensíveis fora do fluxo oficial.</p>
+                <p>6. <strong>Aviso de Fraudes e Disputas Indevidas:</strong> O MARKTPLACE stand2 não se responsabiliza por disputas resultantes de acordos feitos por fora da plataforma ou por falhas relacionadas ao uso indevido das contas do jogo. Em caso de disputa, registre imediatamente um ticket de rastreio pelo suporte oficial e mantenha todas as provas de comunicação e transação.</p>
+            </div>
+            <button type="button" onclick="closeTermosModal()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Entendido e Concordo</button>
+        </div>
+    </div>
+
+    <!-- Modal Anúncio -->
+    <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Anunciar Nova Conta</h3>
+            <p class="text-xs text-[var(--muted)] mb-5">Vendedor: <strong id="preview-vendedor-nome" class="text-white"></strong></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Título</label>
+                    <input id="conta-titulo" type="text" placeholder="Ex: Conta com Facas">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Preço R$</label>
+                        <input id="conta-preco" type="text" placeholder="150,00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Rank</label>
+                        <select id="conta-rank">
+                            <option value="Bronze">Bronze</option>
+                            <option value="Prata">Prata</option>
+                            <option value="Ouro">Ouro</option>
+                            <option value="Platina">Platina</option>
+                            <option value="Diamante">Diamante</option>
+                            <option value="Master" selected>Master</option>
+                            <option value="Elite">Elite</option>
+                            <option value="The Champion">The Champion</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Vínculo</label>
+                    <select id="conta-vinculo">
+                        <option value="Google ID">Google ID</option>
+                        <option value="Apple ID">Apple ID</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="VK">VK</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
+                    <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#111111] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
+                    <span class="text-[10px] text-emerald-400 mt-1 block">✨ Descreva manualmente os itens no campo abaixo após selecionar os prints.</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição</label>
+                    <textarea id="conta-desc" rows="4" placeholder="Detalhes dos itens..."></textarea>
+                </div>
+                <button id="btn-publicar-anuncio" type="button" onclick="publicarAnuncioFinal()" class="btn-primary py-3 text-sm">
+                    Publicar Conta
+                </button>
+            </div>
+            <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+    </div>
+
+    <!-- Modal Alerta -->
+    <div id="modal-alerta" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
+            <div id="alerta-icone" class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
+            <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
+            <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
+            <button type="button" onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        let currentUser = null;
+        let codigoEnviadoSimulado = "";
+        let codigoAnuncioSimulado = "";
+        let anunciosEmMemoria = [];
+        let carrinhoItens = [];
+        let pedidosAtivos = [];
+        let anuncioSelecionadoAtual = null;
+        let fotosNovasBase64 = [];
+
+        const STATUS_PEDIDO = {
+            aguardando_pagamento: 'Aguardando confirmação do pagamento',
+            aguardando_conta_vendedor: 'Pagamento confirmado - aguardando envio dos dados da conta',
+            em_conferencia: 'Dados recebidos - suporte conferindo a conta antes da entrega',
+            entregue_finalizado: 'Conta entregue e confirmada - repasse liberado'
+        };
+
+        function montarResumoRapidoTicket({ ticketId, statusKey, itensResumo, compradorEmail, compradorWhats }) {
+            const statusTexto = STATUS_PEDIDO[statusKey] || STATUS_PEDIDO.aguardando_pagamento;
+
+            return `
+🎫 <strong>Ticket:</strong> ${escapeHtml(ticketId)}
+📌 <strong>Status atual:</strong> ${statusTexto}
+🛒 <strong>Itens:</strong> ${itensResumo}
+👤 <strong>Comprador:</strong> ${compradorEmail} | ${compradorWhats}
+
+⚡ <strong>Como funciona a entrega rápida:</strong>
+1. Pagamento validado fica em custódia com o suporte.
+2. Solicitamos os dados da conta ao vendedor e conferimos o anúncio.
+3. Liberamos os dados aqui no suporte e, após sua confirmação, o repasse ao vendedor é concluído.
+`.trim();
+        }
+
+        const AVATARES = [
+            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostSkull2",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=OperatorAlpha3",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowSniper4",
+            "https://api.dicebear.com/7.x/bottts/svg?seed=SpecialForce5"
+        ];
+
+        function escapeHtml(str) {
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function sanitizarNomePublico(nome) {
+            if (!nome) return "Jogador";
+            if (nome.includes("@")) return nome.split("@")[0];
+            return nome;
+        }
+
+        function ehIdNumerico(id) {
+            return (typeof id === "number" && Number.isFinite(id)) || (typeof id === "string" && /^\d+$/.test(id.trim()));
+        }
+
+        function normalizarAnuncio(row) {
+            const curtidoFlag = Boolean(row.curtidoPormim ?? row.curtidoPorMim ?? false);
+            const fotosNormalizadas = Array.isArray(row.fotos) ? row.fotos : [];
+            const textoDesc = row.descricao ?? row.desc ?? "• Inventário verificado e garantido.";
+            const rawId = row.id ?? ("local_" + Date.now());
+            return {
+                id: ehIdNumerico(rawId) ? Number(rawId) : String(rawId),
+                titulo: row.titulo || "Conta Standoff 2",
+                preco: row.preco || "R$ 0,00",
+                rank: row.rank || "Master",
+                vinculo: row.vinculo || "Google ID",
+                descricao: textoDesc,
+                desc: textoDesc,
+                vendedor: row.vendedor || "Sistema",
+                likes: Number(row.likes ?? 0),
+                curtidoPormim: curtidoFlag,
+                fotos: fotosNormalizadas
+            };
+        }
+
+        function prepararPayloadSupabase(anuncio, incluirId = false) {
+            const textoDescricao = anuncio.descricao ?? anuncio.desc ?? "• Inventário verificado e garantido.";
+            const payload = {
+                titulo: anuncio.titulo,
+                preco: anuncio.preco,
+                rank: anuncio.rank,
+                vinculo: anuncio.vinculo,
+                descricao: textoDescricao,
+                vendedor: anuncio.vendedor,
+                likes: Number(anuncio.likes ?? 0),
+                curtidoPormim: Boolean(anuncio.curtidoPormim),
+                fotos: Array.isArray(anuncio.fotos) ? anuncio.fotos : []
+            };
+            if (incluirId && ehIdNumerico(anuncio.id)) {
+                payload.id = Number(anuncio.id);
+            }
+            return payload;
+        }
+
+        function carregarEstadoLocalSeguro() {
+            const termosAceitos = localStorage.getItem("marktplace_stand2_termos");
+            if (!termosAceitos) {
+                const modalBoasVindas = document.getElementById("modal-boas-vindas");
+                if (modalBoasVindas) modalBoasVindas.style.display = "flex";
+            }
+
+            const storedUser = localStorage.getItem("marktplace_stand2_user");
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    if (currentUser) {
+                        currentUser.username = sanitizarNomePublico(currentUser.username);
+                        aplicarEstadoUsuario();
+                    }
+                } catch (e) {
+                    localStorage.removeItem("marktplace_stand2_user");
+                }
+            }
+
+            const storedCart = localStorage.getItem("marktplace_stand2_cart");
+            if (storedCart) {
+                try {
+                    carrinhoItens = JSON.parse(storedCart) || [];
+                } catch (e) {
+                    carrinhoItens = [];
+                }
+                atualizarBadgeCarrinho();
+            }
+
+            const storedPedidos = localStorage.getItem("marktplace_stand2_pedidos");
+            if (storedPedidos) {
+                try {
+                    pedidosAtivos = JSON.parse(storedPedidos) || [];
+                } catch (e) {
+                    pedidosAtivos = [];
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            carregarEstadoLocalSeguro();
+            carregarAvataresRegistro();
+            carregarCatalogo();
+            inicializarAnuncios();
+
+            const hamburgerBtn = document.getElementById("hamburger-btn");
+            const mobileMenu = document.getElementById("mobile-menu");
+            if (hamburgerBtn && mobileMenu) {
+                hamburgerBtn.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle("hidden");
+                });
+
+                document.addEventListener("click", function(e) {
+                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                        mobileMenu.classList.add("hidden");
+                    }
+                });
+
+                mobileMenu.querySelectorAll(".menu-link").forEach(link => {
+                    link.addEventListener("click", function() {
+                        mobileMenu.classList.add("hidden");
+                    });
+                });
+            }
+        });
+
+        function concordarTermosEntrada() {
+            localStorage.setItem("marktplace_stand2_termos", "true");
+            document.getElementById("modal-boas-vindas").style.display = "none";
+        }
+
+        function mostrarAlerta(titulo, texto, tipo = "sucesso") {
+            document.getElementById("alerta-titulo").textContent = titulo;
+            document.getElementById("alerta-texto").textContent = texto;
+            const icone = document.getElementById("alerta-icone");
+            if (tipo === "sucesso") {
+                icone.className = "w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.textContent = "✓";
+            } else {
+                icone.className = "w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold";
+                icone.textContent = "!";
+            }
+            document.getElementById("modal-alerta").style.display = "flex";
+        }
+
+        function fecharAlerta() {
+            document.getElementById("modal-alerta").style.display = "none";
+        }
+
+        function carregarAvataresRegistro() {
+            const grid = document.getElementById("avatars-grid");
+            if (!grid) return;
+            grid.innerHTML = "";
+            AVATARES.forEach((url) => {
+                const img = document.createElement("img");
+                img.src = url;
+                img.className = "w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-[var(--accent)] transition p-1 bg-[#050505]";
+                img.onclick = function() {
+                    document.querySelectorAll("#avatars-grid img").forEach(i => i.classList.remove("border-[var(--accent)]"));
+                    img.classList.add("border-[var(--accent)]");
+                    document.getElementById("selected-avatar").value = url;
+                };
+                grid.appendChild(img);
+            });
+            if (grid.firstChild) grid.firstChild.click();
+        }
+
+        function showTab(tab, event) {
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+            document.getElementById(tab + "-tab").classList.add("active");
+            if (event && event.currentTarget) event.currentTarget.classList.add("active");
+        }
+
+        function openModal() { setModalVisivel("modal", true); document.getElementById("mobile-menu").classList.add("hidden"); }
+        function closeModal() { setModalVisivel("modal", false); }
+        function openTermosModal() { setModalVisivel("modal-termos", true); }
+        function closeTermosModal() { setModalVisivel("modal-termos", false); }
+
+        function abrirRastreioPedido() {
+            document.getElementById("mobile-menu").classList.add("hidden");
+            document.getElementById("modal-rastreio").style.display = "flex";
+        }
+        function closeRastreio() { setModalVisivel("modal-rastreio", false); }
+
+        function consultarStatusPedido() {
+            const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
+            const resBox = document.getElementById("resultado-rastreio");
+            if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
+
+            const pedidoEncontrado = pedidosAtivos.find(p => p.ticketId.toUpperCase() === codigo || p.pedidoId.toUpperCase() === codigo);
+            resBox.classList.remove("hidden");
+
+            if (pedidoEncontrado) {
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedidoEncontrado.status)}</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedidoEncontrado.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedidoEncontrado.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedidoEncontrado.ticketId)}</strong></p>`;
+            } else {
+                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>`;
+            }
+        }
+
+        function verificarAutenticacaoAnuncio() {
+            document.getElementById("mobile-menu").classList.add("hidden");
+            if (!currentUser) {
+                mostrarAlerta("Atenção", "Você precisa estar logado para anunciar uma conta!", "aviso");
+                openModal();
+                return;
+            }
+            document.getElementById("anuncio-email").value = currentUser.email || "";
+            setModalVisivel("modal-verificar-anuncio", true);
+        }
+        function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
+
+        function enviarCodigoAnuncio() {
+            const email = document.getElementById("anuncio-email").value.trim();
+            const feedback = document.getElementById("anuncio-feedback");
+            if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
+            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
+                codigoAnuncioSimulado = "111111";
+            } else {
+                codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            }
+            feedback.style.color = "#10b981";
+            feedback.textContent = `Código enviado! (Código: ${codigoAnuncioSimulado})`;
+        }
+
+        function confirmarCodigoAnuncio(event) {
+            event.preventDefault();
+            const codigoInput = document.getElementById("anuncio-code").value.trim();
+            const feedback = document.getElementById("anuncio-feedback");
+            if (!codigoAnuncioSimulado || codigoInput !== codigoAnuncioSimulado) {
+                feedback.textContent = "Código incorreto!";
+                return;
+            }
+            closeVerificarAnuncio();
+            document.getElementById("anuncio-code").value = "";
+            feedback.textContent = "";
+            document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
+            setModalVisivel("modal-anuncio", true);
+        }
+        function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
+
+        function enviarCodigoGmail() {
+            const email = document.getElementById("reg-email").value.trim();
+            const feedback = document.getElementById("register-feedback");
+            if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
+            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
+                codigoEnviadoSimulado = "111111";
+            } else {
+                codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
+            }
+            feedback.style.color = "#10b981";
+            feedback.textContent = `Código enviado! (Código: ${codigoEnviadoSimulado})`;
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const email = document.getElementById("reg-email").value.trim();
+            const whatsapp = document.getElementById("reg-whatsapp").value.trim();
+            const codigoInput = document.getElementById("reg-code").value.trim();
+            let username = document.getElementById("reg-username").value.trim();
+            const password = document.getElementById("reg-password").value;
+            const passwordConfirm = document.getElementById("reg-password-confirm").value;
+            const feedback = document.getElementById("register-feedback");
+
+            if (codigoInput !== codigoEnviadoSimulado) { feedback.textContent = "Código incorreto!"; return; }
+            if (password.length < 6 || password !== passwordConfirm) { feedback.textContent = "Senhas inválidas ou não conferem."; return; }
+
+            if (!username) username = `Player_${Math.floor(1000 + Math.random() * 9000)}`;
+            let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+            if (users.some(u => u.email === email)) { feedback.textContent = "Gmail já cadastrado."; return; }
+
+            const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
+            users.push({ email, whatsapp, username, password, avatar });
+            localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
+
+            currentUser = { username, email, whatsapp, password, avatar };
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            aplicarEstadoUsuario();
+            closeModal();
+            mostrarAlerta("Sucesso!", "Conta criada e salva com segurança!");
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const identifier = document.getElementById("login-identifier").value.trim();
+            const password = document.getElementById("login-password").value;
+            const feedback = document.getElementById("login-feedback");
+            let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+            const foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
+
+            if (!foundUser) { feedback.textContent = "Dados incorretos."; return; }
+            currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || "(Não informado)", password: foundUser.password, avatar: foundUser.avatar };
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            aplicarEstadoUsuario();
+            closeModal();
+        }
+
+        function aplicarEstadoUsuario() {
+            const userPanel = document.getElementById("userPanel");
+            const loginBtnContainer = document.getElementById("loginButtonContainer");
+            if (currentUser) {
+                userPanel.classList.remove("hidden");
+                loginBtnContainer.classList.add("hidden");
+                document.getElementById("user-avatar-img").src = currentUser.avatar;
+                document.getElementById("user-name-text").textContent = sanitizarNomePublico(currentUser.username);
+            } else {
+                userPanel.classList.add("hidden");
+                loginBtnContainer.classList.remove("hidden");
+            }
+            carregarCatalogo();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem("marktplace_stand2_user");
+            aplicarEstadoUsuario();
+            document.getElementById("mobile-menu").classList.add("hidden");
+            mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
+        }
+
+        async function inicializarAnuncios() {
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from("contas")
+                        .select("*")
+                        .order("id", { ascending: false });
+
+                    if (error) {
+                        console.error("❌ Erro ao carregar anúncios do Supabase:", error);
+                    } else if (Array.isArray(data)) {
+                        if (data.length > 0) {
+                            anunciosEmMemoria = data.map(normalizarAnuncio);
+                            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+                            carregarCatalogo();
+                            return;
+                        } else {
+                            console.info("ℹ️ Tabela public.contas retornou 0 linhas.");
+                        }
+                    }
+                } catch (e) {
+                    console.error("❌ Exceção ao consultar Supabase:", e);
+                }
+            }
+
+            const salvos = localStorage.getItem("marktplace_stand2_anuncios");
+            if (salvos) {
+                try {
+                    const parsed = JSON.parse(salvos);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        anunciosEmMemoria = parsed.map(normalizarAnuncio);
+                        carregarCatalogo();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Erro ao ler localStorage de anúncios:", e);
+                }
+            }
+
+            anunciosEmMemoria = [normalizarAnuncio({
+                id: "default_1",
+                titulo: "Conta com M9 Bayonet & AKR",
+                preco: "R$ 150,00",
+                rank: "Master",
+                vinculo: "Google ID",
+                descricao: "• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch",
+                vendedor: "Sistema",
+                likes: 12,
+                curtidoPormim: false,
+                fotos: []
+            })];
+            carregarCatalogo();
+        }
+
+        function formatarPrecoMoeda(valorStr) {
+            let limpo = valorStr.replace(/[^\d,.]/g, "").trim();
+            if (!limpo) return "R$ 0,00";
+            limpo = limpo.replace(".", ",");
+            if (!limpo.includes(",")) {
+                limpo = limpo + ",00";
+            } else {
+                let partes = limpo.split(",");
+                if (partes[1].length === 1) {
+                    limpo = partes[0] + "," + partes[1] + "0";
+                }
+            }
+            return `R$ ${limpo}`;
+        }
+
+        function carregarCatalogo() {
+            const grid = document.getElementById("catalogo-cards");
+            if (!grid) return;
+            grid.innerHTML = "";
+            anunciosEmMemoria.forEach(anuncio => {
+                const item = normalizarAnuncio(anuncio);
+                const card = document.createElement("div");
+                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
+                const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : "";
+
+                const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
+
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        async function curtirAnuncio(id) {
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+
+            const likesAtual = Number(anuncio.likes || 0);
+            const proximoCurtido = !Boolean(anuncio.curtidoPormim);
+            const proximoLikes = proximoCurtido ? likesAtual + 1 : Math.max(0, likesAtual - 1);
+
+            anuncio.curtidoPormim = proximoCurtido;
+            anuncio.likes = proximoLikes;
+
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+            carregarCatalogo();
+
+            if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
+                try {
+                    const { error } = await window.supabaseClient
+                        .from("contas")
+                        .update({
+                            curtidoPormim: proximoCurtido,
+                            likes: proximoLikes
+                        })
+                        .eq("id", Number(anuncio.id));
+
+                    if (error) {
+                        console.warn("⚠️ Erro ao atualizar curtida no Supabase:", error);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Exceção ao atualizar curtida no Supabase:", e);
+                }
+            }
+        }
+
+        function adicionarAoCarrinho(id) {
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+            if (carrinhoItens.some(item => String(item.id) === String(id))) {
+                mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
+                return;
+            }
+            carrinhoItens.push(anuncio);
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
+            atualizarBadgeCarrinho();
+            mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
+        }
+
+        function adicionarAoCarrinhoAtual() {
+            if (!anuncioSelecionadoAtual) return;
+            closeDetalhes();
+            adicionarAoCarrinho(anuncioSelecionadoAtual.id);
+        }
+
+        function atualizarBadgeCarrinho() {
+            const badge = document.getElementById("cart-badge");
+            if (badge) badge.textContent = carrinhoItens.length;
+        }
+
+        function abrirCarrinho() {
+            const container = document.getElementById("carrinho-itens");
+            const totalEl = document.getElementById("carrinho-total");
+            container.innerHTML = "";
+
+            if (carrinhoItens.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Seu carrinho está vazio.</p>';
+                totalEl.textContent = "R$ 0,00";
+            } else {
+                let totalSoma = 0;
+                carrinhoItens.forEach((item, index) => {
+                    let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+                    totalSoma += numPreco;
+
+                    const div = document.createElement("div");
+                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
+                    div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
+                    container.appendChild(div);
+                });
+                totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace(".", ",")}`;
+            }
+            document.getElementById("modal-carrinho").style.display = "flex";
+        }
+
+        function closeCarrinho() { setModalVisivel("modal-carrinho", false); }
+
+        function removerDoCarrinho(index) {
+            carrinhoItens.splice(index, 1);
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
+            atualizarBadgeCarrinho();
+            abrirCarrinho();
+        }
+
+        function finalizarCompraCarrinho() {
+            if (carrinhoItens.length === 0) { mostrarAlerta("Aviso", "Seu carrinho está vazio.", "aviso"); return; }
+            closeCarrinho();
+            if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
+            document.getElementById("modal-checkout").style.display = "flex";
+        }
+
+        function abrirCheckoutDireto() {
+            if (!currentUser) { closeDetalhes(); mostrarAlerta("Login Necessário", "Entre para comprar.", "aviso"); openModal(); return; }
+            closeDetalhes();
+            if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
+                carrinhoItens = [anuncioSelecionadoAtual];
+            }
+            document.getElementById("modal-checkout").style.display = "flex";
+        }
+        function closeCheckout() { setModalVisivel("modal-checkout", false); }
+
+        function mudarMetodoPagamento(metodo) {
+            const caixaCartao = document.getElementById("container-campos-cartao");
+            if (metodo === "cartao") {
+                caixaCartao.classList.remove("hidden");
+            } else {
+                caixaCartao.classList.add("hidden");
+            }
+        }
+
+        function comprimirImagem(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement("canvas");
+                        let w = img.width, h = img.height;
+                        if (w > 800) { h *= 800 / w; w = 800; }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext("2d");
+                        ctx.filter = "none";
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", 0.7));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        const catalogoStandoff2 = {
+            rifles: [
+                "M4A4", "M4A1-S", "AK-47", "AK-74U", "AWP", "SG 553", "G3SG1", "SCAR-20",
+                "MAG-7", "NOVA", "XM1014"
+            ],
+            skins: {
+                "M9 Bayonet": ["Treasure Hunter", "Lore", "Fade", "Doppler", "Chrome"],
+                "Gloves": ["Carbon", "Sport", "Driver", "Motorsports", "Crystalline"],
+                "AK-47": ["Fire Serpent", "Redline", "Case Hardened", "Midnight", "Black Laminate"],
+                "AWP": ["Dragon Lore", "Hyper Beast", "Gungnir", "Medusa", "asi127"],
+                "M4A4": ["Howl", "Fire Serpent", "Hyper Beast", "Emperor", "Neon Kimera"],
+                "USP-S": ["Abyss", "Night", "Master", "Royal", "Yellow Jacket"],
+                "P250": ["Bone Snake", "El Dorado", "Guardian", "Oasis", "Vivid"],
+                "Glock-18": ["Fade", "Water Elemental", "Radiation", "Crimson Web", "Heirloom"]
+            },
+            patterns: ["412", "12", "318", "661", "823", "947", "000", "100", "200", "300"],
+            itens_especiais: ["Tie Dye", "Jade Stone"]
+        };
+
+        async function processarFotosInventario(input) {
+            if (!input.files || input.files.length === 0) return;
+            fotosNovasBase64 = [];
+
+            const totalFotos = Math.min(input.files.length, 7);
+            for (let i = 0; i < totalFotos; i++) {
+                const comp = await comprimirImagem(input.files[i]);
+                if (comp) fotosNovasBase64.push(comp);
+                const campoDesc = document.getElementById("conta-desc");
+                if (campoDesc) {
+                    campoDesc.value = `📸 Processando foto ${i + 1} de ${totalFotos}...`;
+                }
+            }
+
+            if (fotosNovasBase64.length > 0) {
+                const campoDesc = document.getElementById("conta-desc");
+                if (campoDesc) {
+                    campoDesc.value = `${fotosNovasBase64.length} foto(s) comprimida(s) em cor natural. Descreva manualmente os itens abaixo.`;
+                    limparAvisoConfianca();
+                }
+            } else {
+                limparAvisoConfianca();
+                const campoDesc = document.getElementById("conta-desc");
+                if (campoDesc) {
+                    campoDesc.value = "📸 Nenhuma foto selecionada.";
+                }
+            }
+        }
+
+        function limparAvisoConfianca() {
+            const existentes = document.querySelectorAll(".confianca-avisos");
+            existentes.forEach(el => el.remove());
+        }
+
+        async function publicarAnuncioFinal() {
+            const btnPublicar = document.getElementById("btn-publicar-anuncio");
+            const titulo = document.getElementById("conta-titulo").value.trim();
+            const precoInput = document.getElementById("conta-preco").value.trim();
+            const rank = document.getElementById("conta-rank").value;
+            const vinculo = document.getElementById("conta-vinculo").value;
+            let descFinal = document.getElementById("conta-desc").value.trim();
+
+            if (!titulo || !precoInput) { mostrarAlerta("Aviso", "Preencha título e preço.", "aviso"); return; }
+            if (fotosNovasBase64.length === 0) { mostrarAlerta("Aviso", "Adicione pelo menos um print do inventário.", "aviso"); return; }
+
+            const maxTotalBytes = 2 * 1024 * 1024;
+            let totalBytes = 0;
+            for (const photo of fotosNovasBase64) {
+                const base64Part = photo.split("base64,")[1] || "";
+                totalBytes += base64Part.length * 3 / 4;
+            }
+            if (totalBytes > maxTotalBytes) {
+                mostrarAlerta("Aviso", "Total de fotos muito grande. Reduza o número de imagens ou use fotos menores.", "aviso");
+                return;
+            }
+
+            if (!descFinal) {
+                descFinal = "• Inventário verificado e garantido.";
+            }
+
+            const precoFormatado = formatarPrecoMoeda(precoInput);
+
+            let anuncioParaSalvar = normalizarAnuncio({
+                id: "local_" + Date.now(),
+                titulo,
+                preco: precoFormatado,
+                rank,
+                vinculo,
+                descricao: descFinal,
+                vendedor: sanitizarNomePublico(currentUser ? currentUser.username : "Jogador"),
+                likes: 0,
+                curtidoPormim: false,
+                fotos: [...fotosNovasBase64]
+            });
+
+            if (btnPublicar) {
+                btnPublicar.disabled = true;
+                btnPublicar.textContent = "Publicando...";
+            }
+
+            let salvoNoBanco = false;
+
+            if (window.supabaseClient) {
+                try {
+                    const { data: inseridos, error } = await window.supabaseClient
+                        .from("contas")
+                        .insert([prepararPayloadSupabase(anuncioParaSalvar, false)])
+                        .select("*");
+
+                    if (error) {
+                        console.error("Erro ao salvar no Supabase:", error);
+                        mostrarAlerta("Erro ao Salvar no Banco", `O Supabase recusou o anúncio (${error.code || "erro"}): ${error.message}`, "aviso");
+                    } else {
+                        salvoNoBanco = true;
+                        if (Array.isArray(inseridos) && inseridos.length > 0) {
+                            anuncioParaSalvar = normalizarAnuncio(inseridos[0]);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Exceção ao salvar no Supabase:", e);
+                    mostrarAlerta("Erro de Conexão", "Não foi possível comunicar com o Supabase.", "aviso");
+                }
+            } else {
+                mostrarAlerta("Modo Local", "Cliente Supabase indisponível; anúncio salvo apenas neste navegador.", "aviso");
+            }
+
+            if (btnPublicar) {
+                btnPublicar.disabled = false;
+                btnPublicar.textContent = "Publicar Conta";
+            }
+
+            if (!salvoNoBanco && window.supabaseClient) {
+                return;
+            }
+
+            anunciosEmMemoria.unshift(anuncioParaSalvar);
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+            fotosNovasBase64 = [];
+
+            document.getElementById("conta-titulo").value = "";
+            document.getElementById("conta-preco").value = "";
+            document.getElementById("conta-desc").value = "";
+            document.getElementById("conta-fotos").value = "";
+
+            carregarCatalogo();
+            closeAnuncioModal();
+            mostrarAlerta("Sucesso", "Conta publicada e salva no banco com sucesso!");
+        }
+
+        async function removerAnuncio(id) {
+            const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+            carregarCatalogo();
+
+            const idBanco = alvo && ehIdNumerico(alvo.id) ? Number(alvo.id) : (ehIdNumerico(id) ? Number(id) : null);
+
+            if (window.supabaseClient && idBanco !== null) {
+                try {
+                    const { error } = await window.supabaseClient
+                        .from("contas")
+                        .delete()
+                        .eq("id", idBanco);
+                    if (error) {
+                        console.warn("⚠️ Erro ao remover anúncio no Supabase:", error);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Exceção ao remover anúncio no Supabase:", e);
+                }
+            }
+        }
+
+        function abrirDetalhes(id) {
+            const encontrado = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!encontrado) return;
+            anuncioSelecionadoAtual = normalizarAnuncio(encontrado);
+
+            document.getElementById("detalhe-titulo").textContent = anuncioSelecionadoAtual.titulo;
+            document.getElementById("detalhe-preco").textContent = anuncioSelecionadoAtual.preco;
+            document.getElementById("detalhe-badge").textContent = anuncioSelecionadoAtual.rank;
+            document.getElementById("detalhe-vinculo").textContent = anuncioSelecionadoAtual.vinculo;
+            document.getElementById("detalhe-desc").textContent = anuncioSelecionadoAtual.descricao ?? anuncioSelecionadoAtual.desc;
+            document.getElementById("detalhe-vendedor").textContent = sanitizarNomePublico(anuncioSelecionadoAtual.vendedor);
+
+            const imgContainer = document.getElementById("detalhe-img-container");
+            const imgElement = document.getElementById("detalhe-imagem");
+            const minis = document.getElementById("detalhe-miniaturas");
+            minis.innerHTML = "";
+
+            if (anuncioSelecionadoAtual.fotos && anuncioSelecionadoAtual.fotos.length > 0) {
+                imgElement.src = anuncioSelecionadoAtual.fotos[0];
+                imgContainer.classList.remove("hidden");
+                anuncioSelecionadoAtual.fotos.forEach((url, idx) => {
+                    const thumb = document.createElement("img");
+                    thumb.src = url;
+                    thumb.alt = `Miniatura ${idx + 1}`;
+                    thumb.className = `w-12 h-12 object-cover rounded cursor-pointer border-2 ${idx === 0 ? "border-[var(--accent)]" : "border-transparent"}`;
+                    thumb.onclick = () => { imgElement.src = url; };
+                    minis.appendChild(thumb);
+                });
+            } else {
+                imgContainer.classList.add("hidden");
+            }
+            document.getElementById("modal-detalhes").style.display = "flex";
+        }
+
+        function closeDetalhes() { setModalVisivel("modal-detalhes", false); }
+
+        function gerarQrCodePagamento() {
+            closeCheckout();
+            let totalCarrinhoStr = "R$ 0,00";
+            let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
+            if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
+
+            let somaTotal = 0;
+            carrinhoItens.forEach(item => {
+                let p = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+                somaTotal += p;
+            });
+            if (somaTotal === 0 && anuncioSelecionadoAtual) {
+                somaTotal = parseFloat(anuncioSelecionadoAtual.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+            }
+            totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
+
+            const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
+            document.getElementById("pedido-codigo").textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
+            document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
+
+            const conteudoPag = document.getElementById("pag-conteudo");
+            if (metodoEscolhido === "pix") {
+                const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
+                conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
+            } else {
+                conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
+            }
+            document.getElementById("modal-pagamento-detalhes").style.display = "flex";
+        }
+
+        function closePagamentoDetalhes() { document.getElementById("modal-pagamento-detalhes").style.display = "none"; }
+
+        function enviarComprovanteParaTicket() {
+            closePagamentoDetalhes();
+            const ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
+            const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
+
+            document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
+
+            let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
+            let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
+
+            document.getElementById("ticket-info-gmail").textContent = gmailUser;
+            document.getElementById("ticket-info-wpp").textContent = wppUser;
+
+            let nomesItens = carrinhoItens.map(i => i.titulo) || [];
+            const listaItensFormatada = Array.isArray(nomesItens)
+                ? nomesItens.filter(Boolean).join(", ")
+                : String(nomesItens || "").trim();
+            let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
+
+            pedidosAtivos.unshift({
+                ticketId: ticketIdGerado,
+                pedidoId: pedidoIdGerado,
+                status: "Aprovado • Custódia Segura",
+                itens: listaItensFormatada,
+                total: valorTotalPedido
+            });
+            localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
+
+            const statusKey = "aguardando_conta_vendedor";
+            const resumoRapido = montarResumoRapidoTicket({
+                ticketId: ticketIdGerado,
+                statusKey,
+                itensResumo: listaItensFormatada || "Item do catálogo",
+                compradorEmail: gmailUser,
+                compradorWhats: wppUser
+            });
+
+            const chatBox = document.getElementById("chat-mensagens");
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            document.getElementById("modal-ticket").style.display = "flex";
+
+            carrinhoItens = [];
+            localStorage.removeItem("marktplace_stand2_cart");
+            atualizarBadgeCarrinho();
+        }
+
+        function closeTicketModal() { document.getElementById("modal-ticket").style.display = "none"; }
+
+        function abrirChatSuporte() {
+            closeTicketModal();
+            document.getElementById("modal-chat-suporte").style.display = "flex";
+        }
+
+        function closeChatSuporte() { document.getElementById("modal-chat-suporte").style.display = "none"; }
+
+        function enviarMensagemSuporte() {
+            const input = document.getElementById("chat-input-texto");
+            if (!input.value.trim()) return;
+            const chat = document.getElementById("chat-mensagens");
+            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(input.value)}</div>`;
+            input.value = "";
+            chat.scrollTop = chat.scrollHeight;
+            setTimeout(() => {
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Recebido! Nossa equipe de suporte está à disposição para auxiliar na transferência segura.</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+        }
+
+        function openModalComoFunciona() { setModalVisivel("modal-como-funcionamos", true); }
+
+        function closeModalComoFunciona() {
+            setModalVisivel("modal-como-funcionamos", false);
+        }
+
+        // Header scroll hide/show (apenas transform/opacity - para todas as telas)
+        (function() {
+            const header = document.querySelector("header.sticky");
+            if (!header) return;
+            let lastScrollY = window.scrollY;
+            const hideThreshold = 80;
+            const showMinDelta = 20;
+            const showNearTop = 120;
+
+            const updateHeader = () => {
+                const currentScrollY = window.scrollY;
+                const scrollDelta = lastScrollY - currentScrollY;
+
+                if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
+                    header.style.transform = "translateY(-100%)";
+                    header.style.opacity = "0";
+                } else if (scrollDelta > showMinDelta && currentScrollY < showNearTop) {
+                    header.style.transform = "translateY(0)";
+                    header.style.opacity = "1";
+                }
+
+                lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+            };
+
+            let ticking = false;
+            window.addEventListener("scroll", () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        updateHeader();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+
+            updateHeader();
+        })();
+    </script>
+
+    <!-- Modal Como Funcionamos -->
+    <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
