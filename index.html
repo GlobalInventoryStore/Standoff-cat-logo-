@@ -1416,8 +1416,8 @@
 
                     // Normaliza o texto extraído: lowercase, remove aspas extras, espaços múltiplos,
                     // trata acentos e caracteres especiais comuns em prints do Standoff 2
-                    let textoNormalizado = (extractedText.data.text || '').toString()
-                        .toLowerCase()
+                    const rawText = (extractedText?.data?.text || '').toString();
+                    let textoNormalizado = rawText.toLowerCase()
                         // Remove aspas duplas e simples extras
                         .replace(/[""]/g, '')
                         // Normaliza espaços múltiplos para um único espaço
@@ -1535,21 +1535,29 @@
                     }
 
                     const campoDesc = document.getElementById("conta-desc");
-                    campoDesc.value = descricao = desc;
+                    // Preenche apenas se o elemento existir no DOM
+                    if (campoDesc) {
+                        campoDesc.value = descricao = desc;
+                        // Insere aviso de confiança após o campo
+                        const avisosAntigos = document.querySelectorAll('.confianca-avisos');
+                        avisosAntigos.forEach(el => el.remove());
 
-                    const avisosAntigos = document.querySelectorAll('.confianca-avisos');
-                    avisosAntigos.forEach(el => el.remove());
-
-                    const avisoConf = document.createElement('div');
-                    avisoConf.className = 'bg-[#181818] border border-[#262626] rounded-xl p-3 mb-4 text-[10px] text-[#d4ff00] confianca-avisos';
-                    const totalReconhecidos = resultados.filter(r => r.tipo !== 'nao_reconhecido').length;
-                    const confianca = totalTokens > 0 ? Math.min(1.0, totalReconhecidos / totalTokens * 1.2) : 0.3;
-                    if (confianca < 0.4) {
-                        avisoConf.innerHTML = '⚠️ <strong>Baixa confiança OCR</strong> - O sistema leu o print mas reconheceu poucos itens. ✏️ Por favor, confirme e complete manualmente os itens abaixo antes de publicar. A conta passará por conferência na intermediação e erros podem causar rejeição do anúncio.';
-                    } else {
-                        avisoConf.innerHTML = '✅ <strong>Leitura OCR concluída</strong> - Foram reconhecidos ' + resultados.length + ' item(ns) do catálogo Standoff 2. ✏️ Verifique se todos os itens estão corretos e complete o que estiver faltando antes de publicar.';
+                        const avisoConf = document.createElement('div');
+                        avisoConf.className = 'bg-[#181818] border border-[#262626] rounded-xl p-3 mb-4 text-[10px] text-[#d4ff00] confianca-avisos';
+                        const totalReconhecidos = resultados.filter(r => r.tipo !== 'nao_reconhecido').length;
+                        // Evita divisão por zero: conta total de tokens reconhecidos
+                        const totalTokens = textoNormalizado.split(/\s/).filter(t => t.trim().length > 0).length;
+                        const confianca = totalTokens > 0 ? Math.min(1.0, totalReconhecidos / totalTokens * 1.2) : 0.3;
+                        if (confianca < 0.4) {
+                            avisoConf.innerHTML = '⚠️ <strong>Baixa confiança OCR</strong> - O sistema leu o print mas reconheceu poucos itens. ✏️ Por favor, confirme e complete manualmente os itens abaixo antes de publicar. A conta passará por conferência na intermediação e erros podem causar rejeição do anúncio.';
+                        } else if (resultados.length > 0) {
+                            avisoConf.innerHTML = '✅ <strong>Leitura OCR concluída</strong> - Foram reconhecidos ' + resultados.length + ' item(ns) do catálogo Standoff 2. ✏️ Verifique se todos os itens estão corretos e complete o que estiver faltando antes de publicar.';
+                        } else {
+                            // Nenhum item reconhecido: avisa para conferência manual, sem cair em erro interno
+                            avisoConf.innerHTML = '⚠️ <strong>Baixa confiança OCR</strong> - Nenhum item do catálogo Standoff 2 foi reconhecido no texto do print. ✏️ Por favor, confira e complete manualmente os itens abaixo antes de publicar. A conta passará por conferência na intermediação.';
+                        }
+                        campoDesc.parentNode.insertBefore(avisoConf, campoDesc.nextSibling);
                     }
-                    campoDesc.parentNode.insertBefore(avisoConf, campoDesc.nextSibling);
 
                 } catch (err) {
                     console.error('Erro na leitura OCR:', err);
