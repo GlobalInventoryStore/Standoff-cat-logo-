@@ -9,7 +9,108 @@
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg: #080808;
+            --card: #121212;
+            --accent: #d4ff00;
+            --accent-hover: #c2eb00;
+            --muted: #a1a1aa;
+        }
+
+        html, body {
+            background-color: #080808;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, textarea {
+            background-color: #111111 !important;
+            color: #ffffff !important;
+            border: 1px solid #262626;
+            border-radius: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .input-group {
+            margin-bottom: 0.85rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: var(--accent);
+            color: #000000;
+            font-weight: 800;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 640px) {
+            .accounts-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .accounts-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+    </style>
     <script>
         (function initSupabaseSeguro() {
             const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || "https://dumvvprvafzmzqdrenyn.supabase.co";
@@ -26,104 +127,32 @@
                 console.warn("⚠️ Falha ao iniciar cliente Supabase:", e);
             }
         })();
+
         window.setModalVisivel = function(modalId, aberto) {
-            // Safe fallback: check if modal exists before trying to use it
             const modal = document.getElementById(modalId);
             if (!modal) {
                 console.warn(`Modal with ID "${modalId}" not found in DOM`);
                 return;
             }
-            
+
             if (aberto) {
                 modal.style.display = "flex";
-                // Block body scroll and add overscroll containment
                 document.body.style.overflow = "hidden";
                 document.body.style.overscrollBehavior = "contains";
-                // Add overscroll containment to modal containers with overflow-y-auto
                 const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
                 containers.forEach(el => {
                     el.style.overscrollBehavior = "contains";
                 });
             } else {
                 modal.style.display = "none";
-                // Release body scroll
                 document.body.style.overflow = "";
-                document.body.style.overscrollBehavior = "";
-                // Release overscroll containment
                 const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
                 containers.forEach(el => {
                     el.style.overscrollBehavior = "";
                 });
             }
-        }
-    </script>        
-
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #080808;
-            --bg-card: #121212;
-            --bg-card-hover: #181818;
-            --accent: #d4ff00;
-            --accent-hover: #bde000;
-            --text-main: #f5f5f5;
-            --muted: #888888;
-            --border-color: #222222;
-        }
-        html {
-            box-sizing: border-box;
-            width: 100%;
-            overflow-x: hidden;
-        }
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            font-family: "Inter", sans-serif;
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            padding: 0;
-        }
-        .accounts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab { background: transparent; border: none; color: var(--muted); padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; }
-        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-        .input-group { margin-bottom: 1rem; }
-        .input-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
-        input, select, textarea {
-            background-color: #111111 !important;
-            color: #ffffff !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            font-size: 0.875rem;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--accent) !important;
-            outline: none !important;
-        }
-        select option {
-            background-color: #121212;
-            color: #ffffff;
-        }
-        .btn-primary { background: var(--accent); color: #000; padding: 0.75rem; border-radius: 0.5rem; font-weight: 700; text-align: center; cursor: pointer; width: 100%; transition: background 0.2s; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        header.sticky {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-    </style>
+        };
+    </script>
 </head>
 
 <body>
@@ -136,7 +165,7 @@
     <!-- Modal Obrigatório de Entrada / Termos -->
     <div id="modal-boas-vindas" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden items-center justify-center z-[999999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative shadow-2xl">
-            <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Bemvindo ao MARKTPLACE stand2</h3>
+            <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Bem-vindo ao MARKTPLACE stand2</h3>
             <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-6 max-h-[50vh] overflow-y-auto pr-2">
                 <p>O <strong>MARKTPLACE stand2</strong> é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2.</p>
                 <p>Nosso objetivo é proporcionar um ambiente seguro e organizado para transações entre jogadores, garantindo que ambas as partes sejam protegidas.</p>
@@ -145,9 +174,8 @@
                 <p>2. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
                 <p>3. <strong>Custódia Protegida:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes.</p>
                 <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
-                    2. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.
-                </p>
-                <p>3. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
+                <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
+                <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
             </div>
             <button type="button" onclick="concordarTermosEntrada()" class="btn-primary">
                 Concordo com os Termos e Entrar
@@ -162,14 +190,14 @@
                 <span class="text-xl font-black text-white tracking-wider uppercase leading-none">MARKTPLACE</span>
                 <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase mt-0.5">stand2</span>
             </div>
-            
+
             <div class="flex items-center gap-3 relative">
                 <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
                     🔍 Rastrear Pedido
                 </button>
 
                 <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
-                    🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
+                    🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
                 </button>
 
                 <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-white focus:outline-none cursor-pointer relative z-[10000]">
@@ -183,8 +211,8 @@
                     <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
                     <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
-<a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Funcionamos</a>
-                    
+                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Funcionamos</a>
+
                     <div class="pt-3 border-t border-[#222]" id="authSection">
                         <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
                             <div class="flex items-center gap-2">
@@ -221,7 +249,7 @@
         <section id="secao-contas" class="pb-12 pt-12">
             <h2 class="text-3xl font-bold mb-2 text-white">Catálogo de Contas</h2>
             <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes ou adicionar ao carrinho:</p>
-            
+
             <div class="accounts-grid" id="catalogo-cards"></div>
         </section>
     </main>
@@ -239,7 +267,7 @@
                 <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
-            
+
             <div class="input-group flex gap-2">
                 <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
                 <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
@@ -252,12 +280,12 @@
     <!-- Modal de Carrinho -->
     <div id="modal-carrinho" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-        <div class="bg-[#111111] text-white text-xs mb-3">Seu Carrinho</div>
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
                 <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
-            
+
             <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
 
             <div class="bg-[#050505] p-3.5 rounded-xl border border-[#222] mb-4 flex justify-between items-center">
@@ -281,12 +309,12 @@
                 <h3 class="text-xl font-bold">Acesso à Conta</h3>
                 <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
-            
+
             <div class="flex border-b border-[#222] mb-4">
                 <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
                 <button type="button" class="tab" onclick="showTab('register', event)">Cadastrar</button>
             </div>
-            
+
             <div id="login-tab" class="tab-content active">
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
@@ -372,7 +400,7 @@
     <!-- Modal Detalhes -->
     <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-        <div class="bg-[#111111] text-white text-xs mb-3">Detalhes da Conta</div>
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
             <div id="detalhe-img-container" class="mb-4 hidden">
                 <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#222] flex items-center justify-center">
                     <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-full object-contain">
@@ -390,7 +418,7 @@
                 <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-semibold">Protegido</span>
             </div>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
-            
+
             <div class="space-y-3">
                 <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
                     🛒 Adicionar ao Carrinho
@@ -407,10 +435,10 @@
     <!-- Modal Checkout -->
     <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
-        <div class="bg-[#111111] text-white text-xs mb-3">Etapa 1 de 2 - Pagamento</div>
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
-            
+
             <div class="space-y-3 mb-6">
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
                     <div class="flex items-center gap-3">
@@ -467,7 +495,7 @@
     <!-- Modal Pagamento Detalhes -->
     <div id="modal-pagamento-detalhes" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-        <div class="bg-[#111111] text-white text-xs mb-3">Etapa 2 de 2 - QR Code & Confirmação</div>
+            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
                 <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
@@ -523,7 +551,7 @@
                 </div>
                 <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
-            <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-1">
+            <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-3">
                 <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[85%]">
                     <p class="font-bold text-[var(--accent)] mb-0.5">Bot Oficial</p>
                     Olá! Bem-vindo ao suporte automatizado do MARKTPLACE stand2.
@@ -543,7 +571,7 @@
             <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por meio do sistema oficial desta plataforma.</p>
                 <p class="text-amber-400 font-medium bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 leading-relaxed">
-                    2. <strong>Isenção Total por Negociações Externas (Proteção Jurídica):</strong> O MARKTPLACE stand2 <strong>NÃO SE RESPONSABILIZAM</strong> por acordos feitos por fora da plataforma (Discord, WhatsApp, Telegram). Isso inclui riscos de golpes, perda de dados e falta de proteção jurídica para transações não registradas no sistema.
+                    2. <strong>Isenção Total por Negociações Externas (Proteção Jurídica):</strong> O MARKTPLACE stand2 <strong>NÃO SE RESPONSABILIZA</strong> por acordos feitos por fora da plataforma (Discord, WhatsApp, Telegram). Isso inclui riscos de golpes, perda de dados e falta de proteção jurídica para transações não registradas no sistema.
                 </p>
                 <p>3. <strong>Independência da Plataforma:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todas as regras e políticas aplicáveis são exclusivamente da desenvolvedora do jogo.</p>
                 <p>4. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
@@ -593,12 +621,12 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Leitura Instantânea de Inventário</label>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
                     <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#111111] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
-                    <span class="text-[10px] text-emerald-400 mt-1 block">✨ As skins e patterns são lidas e preenchidas automaticamente na descrição abaixo ao selecionar o print!</span>
+                    <span class="text-[10px] text-emerald-400 mt-1 block">✨ Descreva manualmente os itens no campo abaixo após selecionar os prints.</span>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição (Preenchida Automaticamente)</label>
+                    <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição</label>
                     <textarea id="conta-desc" rows="4" placeholder="Detalhes dos itens..."></textarea>
                 </div>
                 <button id="btn-publicar-anuncio" type="button" onclick="publicarAnuncioFinal()" class="btn-primary py-3 text-sm">
@@ -849,7 +877,7 @@
         function consultarStatusPedido() {
             const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
             const resBox = document.getElementById("resultado-rastreio");
-            if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = "<span class=\"text-red-400\">Insira um código válido.</span>"; return; }
+            if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
 
             const pedidoEncontrado = pedidosAtivos.find(p => p.ticketId.toUpperCase() === codigo || p.pedidoId.toUpperCase() === codigo);
             resBox.classList.remove("hidden");
@@ -877,7 +905,6 @@
             const email = document.getElementById("anuncio-email").value.trim();
             const feedback = document.getElementById("anuncio-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            // Código fixo para teste: scruzsamuka@gmail.com sempre recebe 111111
             if (email.toLowerCase() === "scruzsamuka@gmail.com") {
                 codigoAnuncioSimulado = "111111";
             } else {
@@ -907,7 +934,6 @@
             const email = document.getElementById("reg-email").value.trim();
             const feedback = document.getElementById("register-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            // Código fixo para teste: scruzsamuka@gmail.com sempre recebe 111111
             if (email.toLowerCase() === "scruzsamuka@gmail.com") {
                 codigoEnviadoSimulado = "111111";
             } else {
@@ -983,55 +1009,31 @@
             mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
         }
 
-        function carregarFallbackAnuncios() {
-            try {
-                const salvos = localStorage.getItem("marktplace_stand2_anuncios");
-                if (salvos) {
-                    const parsed = JSON.parse(salvos);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        anunciosEmMemoria = parsed.map(normalizarAnuncio);
-                        return;
-                    }
-                }
-            } catch (e) {}
-
-            anunciosEmMemoria = [normalizarAnuncio({
-                id: "default_1",
-                titulo: "Conta com M9 Bayonet & AKR",
-                preco: "R$ 150,00",
-                rank: "Master",
-                vinculo: "Google ID",
-                descricao: "• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch",
-                vendedor: "Sistema",
-                likes: 12,
-                curtidoPormim: false,
-                fotos: []
-            })];
-        }
-
         async function inicializarAnuncios() {
-            // 1. Tenta carregar do Supabase primeiro
             if (window.supabaseClient) {
                 try {
                     const { data, error } = await window.supabaseClient
                         .from("contas")
-                        .select("*");
+                        .select("*")
+                        .order("id", { ascending: false });
 
                     if (error) {
-                        console.warn("⚠️ Erro ao carregar anúncios do Supabase:", error);
-                    } else if (Array.isArray(data) && data.length > 0) {
-                        // Sucesso do Supabase: usa os dados da tabela e salva no localStorage
-                        anunciosEmMemoria = data.map(normalizarAnuncio);
-                        localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
-                        carregarCatalogo();
-                        return;
+                        console.error("❌ Erro ao carregar anúncios do Supabase:", error);
+                    } else if (Array.isArray(data)) {
+                        if (data.length > 0) {
+                            anunciosEmMemoria = data.map(normalizarAnuncio);
+                            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+                            carregarCatalogo();
+                            return;
+                        } else {
+                            console.info("ℹ️ Tabela public.contas retornou 0 linhas.");
+                        }
                     }
                 } catch (e) {
-                    console.warn("⚠️ Exceção ao consultar Supabase:", e);
+                    console.error("❌ Exceção ao consultar Supabase:", e);
                 }
             }
 
-            // 2. Se Supabase falhou/cliente não existe ou sem dados, tenta localStorage
             const salvos = localStorage.getItem("marktplace_stand2_anuncios");
             if (salvos) {
                 try {
@@ -1046,7 +1048,6 @@
                 }
             }
 
-            // 3. Se localStorage também não tem dados válidos, usa fallback padrão
             anunciosEmMemoria = [normalizarAnuncio({
                 id: "default_1",
                 titulo: "Conta com M9 Bayonet & AKR",
@@ -1086,7 +1087,7 @@
                 const card = document.createElement("div");
                 card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
-                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
                 const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : "";
 
                 const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
@@ -1159,7 +1160,7 @@
             container.innerHTML = "";
 
             if (carrinhoItens.length === 0) {
-                container.innerHTML = "<p class=\"text-xs text-gray-400 text-center py-6\">Seu carrinho está vazio.</p>";
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Seu carrinho está vazio.</p>';
                 totalEl.textContent = "R$ 0,00";
             } else {
                 let totalSoma = 0;
@@ -1221,9 +1222,12 @@
                         const canvas = document.createElement("canvas");
                         let w = img.width, h = img.height;
                         if (w > 800) { h *= 800 / w; w = 800; }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL("image/jpeg", 0.6));
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext("2d");
+                        ctx.filter = "none";
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", 0.7));
                     };
                     img.src = e.target.result;
                 };
@@ -1231,19 +1235,11 @@
             });
         }
 
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Catálogo de referência de armas, skins e patterns do Standoff 2
-        // (lista expandida - apenas nomes/patterns, sem dados sensíveis ou chaves de API)
         const catalogoStandoff2 = {
-            // Armas principais (padrões conhecidos)
             rifles: [
                 "M4A4", "M4A1-S", "AK-47", "AK-74U", "AWP", "SG 553", "G3SG1", "SCAR-20",
                 "MAG-7", "NOVA", "XM1014"
             ],
-            // Skins conhecidas (nome -> padrões possíveis)
             skins: {
                 "M9 Bayonet": ["Treasure Hunter", "Lore", "Fade", "Doppler", "Chrome"],
                 "Gloves": ["Carbon", "Sport", "Driver", "Motorsports", "Crystalline"],
@@ -1254,165 +1250,44 @@
                 "P250": ["Bone Snake", "El Dorado", "Guardian", "Oasis", "Vivid"],
                 "Glock-18": ["Fade", "Water Elemental", "Radiation", "Crimson Web", "Heirloom"]
             },
-            // Patterns numéricos conhecidos (para validação)
-            patterns: ["412", "12", "318", "661", "823", "947", "000", "100", "200", "300"]
+            patterns: ["412", "12", "318", "661", "823", "947", "000", "100", "200", "300"],
+            itens_especiais: ["Tie Dye", "Jade Stone"]
         };
-
-        // Tentativa de correspondência guiada entre texto OCR simplificado e catálogo
-        // Apenas reconhece skins/armes/patterns que realmente existem no catálogo Standoff 2
-        // Usa comparação normalizada (lowercase, remove pontuação, trim) com tolerância a
-        // pequenas variações de leitura OCR, mas evita inventar itens de fora do catálogo.
-        function tentarCorrespondencia(canalTexto) {
-            const resultados = [];
-            const textos = canalTexto.toLowerCase()
-                .replace(/[^\w\s]/g, '')
-                .trim()
-                .split(/\s+/);
-
-            // Busca por skins (nome -> padrões possíveis)
-            // Verifica se o texto contém o nome da arma como token completo ou se tokens
-            // individuais correspondem a variações do catálogo
-            for (const [arma, paddings] of Object.entries(catalogoStandoff2.skins)) {
-                const nomeArmaLower = arma.toLowerCase();
-                // Verifica token completo
-                if (textos.includes(nomeArmaLower)) {
-                    // Encontra o padding mais provável no texto
-                    for (const pad of paddings) {
-                        const padLower = pad.toLowerCase();
-                        // Verifica se o padding aparece como token completo no texto
-                        if (textos.some(t => t === padLower || t.includes(padLower))) {
-                            resultados.push({ arma, padding: pad, confianca: 0.8 });
-                            break;
-                        }
-                    }
-                } else {
-                    // Token solto: verifica se algum token do texto corresponde a uma variação do padding
-                    for (const pad of paddings) {
-                        const padLower = pad.toLowerCase();
-                        // Cada token do padding em caracteres individuais
-                        const padChars = padLower.split('');
-                        if (textos.some(t => {
-                            // Token tem pelo menos 3 chars e compartilha muitos caracteres com o padding
-                            return t.length >= 3 && t.split('').filter(c => padChars.includes(c)).length >= Math.max(1, Math.floor(padChars.length * 0.5));
-                        })) {
-                            resultados.push({ arma, padding: pad, confianca: 0.6 });
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Busca por nomes de rifles (ex: AK-47, M4A4)
-            // Apenas rifles do catálogo oficial, com match de token completo
-            for (const rifle of catalogoStandoff2.rifles) {
-                const rifleLower = rifle.toLowerCase();
-                // Match exato de token ou substring dentro de token
-                if (textos.some(t => t === rifleLower || t.includes(rifleLower) || rifleLower.includes(t))) {
-                    resultados.push({ arma: rifle, confianca: 0.5 });
-                }
-            }
-
-            // Busca por patterns numéricos (apenas do catálogo oficial)
-            for (const pad of catalogoStandoff2.patterns) {
-                const padLower = pad.toLowerCase();
-                // Match exato de token
-                if (textos.some(t => t === padLower)) {
-                    resultados.push({ pattern: pad, confianca: 0.7 });
-                    break;
-                }
-            }
-
-            // Busca por itens especiais do catálogo (Tie Dye, Jade Stone, etc.)
-            for (const item of catalogoStandoff2.itens_especiais) {
-                const itemLower = item.toLowerCase();
-                if (textos.some(t => t === itemLower || t.includes(itemLower))) {
-                    resultados.push({ tipo: 'item_especial', nome: item, confianca: 0.5 });
-                }
-            }
-
-            return resultados;
-        }
-
-        // Gera descrição guiada baseada na correspondência encontrada
-        function gerarDescricaoGuiada(resultados) {
-            if (resultados.length === 0) {
-                return "📋 **Inventário importado**\n• Itens identificados: nenhum (verifique manualmente)\n• Confira os itens abaixo antes de publicar";
-            }
-
-            let desc = "🎒 **Inventário Verificado (Skins & Patterns):**\n";
-
-            // Agrupa por arma
-            const porArma = {};
-            resultados.forEach(r => {
-                if (r.arma) {
-                    if (!porArma[r.arma]) porArma[r.arma] = [];
-                    porArma[r.arma].push(r.padding || r.arma);
-                }
-                if (r.pattern) {
-                    if (!porArma['Patterns']) porArma['Patterns'] = [];
-                    porArma['Patterns'].push(r.pattern);
-                }
-            });
-
-            // Lista armas encontradas
-            const ordArma = ["AK-47", "M4A4", "AWP", "M9 Bayonet", "Gloves", "USP-S", "P250", "Glock-18"];
-            for (const arma of ordArma) {
-                if (porArma[arma]) {
-                    const paddings = porArma[arma].join(', ');
-                    desc += `• ${arma}: ${paddings}\n`;
-                }
-            }
-
-            // Patterns soltos
-            if (porArma['Patterns']) {
-                desc += `• Padrões: ${porArma['Patterns'].join(', ')}\n`;
-            }
-
-            // Itens não reconhecidos
-            const reconhecidos = new Set(resultados.map(r => r.arma || r.pattern || '').filter(x => x));
-            desc += `• Itens não reconhecidos: confira manualmente\n`;
-
-            return desc;
-        }
 
         async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
 
-            // Processa até 7 fotos, comprimindo cada uma
             const totalFotos = Math.min(input.files.length, 7);
             for (let i = 0; i < totalFotos; i++) {
                 const comp = await comprimirImagem(input.files[i]);
                 if (comp) fotosNovasBase64.push(comp);
-                // Atualiza UI: mostrando qual foto está sendo processada
                 const campoDesc = document.getElementById("conta-desc");
                 if (campoDesc) {
                     campoDesc.value = `📸 Processando foto ${i + 1} de ${totalFotos}...`;
                 }
             }
 
-            // Fotos comprimidas armazenadas - leitura OCR desativada temporariamente
-            // O campo de descrição permanece editável para preenchimento manual
             if (fotosNovasBase64.length > 0) {
                 const campoDesc = document.getElementById("conta-desc");
                 if (campoDesc) {
-                    // Apenas avisa que fotos foram adicionadas, sem tentativa de OCR automático
-                    campoDesc.value = `${fotosNovasBase64.length} foto(s) comprimida(s). Descreva manualmente os itens abaixo.`;
-                    // Remove qualquer aviso de confiança anterior
+                    campoDesc.value = `${fotosNovasBase64.length} foto(s) comprimida(s) em cor natural. Descreva manualmente os itens abaixo.`;
                     limparAvisoConfianca();
                 }
             } else {
                 limparAvisoConfianca();
                 const campoDesc = document.getElementById("conta-desc");
                 if (campoDesc) {
-                    campoDesc.value = '📸 Nenhuma foto selecionada.';
+                    campoDesc.value = "📸 Nenhuma foto selecionada.";
                 }
             }
         }
+
         function limparAvisoConfianca() {
-            const existentes = document.querySelectorAll('.confianca-avisos');
+            const existentes = document.querySelectorAll(".confianca-avisos");
             existentes.forEach(el => el.remove());
         }
+
         async function publicarAnuncioFinal() {
             const btnPublicar = document.getElementById("btn-publicar-anuncio");
             const titulo = document.getElementById("conta-titulo").value.trim();
@@ -1424,18 +1299,16 @@
             if (!titulo || !precoInput) { mostrarAlerta("Aviso", "Preencha título e preço.", "aviso"); return; }
             if (fotosNovasBase64.length === 0) { mostrarAlerta("Aviso", "Adicione pelo menos um print do inventário.", "aviso"); return; }
 
-// Verify photo sizes - avoid sending unreasonably large Base64 strings to Supabase
-const maxTotalBytes = 2 * 1024 * 1024; // 2MB total for all photos
-let totalBytes = 0;
-for (const photo of fotosNovasBase64) {
-    // Base64 data URL: remove "data:image/jpeg;base64," prefix to get pure base64
-    const base64Part = photo.split("base64,")[1] || "";
-    totalBytes += base64Part.length * 3 / 4; // Approximate decoded byte size
-}
-if (totalBytes > maxTotalBytes) {
-    mostrarAlerta("Aviso", "Total de fotos muito grande. Reduza o número de imagens ou use fotos menores.", "aviso");
-    return;
-}
+            const maxTotalBytes = 2 * 1024 * 1024;
+            let totalBytes = 0;
+            for (const photo of fotosNovasBase64) {
+                const base64Part = photo.split("base64,")[1] || "";
+                totalBytes += base64Part.length * 3 / 4;
+            }
+            if (totalBytes > maxTotalBytes) {
+                mostrarAlerta("Aviso", "Total de fotos muito grande. Reduza o número de imagens ou use fotos menores.", "aviso");
+                return;
+            }
 
             if (!descFinal) {
                 descFinal = "• Inventário verificado e garantido.";
@@ -1556,6 +1429,7 @@ if (totalBytes > maxTotalBytes) {
                 anuncioSelecionadoAtual.fotos.forEach((url, idx) => {
                     const thumb = document.createElement("img");
                     thumb.src = url;
+                    thumb.alt = `Miniatura ${idx + 1}`;
                     thumb.className = `w-12 h-12 object-cover rounded cursor-pointer border-2 ${idx === 0 ? "border-[var(--accent)]" : "border-transparent"}`;
                     thumb.onclick = () => { imgElement.src = url; };
                     minis.appendChild(thumb);
@@ -1584,7 +1458,7 @@ if (totalBytes > maxTotalBytes) {
             }
             totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
 
-            const metodoEscolhido = document.querySelector("input[name=\"pagamento\"]:checked").value;
+            const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
             document.getElementById("pedido-codigo").textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
             document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
             document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
@@ -1592,7 +1466,7 @@ if (totalBytes > maxTotalBytes) {
             const conteudoPag = document.getElementById("pag-conteudo");
             if (metodoEscolhido === "pix") {
                 const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
-                conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
+                conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
@@ -1616,20 +1490,20 @@ if (totalBytes > maxTotalBytes) {
 
             let nomesItens = carrinhoItens.map(i => i.titulo) || [];
             const listaItensFormatada = Array.isArray(nomesItens)
-                ? nomesItens.filter(Boolean).join(', ')
-                : String(nomesItens || '').trim();
+                ? nomesItens.filter(Boolean).join(", ")
+                : String(nomesItens || "").trim();
             let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
 
             pedidosAtivos.unshift({
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
                 status: "Aprovado • Custódia Segura",
-                itens: nomesItens,
+                itens: listaItensFormatada,
                 total: valorTotalPedido
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
 
-            const statusKey = "aguardando_conta_vendedor"; // Pagamento confirmado - aguardando envio dos dados da conta
+            const statusKey = "aguardando_conta_vendedor";
             const resumoRapido = montarResumoRapidoTicket({
                 ticketId: ticketIdGerado,
                 statusKey,
@@ -1674,110 +1548,97 @@ if (totalBytes > maxTotalBytes) {
         function openModalComoFunciona() { setModalVisivel("modal-como-funcionamos", true); }
 
         function closeModalComoFunciona() {
-
-
-
-            document.getElementById("modal-como-funcionamos").style.display = "none";
-            document.body.style.overflow = '';
-        }
-    
-// Header scroll hide/show (apenas transform/opacity - para todas as telas)
-(function() {
-    const header = document.querySelector("header.sticky");
-    if (!header) return;
-    let lastScrollY = window.scrollY;
-    const hideThreshold = 80;
-    const showMinDelta = 20; // pixels to count as real scroll up
-    const showNearTop = 120; // show only when within 120px from top
-
-    const updateHeader = () => {
-        const currentScrollY = window.scrollY;
-        const scrollDelta = lastScrollY - currentScrollY;
-
-        // Scrolling down past threshold: hide
-        if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
-            header.style.transform = "translateY(-100%)";
-            header.style.opacity = "0";
-        }
-        // Scrolling up minimum delta AND near top: show
-        else if (scrollDelta > showMinDelta && currentScrollY < showNearTop) {
-            header.style.transform = "translateY(0)";
-            header.style.opacity = "1";
+            setModalVisivel("modal-como-funcionamos", false);
         }
 
-        lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
-    };
+        // Header scroll hide/show (apenas transform/opacity - para todas as telas)
+        (function() {
+            const header = document.querySelector("header.sticky");
+            if (!header) return;
+            let lastScrollY = window.scrollY;
+            const hideThreshold = 80;
+            const showMinDelta = 20;
+            const showNearTop = 120;
 
-    // Debounce: only run every 15ms to avoid flood during drag
-    let ticking = false;
-    window.addEventListener("scroll", () => {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                updateHeader();
-                ticking = false;
-            });
-            ticking = true;
-        }
-    }, { passive: true });
+            const updateHeader = () => {
+                const currentScrollY = window.scrollY;
+                const scrollDelta = lastScrollY - currentScrollY;
 
-    // Initialize header position
-    updateHeader();
-})();
+                if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
+                    header.style.transform = "translateY(-100%)";
+                    header.style.opacity = "0";
+                } else if (scrollDelta > showMinDelta && currentScrollY < showNearTop) {
+                    header.style.transform = "translateY(0)";
+                    header.style.opacity = "1";
+                }
 
-</script>
-<!-- Modal Como Funcionamos -->
-<div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-  <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
-    <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
-    <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
+                lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+            };
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Intermediação e Custódia -->
-      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
-          </svg>
+            let ticking = false;
+            window.addEventListener("scroll", () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        updateHeader();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+
+            updateHeader();
+        })();
+    </script>
+
+    <!-- Modal Como Funcionamos -->
+    <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
+                </div>
+
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
+                </div>
+            </div>
         </div>
-        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
-        <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
-      </div>
-
-      <!-- Conferência da Conta -->
-      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
-        <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
-      </div>
-
-      <!-- Atendimento Centralizado -->
-      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
-        <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
-      </div>
-
-      <!-- Benefícios Rápidos -->
-      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
-        <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
-      </div>
     </div>
-  </div>
-</div>
 
 </body>
 </html>
