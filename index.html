@@ -1418,8 +1418,12 @@
                     // trata acentos e caracteres especiais comuns em prints do Standoff 2
                     let textoNormalizado = (extractedText.data.text || '').toString()
                         .toLowerCase()
+                        // Remove aspas duplas e simples extras
                         .replace(/[""]/g, '')
+                        // Normaliza espaços múltiplos para um único espaço
                         .replace(/\s+/g, ' ')
+                        // Remove acentos e caracteres especiais, substituindo por versas ASCII
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                         .trim();
 
                     // Catálogo expandido de armas, skins e patterns do Standoff 2
@@ -1451,8 +1455,11 @@
                     };
 
                     function compara(str1, str2) {
-                        const s1 = str1.replace(/[^\w\s]/g, '').trim();
-                        const s2 = str2.replace(/[^\w\s]/g).trim();
+                        // Normaliza ambas as strings: lowercase, remove pontuação, espaços extras
+                        const normalize = s => String(s).toLowerCase().replace(/[^\w\s]/g, '').trim();
+                        const s1 = normalize(str1);
+                        const s2 = normalize(str2);
+                        // Correspondência exata ou um contém o outro
                         return s1 === s2 || s1.includes(s2) || s2.includes(s1);
                     }
 
