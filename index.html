@@ -9,7 +9,7 @@
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.2.6/dist/tesseract.wasm"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.2.6/dist/tesseract.legacy.js"></script>
     <script>
         (function initSupabaseSeguro() {
             const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || "https://dumvvprvafzmzqdrenyn.supabase.co";
@@ -1363,21 +1363,12 @@
             const imgPreview = document.createElement('img');
             imgPreview.src = fotosNovasBase64[0] || '';
             imgPreview.onload = () => {
-                // Canvas para análise visual e OCR
+                // Canvas único para análise visual e OCR
                 const canvas = document.createElement('canvas');
                 canvas.width = 400;
                 canvas.height = 300;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(imgPreview, 0, 0, 400, 300);
-
-            // Cria canvas para análise visual rápida
-            const canvas = document.createElement('canvas');
-            canvas.width = 400;
-            canvas.height = 300;
-            const ctx = canvas.getContext('2d');
-            imgPreview.onload = () => {
-                ctx.drawImage(imgPreview, 0, 0, 400, 300);
-                // Extrair dados de contraste médio para indicar confiança
                 const imgData = ctx.getImageData(0, 0, 400, 300).data;
                 let pixelsEscuros = 0, pixelsClaros = 0;
                 for (let i = 0; i < imgData.length; i += 4) {
