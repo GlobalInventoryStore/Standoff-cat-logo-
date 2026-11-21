@@ -1273,35 +1273,74 @@
         };
 
         // Tentativa de correspondência guiada entre texto OCR simplificado e catálogo
+        // Apenas reconhece skins/armes/patterns que realmente existem no catálogo Standoff 2
+        // Usa comparação normalizada (lowercase, remove pontuação, trim) com tolerância a
+        // pequenas variações de leitura OCR, mas evita inventar itens de fora do catálogo.
         function tentarCorrespondencia(canalTexto) {
             const resultados = [];
-            const textos = canalTexto.toLowerCase().split(/\s+/);
+            const textos = canalTexto.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .trim()
+                .split(/\s+/);
 
-            // Busca por nomes de armas
+            // Busca por skins (nome -> padrões possíveis)
+            // Verifica se o texto contém o nome da arma como token completo ou se tokens
+            // individuais correspondem a variações do catálogo
             for (const [arma, paddings] of Object.entries(catalogoStandoff2.skins)) {
-                if (textos.includes(arma.toLowerCase())) {
+                const nomeArmaLower = arma.toLowerCase();
+                // Verifica token completo
+                if (textos.includes(nomeArmaLower)) {
                     // Encontra o padding mais provável no texto
                     for (const pad of paddings) {
-                        if (textos.some(t => t.includes(pad.toLowerCase()) || pad.toLowerCase().split('').some(c => t.includes(c)))) {
-                            resultados.push({ arma, padding: pad, confianca: 0.7 });
+                        const padLower = pad.toLowerCase();
+                        // Verifica se o padding aparece como token completo no texto
+                        if (textos.some(t => t === padLower || t.includes(padLower))) {
+                            resultados.push({ arma, padding: pad, confianca: 0.8 });
+                            break;
+                        }
+                    }
+                } else {
+                    // Token solto: verifica se algum token do texto corresponde a uma variação do padding
+                    for (const pad of paddings) {
+                        const padLower = pad.toLowerCase();
+                        // Cada token do padding em caracteres individuais
+                        const padChars = padLower.split('');
+                        if (textos.some(t => {
+                            // Token tem pelo menos 3 chars e compartilha muitos caracteres com o padding
+                            return t.length >= 3 && t.split('').filter(c => padChars.includes(c)).length >= Math.max(1, Math.floor(padChars.length * 0.5));
+                        })) {
+                            resultados.push({ arma, padding: pad, confianca: 0.6 });
                             break;
                         }
                     }
                 }
             }
 
-            // Busca por nomes de rifles
+            // Busca por nomes de rifles (ex: AK-47, M4A4)
+            // Apenas rifles do catálogo oficial, com match de token completo
             for (const rifle of catalogoStandoff2.rifles) {
-                if (textos.some(t => t.toLowerCase().includes(rifle.toLowerCase()))) {
+                const rifleLower = rifle.toLowerCase();
+                // Match exato de token ou substring dentro de token
+                if (textos.some(t => t === rifleLower || t.includes(rifleLower) || rifleLower.includes(t))) {
                     resultados.push({ arma: rifle, confianca: 0.5 });
                 }
             }
 
-            // Busca por patterns numéricos
+            // Busca por patterns numéricos (apenas do catálogo oficial)
             for (const pad of catalogoStandoff2.patterns) {
-                if (textos.some(t => t.includes(pad))) {
-                    resultados.push({ pattern: pad, confianca: 0.6 });
+                const padLower = pad.toLowerCase();
+                // Match exato de token
+                if (textos.some(t => t === padLower)) {
+                    resultados.push({ pattern: pad, confianca: 0.7 });
                     break;
+                }
+            }
+
+            // Busca por itens especiais do catálogo (Tie Dye, Jade Stone, etc.)
+            for (const item of catalogoStandoff2.itens_especiais) {
+                const itemLower = item.toLowerCase();
+                if (textos.some(t => t === itemLower || t.includes(itemLower))) {
+                    resultados.push({ tipo: 'item_especial', nome: item, confianca: 0.5 });
                 }
             }
 
@@ -1311,46 +1350,68 @@
         // Gera descrição guiada baseada na correspondência encontrada
         function gerarDescricaoGuiada(resultados) {
             if (resultados.length === 0) {
-                return "📋 **Inventário importado**\n• Itens identificados: nenhum (verifique manualmente)\n• Confira os itens abaixo antes de publicar";
+                return "📋 **Inventário importado**
+• Itens identificados: nenhum (verifique manualmente)
+• Confira os itens abaixo antes de publicar";
             }
 
-            let desc = "🎒 **Inventário Verificado (Skins & Patterns):**\n";
+            let desc = "🎒 **Inventário Verificado (Skins & Patterns):**
+";
 
-            // Agrupa por arma
+            // Agrupa por tipo: skins por arma, patterns soltos, itens especiais
             const porArma = {};
+            const porPattern = [];
+            const itensEspeciais = [];
+
             resultados.forEach(r => {
                 if (r.arma) {
                     if (!porArma[r.arma]) porArma[r.arma] = [];
                     porArma[r.arma].push(r.padding || r.arma);
                 }
                 if (r.pattern) {
-                    if (!porArma['Patterns']) porArma['Patterns'] = [];
-                    porArma['Patterns'].push(r.pattern);
+                    porPattern.push(r.pattern);
+                }
+                if (r.tipo === 'item_especial') {
+                    itensEspeciais.push(r.nome);
                 }
             });
 
-            // Lista armas encontradas
-            const ordArma = ["AK-47", "M4A4", "AWP", "M9 Bayonet", "Gloves", "USP-S", "P250", "Glock-18"];
-            for (const arma of ordArma) {
-                if (porArma[arma]) {
-                    const paddings = porArma[arma].join(', ');
-                    desc += `• ${arma}: ${paddings}\n`;
+            // Lista armas encontradas (ordem preferencial)
+            const ordArma = ["M9 Bayonet", "Karambit", "Butterfly", "M4A4", "AK-47", "AWP", "Gloves", "USP-S", "P250", "Glock-18"];
+            const ordArmaKey = ["m9_bayonet", "karambit", "butterfly", "m4a4", "ak_47", "awp", "gloves", "usp_s", "p250", "glock_18"];
+            for (let i = 0; i < ordArmaKey.length; i++) {
+                const key = ordArmaKey[i];
+                const nome = ordArma[i];
+                if (porArma[key]) {
+                    const paddings = porArma[key].join(', ');
+                    desc += `• ${nome}: ${paddings}
+`;
                 }
             }
 
-            // Patterns soltos
-            if (porArma['Patterns']) {
-                desc += `• Padrões: ${porArma['Patterns'].join(', ')}\n`;
+            // Patterns soltos (apenas se houver)
+            if (porPattern.length > 0) {
+                // Remove duplicates
+                const padsUnicos = [...new Set(porPattern)];
+                desc += `• Padrões: ${padsUnicos.join(', ')}
+`;
             }
 
-            // Itens não reconhecidos
-            const reconhecidos = new Set(resultados.map(r => r.arma || r.pattern || '').filter(x => x));
-            desc += `• Itens não reconhecidos: confira manualmente\n`;
+            // Itens não reconhecidos APENAS se realmente não houver correspondência de catálogo
+            const naoReconhecidos = resultados.filter(r => {
+                if (r.arma && !catalogoStandoff2.skins[r.arma] && !catalogoStandoff2.rifles.includes(r.arma) && !catalogoStandoff2.itens_especiais.includes(r.arma)) return true;
+                if (r.pattern && !catalogoStandoff2.patterns.includes(r.pattern)) return true;
+                if (r.tipo === 'item_especial' && !catalogoStandoff2.itens_especiais.includes(r.nome)) return true;
+                return false;
+            });
+
+            if (naoReconhecidos.length > 0) {
+                desc += `• Itens não reconhecidos: confira manualmente
+`;
+            }
 
             return desc;
-        }
-
-        async function processarFotosInventario(input) {
+        }async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
 
@@ -1469,10 +1530,27 @@
                     const resultados = [];
 
                     for (const [arma, variacoes] of Object.entries(catalogo.skins)) {
-                        for (const variacao of variacoes) {
-                            if (compara(textoNormalizado, variacao) || tokens.some(t => compara(t, variacao))) {
-                                resultados.push({ tipo: 'skin', nome: arma, variacao });
-                                break;
+                        // Busca apenas se o nome da arma aparecer como token completo no texto normalizado
+                        const armaLower = arma.toLowerCase();
+                        // Token exato
+                        if (textos.some(t => t === armaLower)) {
+                            // Encontra o padding mais provável
+                            for (const pad of variacoes) {
+                                const padLower = pad.toLowerCase();
+                                // Pad como token exato
+                                if (textos.some(t => t === padLower)) {
+                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
+                                    break;
+                                }
+                            }
+                        } else {
+                            // Token solto: verifica se algum token do texto compartilha muitas características com o padding
+                            for (const pad of variacoes) {
+                                const padChars = pad.toLowerCase().split('');
+                                if (textos.some(t => t.length >= 3 && t.split('').filter(c => padChars.includes(c)).length >= Math.max(1, Math.floor(padChars.length * 0.5)))) {
+                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1488,14 +1566,20 @@
                     }
 
                     for (const pad of catalogo.patterns) {
-                        if (textoNormalizado.includes(pad) || tokens.some(t => t === pad)) {
+                        // Apenas patterns do catálogo oficial Standoff 2
+                        const padLower = pad.toLowerCase();
+                        // Match exato de token no texto normalizado
+                        if (textos.some(t => t === padLower)) {
                             resultados.push({ tipo: 'pattern', pad });
                             break;
                         }
                     }
 
                     for (const item of catalogo.itens_especiais) {
-                        if (textoNormalizado.includes(item)) {
+                        // Apenas itens_especiais do catálogo oficial
+                        const itemLower = item.toLowerCase();
+                        // Match exato de token ou substring dentro de token
+                        if (textos.some(t => t === itemLower || t.includes(itemLower))) {
                             resultados.push({ tipo: 'item_especial', nome: item });
                             break;
                         }
