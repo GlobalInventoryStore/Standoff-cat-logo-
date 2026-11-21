@@ -1010,29 +1010,56 @@
         }
 
         async function inicializarAnuncios() {
-            carregarFallbackAnuncios();
-            carregarCatalogo();
+            // 1. Tenta carregar do Supabase primeiro
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from("contas")
+                        .select("*");
 
-            if (!window.supabaseClient) return;
-
-            try {
-                const { data, error } = await window.supabaseClient
-                    .from("contas")
-                    .select("*");
-
-                if (error) {
-                    console.warn("⚠️ Erro ao carregar anúncios do Supabase:", error);
-                    return;
+                    if (error) {
+                        console.warn("⚠️ Erro ao carregar anúncios do Supabase:", error);
+                    } else if (Array.isArray(data) && data.length > 0) {
+                        // Sucesso do Supabase: usa os dados da tabela e salva no localStorage
+                        anunciosEmMemoria = data.map(normalizarAnuncio);
+                        localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+                        carregarCatalogo();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Exceção ao consultar Supabase:", e);
                 }
-
-                if (Array.isArray(data) && data.length > 0) {
-                    anunciosEmMemoria = data.map(normalizarAnuncio);
-                    localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
-                    carregarCatalogo();
-                }
-            } catch (e) {
-                console.warn("⚠️ Exceção ao consultar Supabase:", e);
             }
+
+            // 2. Se Supabase falhou/cliente não existe ou sem dados, tenta localStorage
+            const salvos = localStorage.getItem("marktplace_stand2_anuncios");
+            if (salvos) {
+                try {
+                    const parsed = JSON.parse(salvos);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        anunciosEmMemoria = parsed.map(normalizarAnuncio);
+                        carregarCatalogo();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Erro ao ler localStorage de anúncios:", e);
+                }
+            }
+
+            // 3. Se localStorage também não tem dados válidos, usa fallback padrão
+            anunciosEmMemoria = [normalizarAnuncio({
+                id: "default_1",
+                titulo: "Conta com M9 Bayonet & AKR",
+                preco: "R$ 150,00",
+                rank: "Master",
+                vinculo: "Google ID",
+                descricao: "• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch",
+                vendedor: "Sistema",
+                likes: 12,
+                curtidoPormim: false,
+                fotos: []
+            })];
+            carregarCatalogo();
         }
 
         function formatarPrecoMoeda(valorStr) {
