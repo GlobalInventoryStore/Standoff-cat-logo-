@@ -1231,57 +1231,6 @@
             });
         }
 
-        async function comprimirImagem(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        // Pré-processamento no canvas: resize para tamanho ótimo de OCR e melhoria de contraste
-                        const canvas = document.createElement('canvas');
-                        const maxDim = 1024;
-                        let width = img.width;
-                        let height = img.height;
-
-                        // Proporcional resize se maior que maxDim
-                        if (width > height) {
-                            if (width > maxDim) {
-                                height = (height * maxDim) / width;
-                                width = maxDim;
-                            }
-                        } else {
-                            if (height > maxDim) {
-                                width = (width * maxDim) / height;
-                                height = maxDim;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-
-                        // Fundo branco e contraste aprimorado
-                        ctx.fillStyle = '#fff';
-                        ctx.fillRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Aplicar máscara de nitidez simples
-                        const imageData = ctx.getImageData(0, 0, width, height);
-                        const data = imageData.data;
-                        for (let i = 0; i < data.length; i += 4) {
-                            // Realce de contraste: realçar canais escuros
-                            const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                            data[i] = Math.min(255, avg + 30);     // R
-                            data[i+1] = Math.min(255, avg + 20);   // G
-                            data[i+2] = Math.min(255, avg + 10);   // B
-                        }
-                        ctx.putImageData(imageData, 0, 0);
-
-                        // Retornar Base64 do canvas processado (menor tamanho, melhor para análise)
-                        resolve(canvas.toDataURL('image/jpeg', 0.85));
-                    };
-                    img.src = e.target.result;
-                };
                 reader.readAsDataURL(file);
             });
         }
@@ -1474,6 +1423,19 @@
 
             if (!titulo || !precoInput) { mostrarAlerta("Aviso", "Preencha título e preço.", "aviso"); return; }
             if (fotosNovasBase64.length === 0) { mostrarAlerta("Aviso", "Adicione pelo menos um print do inventário.", "aviso"); return; }
+
+// Verify photo sizes - avoid sending unreasonably large Base64 strings to Supabase
+const maxTotalBytes = 2 * 1024 * 1024; // 2MB total for all photos
+let totalBytes = 0;
+for (const photo of fotosNovasBase64) {
+    // Base64 data URL: remove "data:image/jpeg;base64," prefix to get pure base64
+    const base64Part = photo.split("base64,")[1] || "";
+    totalBytes += base64Part.length * 3 / 4; // Approximate decoded byte size
+}
+if (totalBytes > maxTotalBytes) {
+    mostrarAlerta("Aviso", "Total de fotos muito grande. Reduza o número de imagens ou use fotos menores.", "aviso");
+    return;
+}
 
             if (!descFinal) {
                 descFinal = "• Inventário verificado e garantido.";
