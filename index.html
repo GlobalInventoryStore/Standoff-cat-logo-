@@ -1175,18 +1175,37 @@
             }
         }
 
+        // Comprime e redimensiona a imagem para otimizar o OCR
+        // Limita a largura/altura máxima para acelerar o processamento no mobile
+        // Usa JPEG 0.70 para equilíbrio entre qualidade e velocidade
         function comprimirImagem(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
-                        const canvas = document.createElement("canvas");
+                        // Max dimensions for OCR: balance between quality and speed
+                        // 960px é o limite ideal: evita processamento pesado em mobile
+                        // mas ainda legível para o Tesseract
+                        const maxDim = 960;
                         let w = img.width, h = img.height;
-                        if (w > 800) { h *= 800 / w; w = 800; }
-                        canvas.width = w; canvas.height = h;
+                        if (w > h) {
+                            if (w > maxDim) {
+                                h *= maxDim / w;
+                                w = maxDim;
+                            }
+                        } else {
+                            if (h > maxDim) {
+                                w *= maxDim / h;
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement("canvas");
+                        canvas.width = w;
+                        canvas.height = h;
                         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL("image/jpeg", 0.6));
+                        // JPEG 0.70: boa qualidade com menor tamanho de arquivo e processamento mais rápido no Tesseract
+                        resolve(canvas.toDataURL("image/jpeg", 0.70));
                     };
                     img.src = e.target.result;
                 };
@@ -1201,8 +1220,9 @@
                     const img = new Image();
                     img.onload = () => {
                         // Pré-processamento no canvas: resize para tamanho ótimo de OCR e melhoria de contraste
-                        const canvas = document.createElement('canvas');
-                        const maxDim = 1024;
+                        // Max dimensions balance quality and speed on mobile
+                        // 960px: limite que garante legibilidade mantendo processamento rápido
+                        const maxDim = 960;
                         let width = img.width;
                         let height = img.height;
 
@@ -1219,29 +1239,23 @@
                             }
                         }
 
+                        const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
 
-                        // Fundo branco e contraste aprimorado
+                        // Fundo branco
                         ctx.fillStyle = '#fff';
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Aplicar máscara de nitidez simples
-                        const imageData = ctx.getImageData(0, 0, width, height);
-                        const data = imageData.data;
-                        for (let i = 0; i < data.length; i += 4) {
-                            // Realce de contraste: realçar canais escuros
-                            const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                            data[i] = Math.min(255, avg + 30);     // R
-                            data[i+1] = Math.min(255, avg + 20);   // G
-                            data[i+2] = Math.min(255, avg + 10);   // B
-                        }
-                        ctx.putImageData(imageData, 0, 0);
+                        // Contraste aprimorado para OCR (sem loop pesadíssimo de máscara)
+                        // Simples fill white + drawImage já melhora bastante;
+                        // removido loop de máscara pesado para acelerar em mobile
 
                         // Retornar Base64 do canvas processado (menor tamanho, melhor para análise)
-                        resolve(canvas.toDataURL('image/jpeg', 0.85));
+                        // Usa JPEG 0.70: equilíbrio entre qualidade e velocidade de leitura
+                        resolve(canvas.toDataURL('image/jpeg', 0.70));
                     };
                     img.src = e.target.result;
                 };
@@ -1350,74 +1364,59 @@
         // Gera descrição guiada baseada na correspondência encontrada
         function gerarDescricaoGuiada(resultados) {
             if (resultados.length === 0) {
-                return "📋 **Inventário importado**
-• Itens identificados: nenhum (verifique manualmente)
-• Confira os itens abaixo antes de publicar";
+                return "📋 **Inventário importado**\n• Itens identificados: nenhum (verifique manualmente)\n• Confira os itens abaixo antes de publicar";
             }
 
-            let desc = "🎒 **Inventário Verificado (Skins & Patterns):**
-";
+            let desc = "🎒 **Inventário Verificado (Skins & Patterns):**\n";
 
-            // Agrupa por tipo: skins por arma, patterns soltos, itens especiais
+            // Agrupa por arma
             const porArma = {};
-            const porPattern = [];
-            const itensEspeciais = [];
-
             resultados.forEach(r => {
                 if (r.arma) {
                     if (!porArma[r.arma]) porArma[r.arma] = [];
                     porArma[r.arma].push(r.padding || r.arma);
                 }
                 if (r.pattern) {
-                    porPattern.push(r.pattern);
-                }
-                if (r.tipo === 'item_especial') {
-                    itensEspeciais.push(r.nome);
+                    if (!porArma['Patterns']) porArma['Patterns'] = [];
+                    porArma['Patterns'].push(r.pattern);
                 }
             });
 
-            // Lista armas encontradas (ordem preferencial)
-            const ordArma = ["M9 Bayonet", "Karambit", "Butterfly", "M4A4", "AK-47", "AWP", "Gloves", "USP-S", "P250", "Glock-18"];
-            const ordArmaKey = ["m9_bayonet", "karambit", "butterfly", "m4a4", "ak_47", "awp", "gloves", "usp_s", "p250", "glock_18"];
-            for (let i = 0; i < ordArmaKey.length; i++) {
-                const key = ordArmaKey[i];
-                const nome = ordArma[i];
-                if (porArma[key]) {
-                    const paddings = porArma[key].join(', ');
-                    desc += `• ${nome}: ${paddings}
-`;
+            // Lista armas encontradas
+            const ordArma = ["AK-47", "M4A4", "AWP", "M9 Bayonet", "Gloves", "USP-S", "P250", "Glock-18"];
+            for (const arma of ordArma) {
+                if (porArma[arma]) {
+                    const paddings = porArma[arma].join(', ');
+                    desc += `• ${arma}: ${paddings}\n`;
                 }
             }
 
-            // Patterns soltos (apenas se houver)
-            if (porPattern.length > 0) {
-                // Remove duplicates
-                const padsUnicos = [...new Set(porPattern)];
-                desc += `• Padrões: ${padsUnicos.join(', ')}
-`;
+            // Patterns soltos
+            if (porArma['Patterns']) {
+                desc += `• Padrões: ${porArma['Patterns'].join(', ')}\n`;
             }
 
-            // Itens não reconhecidos APENAS se realmente não houver correspondência de catálogo
-            const naoReconhecidos = resultados.filter(r => {
-                if (r.arma && !catalogoStandoff2.skins[r.arma] && !catalogoStandoff2.rifles.includes(r.arma) && !catalogoStandoff2.itens_especiais.includes(r.arma)) return true;
-                if (r.pattern && !catalogoStandoff2.patterns.includes(r.pattern)) return true;
-                if (r.tipo === 'item_especial' && !catalogoStandoff2.itens_especiais.includes(r.nome)) return true;
-                return false;
-            });
-
-            if (naoReconhecidos.length > 0) {
-                desc += `• Itens não reconhecidos: confira manualmente
-`;
-            }
+            // Itens não reconhecidos
+            const reconhecidos = new Set(resultados.map(r => r.arma || r.pattern || '').filter(x => x));
+            desc += `• Itens não reconhecidos: confira manualmente\n`;
 
             return desc;
-        }async function processarFotosInventario(input) {
+        }
+
+        async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
 
-            for (let i = 0; i < Math.min(input.files.length, 7); i++) {
+            // Processa até 7 fotos, mostrando progresso por foto
+            const totalFotos = Math.min(input.files.length, 7);
+            for (let i = 0; i < totalFotos; i++) {
                 const comp = await comprimirImagem(input.files[i]);
                 if (comp) fotosNovasBase64.push(comp);
+                // Atualiza UI: mostrando qual foto está sendo processada
+                const campoDesc = document.getElementById("conta-desc");
+                if (campoDesc) {
+                    campoDesc.value = `📸 Processando foto ${i + 1} de ${totalFotos}...`;
+                }
             }
 
             // Lê o primeiro print com Tesseract.js para extrair texto real
@@ -1433,9 +1432,222 @@
 
                 try {
                     // Pré-processa o canvas para melhorar OCR
-                    const canvas = document.createElement('canvas');
-                    const maxDim = 1024;
+                    // Max dimensions balance quality and speed on mobile (960px)
+                    const maxDim = 960;
                     let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height = (height * maxDim) / width;
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width = (width * maxDim) / height;
+                            height = maxDim;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+
+                    // Fundo branco
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Contraste aprimorado (sem loop pesadíssimo de máscara para acelerar em mobile)
+                    // drawImage sobre fundo branco já melhora legibilidade
+
+                    // Extrai texto com Tesseract.js
+                    const extractedText = await Tesseract.recognize(
+                        canvas,
+                        'eng',
+                        { logger: m => console.log('Tesseract progress:', m) }
+                    );
+
+                    // Normaliza o texto extraído com segurança para casos vazios
+                    const rawText = (extractedText?.data?.text || '').toString();
+                    let textoNormalizado = rawText.toLowerCase()
+                        // Remove aspas duplas e simples extras
+                        .replace(/[""]/g, '')
+                        // Normaliza espaços múltiplos para um único espaço
+                        .replace(/\s+/g, ' ')
+                        // Remove acentos e caracteres especiais, substituindo por versões ASCII
+                        // NFD decompõe caracteres acentuados em base + combining mark;
+                        // o remove removes the combining marks (U+0300-U+036F)
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .trim();
+
+                    // Catálogo expandido de armas, skins e patterns do Standoff 2
+                    const catalogo = {
+                        m4a4: ['m4a4', 'howl', 'fire serpent', 'hyper beast', 'emperor', 'neon kimera'],
+                        m4a1_s: ['m4a1-s', 'night', 'master', 'royal', 'yellow jacket'],
+                        ak_47: ['ak-47', 'fire serpent', 'redline', 'case hardened', 'midnight', 'black laminate'],
+                        awp: ['awp', 'dragon lore', 'hyper beast', 'gungnir', 'medusa'],
+                        m9_bayonet: ['m9 bayonet', 'karambit', 'butterfly', 'knife'],
+                        gloves: ['gloves', 'carbon', 'sport', 'driver', 'motorsports', 'crystalline'],
+                        usp_s: ['usp-s', 'abyss', 'night', 'master', 'royal', 'yellow jacket'],
+                        p250: ['p250', 'bone snake', 'el dorado', 'guardian', 'oasis', 'vivid'],
+                        glock_18: ['glock-18', 'fade', 'water elemental', 'radiation', 'crimson web', 'heirloom'],
+                        skins: {
+                            'm9 bayonet': ['treasure hunter', 'lore', 'fade', 'doppler', 'chrome'],
+                            'karambit': ['fades', 'dorf', 'ricochet', 'vanilla'],
+                            'butterfly': ['butterfly', 'vanilla', 'fades'],
+                            'ak-47': ['fire serpent', 'redline', 'case hardened', 'midnight', 'black laminate'],
+                            'awp': ['dragon lore', 'hyper beast', 'gungnir', 'medusa'],
+                            'm4a4': ['howl', 'fire serpent', 'hyper beast', 'emperor', 'neon kimera'],
+                            'm4a1-s': ['night', 'master', 'royal', 'yellow jacket'],
+                            'gloves': ['carbon', 'sport', 'driver', 'motorsports', 'crystalline'],
+                        },
+                        patterns: ['412', '12', '318', '661', '823', '947', '000', '100', '200', '300'],
+                        itens_especiais: [
+                            'tie dye', 'jade stone', 'reis', 'venom', 'genesis', 'bubblegum',
+                            'ice storm', 'orange', 'purple', 'pink', 'black', 'white'
+                        ]
+                    };
+
+                    function compara(str1, str2) {
+                        // Normaliza ambas as strings: lowercase, remove pontuação, espaços extras
+                        const normalize = s => String(s).toLowerCase().replace(/[^\w\s]/g, '').trim();
+                        const s1 = normalize(str1);
+                        const s2 = normalize(str2);
+                        // Correspondência exata ou um contém o outro
+                        return s1 === s2 || s1.includes(s2) || s2.includes(s1);
+                    }
+
+                    const tokens = textoNormalizado.split(/\s+/);
+                    const resultados = [];
+
+                    for (const [arma, variacoes] of Object.entries(catalogo.skins)) {
+                        // Busca apenas se o nome daarma aparecer como token completo no texto normalizado
+                        const armaLower = arma.toLowerCase();
+                        // Token exato
+                        if (textos.some(t => t === armaLower)) {
+                            // Encontra o padding mais provável
+                            for (const pad of variacoes) {
+                                const padLower = pad.toLowerCase();
+                                // Pad como token exato
+                                if (textos.some(t => t === padLower)) {
+                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
+                                    break;
+                                }
+                            }
+                        } else {
+                            // Token solto: verifica se algum token do texto compartilha muitas características com o padding
+                            for (const pad of variacoes) {
+                                const padChars = pad.toLowerCase().split('');
+                                if (textos.some(t => t.length >= 3 && t.split('').filter(c => padChars.includes(c)).length >= Math.max(1, Math.floor(padChars.length * 0.5)))) {
+                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    for (const [arma, variacoes] of Object.entries(catalogo)) {
+                        if (arma === 'skins' || arma === 'patterns' || arma === 'itens_especiais') continue;
+                        for (const variacao of variacoes) {
+                            if (compara(textoNormalizado, variacao)) {
+                                resultados.push({ tipo: 'arma', nome: arma, variacao });
+                                break;
+                            }
+                        }
+                    }
+
+                    for (const pad of catalogo.patterns) {
+                        // Apenas patterns do catálogo oficial Standoff 2
+                        const padLower = pad.toLowerCase();
+                        // Match exato de token no texto normalizado
+                        if (textos.some(t => t === padLower)) {
+                            resultados.push({ tipo: 'pattern', pad });
+                            break;
+                        }
+                    }
+
+                    for (const item of catalogo.itens_especiais) {
+                        // Apenas itens_especiais do catálogo oficial
+                        const itemLower = item.toLowerCase();
+                        // Match exato de token ou substring dentro de token
+                        if (textos.some(t => t === itemLower || t.includes(itemLower))) {
+                            resultados.push({ tipo: 'item_especial', nome: item });
+                            break;
+                        }
+                    }
+
+                    if (resultados.length === 0) {
+                        resultados.push({ tipo: 'nao_reconhecido', observacao: 'Nenhum item do catálogo Standoff 2 foi reconhecido no texto OCR. Verifique manualmente abaixo.' });
+                    }
+
+                    let descricao = '🎒 **Inventário Verificado (Skins & Patterns):**\n';
+                    let desc = '';
+
+                    const porTipo = {};
+                    resultados.forEach(r => {
+                        const chave = r.tipo;
+                        if (!porTipo[chave]) porTipo[chave] = [];
+                        porTipo[chave].push(r);
+                    });
+
+                    const ordemArmas = ['m9_bayonet', 'karambit', 'butterfly', 'm4a4', 'm4a1_s', 'ak_47', 'awp', 'gloves', 'usp_s', 'p250', 'glock_18'];
+                    for (let i = 0; i < ordemArmas.length; i++) {
+                        const key = ordemArmas[i];
+                        const nome = ordArmaKey[i];
+                        if (porArma[key]) {
+                            const paddings = porArma[key].join(', ');
+                            desc += '• ' + nome.replace(/_/g, ' ') + ': ' + paddings + '\n';
+                        }
+                    }
+
+                    if (porTipo['pattern']) {
+                        const pads = porTipo['pattern'].map(p => p.pad);
+                        desc += '• Padrões: ' + pads.join(', ') + '\n';
+                    }
+
+                    if (porTipo['nao_reconhecido']) {
+                        desc += '• Itens não reconhecidos: ' + porTipo['nao_reconhecido'].observacao + '\n';
+                    } else {
+                        desc += '• Itens não reconhecidos: confira manualmente\n';
+                    }
+
+                    const campoDesc = document.getElementById("conta-desc");
+                    // Preenche apenas se o elemento existir no DOM
+                    if (campoDesc) {
+                        campoDesc.value = descricao = desc;
+                        // Insere aviso de confiança após o campo
+                        const avisosAntigos = document.querySelectorAll('.confianca-avisos');
+                        avisosAntigos.forEach(el => el.remove());
+
+                        const avisoConf = document.createElement('div');
+                        avisoConf.className = 'bg-[#181818] border border-[#262626] rounded-xl p-3 mb-4 text-[10px] text-[#d4ff00] confianca-avisos';
+                        const totalReconhecidos = resultados.filter(r => r.tipo !== 'nao_reconhecido').length;
+                        // Evita divisão por zero: conta total de tokens reconhecidos
+                        const totalTokens = textoNormalizado.split(/\s/).filter(t => t.trim().length > 0).length;
+                        const confianca = totalTokens > 0 ? Math.min(1.0, totalReconhecidos / totalTokens * 1.2) : 0.3;
+                        if (confianca < 0.4) {
+                            avisoConf.innerHTML = '⚠️ <strong>Baixa confiança OCR</strong> - O sistema leu o print mas reconheceu poucos itens. ✏️ Por favor, confirme e complete manualmente os itens abaixo antes de publicar. A conta passará por conferência na intermediação e erros podem causar rejeição do anúncio.';
+                        } else if (resultados.length > 0) {
+                            avisoConf.innerHTML = '✅ <strong>Leitura OCR concluída</strong> - Foram reconhecidos ' + resultados.length + ' item(ns) do catálogo Standoff 2. ✏️ Verifique se todos os itens estão corretos e complete o que estiver faltando antes de publicar.';
+                        } else {
+                            // Nenhum item reconhecido: avisa para conferência manual, sem cair em erro interno
+                            avisoConf.innerHTML = '⚠️ <strong>Baixa confiança OCR</strong> - Nenhum item do catálogo Standoff 2 foi reconhecido no texto do print. ✏️ Por favor, confira e complete manualmente os itens abaixo antes de publicar. A conta passará por conferência na intermediação.';
+                        }
+                        campoDesc.parentNode.insertBefore(avisoConf, campoDesc.nextSibling);
+                    }
+
+                } catch (err) {
+                    console.error('Erro na leitura OCR:', err);
+                    limparAvisoConfianca();
+                    const campoDesc = document.getElementById("conta-desc");
+                    campoDesc.value = '📋 **Leitura OCR indisponível**\n⚠️ O sistema não conseguiu processar o print automaticamente.✏️ Descreva manualmente os itens do seu inventário ou selecione-os na lista abaixo antes de publicar o anúncio.';
+                    const avisoConf = document.createElement('div');
+                    avisoConf.className = 'bg-[#181818] border border-[#262626] rounded-xl p-3 mb-4 text-[10px] text-[#d4ff00] confianca-avisos';
+                    avisoConf.innerHTML = '⚠️ <strong>Erro na leitura automática</strong>\n✏️ Por favor, descreva manualmente os itens do seu inventário antes de publicar o anúncio. A conta passará por conferência na intermediação.';
+                    campoDesc.parentNode.insertBefore(avisoConf, campoDesc.nextSibling);
+                }
                     let height = img.height;
 
                     if (width > height) {
@@ -1530,27 +1742,10 @@
                     const resultados = [];
 
                     for (const [arma, variacoes] of Object.entries(catalogo.skins)) {
-                        // Busca apenas se o nome da arma aparecer como token completo no texto normalizado
-                        const armaLower = arma.toLowerCase();
-                        // Token exato
-                        if (textos.some(t => t === armaLower)) {
-                            // Encontra o padding mais provável
-                            for (const pad of variacoes) {
-                                const padLower = pad.toLowerCase();
-                                // Pad como token exato
-                                if (textos.some(t => t === padLower)) {
-                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
-                                    break;
-                                }
-                            }
-                        } else {
-                            // Token solto: verifica se algum token do texto compartilha muitas características com o padding
-                            for (const pad of variacoes) {
-                                const padChars = pad.toLowerCase().split('');
-                                if (textos.some(t => t.length >= 3 && t.split('').filter(c => padChars.includes(c)).length >= Math.max(1, Math.floor(padChars.length * 0.5)))) {
-                                    resultados.push({ tipo: 'skin', nome: arma, variacao: pad });
-                                    break;
-                                }
+                        for (const variacao of variacoes) {
+                            if (compara(textoNormalizado, variacao) || tokens.some(t => compara(t, variacao))) {
+                                resultados.push({ tipo: 'skin', nome: arma, variacao });
+                                break;
                             }
                         }
                     }
@@ -1566,20 +1761,14 @@
                     }
 
                     for (const pad of catalogo.patterns) {
-                        // Apenas patterns do catálogo oficial Standoff 2
-                        const padLower = pad.toLowerCase();
-                        // Match exato de token no texto normalizado
-                        if (textos.some(t => t === padLower)) {
+                        if (textoNormalizado.includes(pad) || tokens.some(t => t === pad)) {
                             resultados.push({ tipo: 'pattern', pad });
                             break;
                         }
                     }
 
                     for (const item of catalogo.itens_especiais) {
-                        // Apenas itens_especiais do catálogo oficial
-                        const itemLower = item.toLowerCase();
-                        // Match exato de token ou substring dentro de token
-                        if (textos.some(t => t === itemLower || t.includes(itemLower))) {
+                        if (textoNormalizado.includes(item)) {
                             resultados.push({ tipo: 'item_especial', nome: item });
                             break;
                         }
