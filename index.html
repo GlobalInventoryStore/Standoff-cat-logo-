@@ -1295,7 +1295,7 @@
                             }
                         }
                     } catch (e) {
-                        console.warn("⚠️ OCR indisponível, description manual.");
+                        // OCR falhou silenciosamente; description será deixada vazia para edição manual
                     }
                 };
                 img.src = fotosNovasBase64[i];
