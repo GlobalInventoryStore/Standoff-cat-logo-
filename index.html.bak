@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --bg: #080808;
@@ -446,6 +447,10 @@
                 </button>
                 <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#181818] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
             </div>
+            <div id="detalhes-acoes-admin" class="hidden space-y-2 mt-4">
+                <button type="button" onclick="excluirAnuncioAdminSelecionado()" class="w-full bg-red-500/15 text-red-400 border border-red-500/30 py-2.5 rounded-xl font-bold text-xs cursor-pointer">🗑 Excluir Anúncio (Admin)</button>
+                <button type="button" id="btn-banir-detalhes" onclick="alternarBanimentoVendedorSelecionado()" class="w-full bg-amber-500/10 text-amber-400 border border-amber-500/30 py-2.5 rounded-xl font-bold text-xs cursor-pointer">🚫 Banir Vendedor</button>
+            </div>
             <button type="button" onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
@@ -676,6 +681,16 @@
         let anuncioSelecionadoAtual = null;
         let fotosNovasBase64 = [];
 
+        // ===== Admin e EmailJS (preencha as credenciais abaixo) =====
+        const ADMIN_EMAIL = "scruzsamuka@gmail.com";
+        const ADMIN_SENHA_DIRETA = ""; // opcional: senha de acesso direto do admin; vazio = login normal pelo cadastro
+        const CODIGO_ADMIN_FIXO = "111111";
+        const CHAVE_STORAGE_BANIDOS = "marktplace_stand2_banidos";
+        const EMAILJS_SERVICE_ID = ""; // ex: "service_xxxxxxx"
+        const EMAILJS_TEMPLATE_ID = ""; // ex: "template_xxxxxxx"
+        const EMAILJS_PUBLIC_KEY = ""; // ex: "SuaChavePublicaEmailJS"
+        let emailjsInicializado = false;
+
         const STATUS_PEDIDO = {
             aguardando_pagamento: 'Aguardando confirmação do pagamento',
             aguardando_conta_vendedor: 'Pagamento confirmado - aguardando envio dos dados da conta',
@@ -778,6 +793,7 @@
                     currentUser = JSON.parse(storedUser);
                     if (currentUser) {
                         currentUser.username = sanitizarNomePublico(currentUser.username);
+                        currentUser.isAdmin = Boolean(currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL);
                         aplicarEstadoUsuario();
                     }
                 } catch (e) {
@@ -810,6 +826,7 @@
             carregarAvataresRegistro();
             carregarCatalogo();
             inicializarAnuncios();
+            sincronizarBanidosSupabase();
 
             const hamburgerBtn = document.getElementById("hamburger-btn");
             const mobileMenu = document.getElementById("mobile-menu");
@@ -914,22 +931,52 @@
                 openModal();
                 return;
             }
+            if (currentUser && usuarioEstaBanido(sanitizarNomePublico(currentUser.username), currentUser.email)) {
+                mostrarAlerta("Acesso Bloqueado", "Sua conta está banida e não pode anunciar.", "aviso");
+                return;
+            }
             document.getElementById("anuncio-email").value = currentUser.email || "";
             setModalVisivel("modal-verificar-anuncio", true);
         }
         function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
-        function enviarCodigoAnuncio() {
+        function gerarCodigoVerificacao(email) {
+            if ((email || "").toLowerCase() === ADMIN_EMAIL) return CODIGO_ADMIN_FIXO;
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        function emailjsConfigurado() {
+            return Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY && window.emailjs && typeof window.emailjs.send === "function");
+        }
+
+        async function enviarCodigoPorEmail(email, codigo) {
+            if (!emailjsConfigurado()) return false;
+            try {
+                if (!emailjsInicializado) {
+                    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+                    emailjsInicializado = true;
+                }
+                await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    to_email: email,
+                    email: email,
+                    codigo_verificacao: codigo,
+                    codigo: codigo,
+                    message: `Seu código de verificacao do MARKTPLACE stand2 e: ${codigo}`
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function enviarCodigoAnuncio() {
             const email = document.getElementById("anuncio-email").value.trim();
             const feedback = document.getElementById("anuncio-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
-                codigoAnuncioSimulado = "111111";
-            } else {
-                codigoAnuncioSimulado = Math.floor(100000 + Math.random() * 900000).toString();
-            }
+            codigoAnuncioSimulado = gerarCodigoVerificacao(email);
+            const enviado = await enviarCodigoPorEmail(email, codigoAnuncioSimulado);
             feedback.style.color = "#10b981";
-            feedback.textContent = `Código enviado! (Código: ${codigoAnuncioSimulado})`;
+            feedback.textContent = enviado ? "Código enviado para o seu Gmail! Confira a caixa de entrada." : `Código enviado! (Código: ${codigoAnuncioSimulado})`;
         }
 
         function confirmarCodigoAnuncio(event) {
@@ -948,17 +995,14 @@
         }
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
 
-        function enviarCodigoGmail() {
+        async function enviarCodigoGmail() {
             const email = document.getElementById("reg-email").value.trim();
             const feedback = document.getElementById("register-feedback");
             if (!email || !email.endsWith("@gmail.com")) { feedback.textContent = "Insira um Gmail válido."; return; }
-            if (email.toLowerCase() === "scruzsamuka@gmail.com") {
-                codigoEnviadoSimulado = "111111";
-            } else {
-                codigoEnviadoSimulado = Math.floor(100000 + Math.random() * 900000).toString();
-            }
+            codigoEnviadoSimulado = gerarCodigoVerificacao(email);
+            const enviado = await enviarCodigoPorEmail(email, codigoEnviadoSimulado);
             feedback.style.color = "#10b981";
-            feedback.textContent = `Código enviado! (Código: ${codigoEnviadoSimulado})`;
+            feedback.textContent = enviado ? "Código enviado para o seu Gmail! Confira a caixa de entrada." : `Código enviado! (Código: ${codigoEnviadoSimulado})`;
         }
 
         function handleRegister(event) {
@@ -979,10 +1023,11 @@
             if (users.some(u => u.email === email)) { feedback.textContent = "Gmail já cadastrado."; return; }
 
             const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
-            users.push({ email, whatsapp, username, password, avatar });
+            const ehAdminNoCadastro = email.toLowerCase() === ADMIN_EMAIL;
+            users.push({ email, whatsapp, username, password, avatar, isAdmin: ehAdminNoCadastro });
             localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
 
-            currentUser = { username, email, whatsapp, password, avatar };
+            currentUser = { username, email, whatsapp, password, avatar, isAdmin: ehAdminNoCadastro };
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
@@ -995,10 +1040,17 @@
             const password = document.getElementById("login-password").value;
             const feedback = document.getElementById("login-feedback");
             let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
-            const foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
+            let foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
+
+            if (!foundUser && ADMIN_SENHA_DIRETA && identifier.toLowerCase() === ADMIN_EMAIL && password === ADMIN_SENHA_DIRETA) {
+                foundUser = { email: ADMIN_EMAIL, whatsapp: "", username: "Admin", password: ADMIN_SENHA_DIRETA, avatar: AVATARES[0], isAdmin: true };
+                users.push(foundUser);
+                localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
+            }
 
             if (!foundUser) { feedback.textContent = "Dados incorretos."; return; }
-            currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || "(Não informado)", password: foundUser.password, avatar: foundUser.avatar };
+            const ehAdminNoLogin = foundUser.email && foundUser.email.toLowerCase() === ADMIN_EMAIL;
+            currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || "(Não informado)", password: foundUser.password, avatar: foundUser.avatar, isAdmin: ehAdminNoLogin };
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
@@ -1011,7 +1063,7 @@
                 userPanel.classList.remove("hidden");
                 loginBtnContainer.classList.add("hidden");
                 document.getElementById("user-avatar-img").src = currentUser.avatar;
-                document.getElementById("user-name-text").textContent = sanitizarNomePublico(currentUser.username);
+                document.getElementById("user-name-text").textContent = sanitizarNomePublico(currentUser.username) + (currentUser.isAdmin || isAdminUsuario() ? " • Admin" : "");
             } else {
                 userPanel.classList.add("hidden");
                 loginBtnContainer.classList.remove("hidden");
@@ -1098,13 +1150,21 @@
             const grid = document.getElementById("catalogo-cards");
             if (!grid) return;
             grid.innerHTML = "";
+            const adminVendo = isAdminUsuario();
             anunciosEmMemoria.forEach(anuncio => {
                 const item = normalizarAnuncio(anuncio);
+                const vendedorCardBanido = usuarioEstaBanido(sanitizarNomePublico(item.vendedor), "");
+                if (vendedorCardBanido && !adminVendo) return;
                 const card = document.createElement("div");
                 card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
                 const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
-                const barraSuperior = ehDono ? `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>` : "";
+                let barraSuperior = "";
+                if (ehDono) {
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>`;
+                } else if (adminVendo) {
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
+                }
 
                 const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
 
@@ -1430,6 +1490,10 @@
             const vinculo = document.getElementById("conta-vinculo").value;
             let descFinal = document.getElementById("conta-desc").value.trim();
 
+            if (currentUser && usuarioEstaBanido(sanitizarNomePublico(currentUser.username), currentUser.email)) {
+                mostrarAlerta("Acesso Bloqueado", "Sua conta está banida e não pode publicar anúncios.", "aviso");
+                return;
+            }
             if (!titulo || !precoInput) { mostrarAlerta("Aviso", "Preencha título e preço.", "aviso"); return; }
             if (fotosNovasBase64.length === 0) { mostrarAlerta("Aviso", "Adicione pelo menos um print do inventário.", "aviso"); return; }
 
@@ -1517,6 +1581,143 @@
             mostrarAlerta("Sucesso", "Conta publicada e salva no banco com sucesso!");
         }
 
+        function isAdminUsuario() {
+            return Boolean(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL);
+        }
+
+        function carregarBanidos() {
+            try {
+                const lista = JSON.parse(localStorage.getItem(CHAVE_STORAGE_BANIDOS) || "[]");
+                return Array.isArray(lista) ? lista : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function salvarBanidos(lista) {
+            localStorage.setItem(CHAVE_STORAGE_BANIDOS, JSON.stringify(lista));
+        }
+
+        function usuarioEstaBanido(nome, email) {
+            const alvoNome = (nome || "").toLowerCase();
+            const alvoEmail = (email || "").toLowerCase();
+            if (!alvoNome && !alvoEmail) return false;
+            return carregarBanidos().some(b => {
+                const confereNome = Boolean(b && b.nome && alvoNome && String(b.nome).toLowerCase() === alvoNome);
+                const confereEmail = Boolean(b && b.email && alvoEmail && String(b.email).toLowerCase() === alvoEmail);
+                return confereNome || confereEmail;
+            });
+        }
+
+        function resolverEmailDoVendedor(nomeVendedor) {
+            try {
+                const users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+                const u = users.find(x => sanitizarNomePublico(x.username) === sanitizarNomePublico(nomeVendedor));
+                return u ? (u.email || "") : "";
+            } catch (e) {
+                return "";
+            }
+        }
+
+        async function sincronizarBanidosSupabase() {
+            if (!window.supabaseClient) return;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("usuarios_banidos")
+                    .select("nome,email");
+                if (!error && Array.isArray(data)) {
+                    const lista = carregarBanidos();
+                    let mudou = false;
+                    for (const b of data) {
+                        if (b && b.nome && !lista.some(x => (x.nome || "").toLowerCase() === String(b.nome).toLowerCase())) {
+                            lista.push({ nome: String(b.nome), email: b.email || "", data: "" });
+                            mudou = true;
+                        }
+                    }
+                    if (mudou) {
+                        salvarBanidos(lista);
+                        carregarCatalogo();
+                    }
+                }
+            } catch (e) {
+                // Sem tabela usuarios_banidos no Supabase: segue com localStorage
+            }
+        }
+
+        async function excluirAnuncioAdmin(id) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode excluir anúncios.", "aviso"); return; }
+            const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!alvo) { mostrarAlerta("Admin", "Anúncio não encontrado.", "aviso"); return; }
+            await removerAnuncio(id);
+            mostrarAlerta("Admin", `Anúncio "${sanitizarNomePublico(alvo.titulo)}" excluído do Supabase e do catálogo.`);
+        }
+
+        async function excluirAnuncioAdminSelecionado() {
+            if (!anuncioSelecionadoAtual) return;
+            const id = anuncioSelecionadoAtual.id;
+            closeDetalhes();
+            await excluirAnuncioAdmin(id);
+        }
+
+        async function banirVendedorDoAnuncio(id) {
+            if (!isAdminUsuario()) return;
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+            const nome = sanitizarNomePublico(anuncio.vendedor);
+            if (currentUser && nome === sanitizarNomePublico(currentUser.username)) { mostrarAlerta("Admin", "Você não pode banir a própria conta admin.", "aviso"); return; }
+            if (!confirm(`Banir o usuário "${nome}"? Os anúncios dele saem do catálogo e ele não poderá publicar.`)) return;
+            const lista = carregarBanidos();
+            if (!lista.some(b => (b.nome || "").toLowerCase() === nome.toLowerCase())) {
+                lista.push({ nome, email: resolverEmailDoVendedor(nome), data: new Date().toISOString() });
+                salvarBanidos(lista);
+            }
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient.from("usuarios_banidos").insert([{ nome, email: resolverEmailDoVendedor(nome) }]);
+                } catch (e) {
+                    // Tabela usuarios_banidos ausente: segue com localStorage
+                }
+            }
+            carregarCatalogo();
+            mostrarAlerta("Admin", `Usuário "${nome}" banido. Anúncios dele ocultos e publicação bloqueada.`, "aviso");
+        }
+
+        async function desbanirVendedorDoAnuncio(id) {
+            if (!isAdminUsuario()) return;
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+            const nome = sanitizarNomePublico(anuncio.vendedor);
+            if (!confirm(`Desbanir o usuário "${nome}"? Os anúncios dele voltam ao catálogo quando recarregar.`)) return;
+            salvarBanidos(carregarBanidos().filter(b => (b.nome || "").toLowerCase() !== nome.toLowerCase()));
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient.from("usuarios_banidos").delete().eq("nome", nome);
+                } catch (e) {
+                    // Tabela usuarios_banidos ausente: segue com localStorage
+                }
+            }
+            carregarCatalogo();
+            mostrarAlerta("Admin", `Usuário "${nome}" desbanido.`);
+        }
+
+        async function alternarBanimentoVendedor(action, id) {
+            if (action === "banir") { await banirVendedorDoAnuncio(id); }
+            else { await desbanirVendedorDoAnuncio(id); }
+        }
+
+        async function alternarBanimentoVendedorSelecionado() {
+            if (!anuncioSelecionadoAtual) return;
+            const btnBan = document.getElementById("btn-banir-detalhes");
+            const acao = btnBan && btnBan.dataset.acao === "desbanir" ? "desbanir" : "banir";
+            const id = anuncioSelecionadoAtual.id;
+            const estaAberto = document.getElementById("modal-detalhes").style.display === "flex";
+            if (estaAberto) closeDetalhes();
+            await alternarBanimentoVendedor(acao, id);
+            if (estaAberto && anunciosEmMemoria.some(a => String(a.id) === String(id))) {
+                abrirDetalhes(id);
+            }
+        }
+
         async function removerAnuncio(id) {
             const alvo = anunciosEmMemoria.find(a => String(a.id) === String(id));
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
@@ -1568,6 +1769,20 @@
                 });
             } else {
                 imgContainer.classList.add("hidden");
+            }
+            const acoesAdmin = document.getElementById("detalhes-acoes-admin");
+            if (acoesAdmin) {
+                if (isAdminUsuario()) {
+                    acoesAdmin.classList.remove("hidden");
+                    const btnBan = document.getElementById("btn-banir-detalhes");
+                    if (btnBan) {
+                        const vendedorBanido = usuarioEstaBanido(sanitizarNomePublico(anuncioSelecionadoAtual.vendedor), "");
+                        btnBan.textContent = vendedorBanido ? "♻️ Desbanir Vendedor" : "🚫 Banir Vendedor";
+                        btnBan.dataset.acao = vendedorBanido ? "desbanir" : "banir";
+                    }
+                } else {
+                    acoesAdmin.classList.add("hidden");
+                }
             }
             document.getElementById("modal-detalhes").style.display = "flex";
         }
