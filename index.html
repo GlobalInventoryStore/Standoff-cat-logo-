@@ -1256,9 +1256,87 @@
 
         const ARMAS_STANDOFF2_NOMES = [
     "M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe",
-    "AKR", "AK-47", "AK-74U", "M4", "M4A4", "M4A1", "M16", "AWM", "AWP", "M40", "M110",
-    "USP", "USP-S", "G22", "Glock-18", "Deagle", "Desert Eagle", "P350", "P250", "Five-SeveN", "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
+    "AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60",
+    "FAMAS", "VAL", "Akimbo Uzi", "F/S", "Berettas",
+    "USP-S", "USP", "G22", "Glock-18", "Desert Eagle", "Deagle", "P350", "P250", "Five-SeveN",
+    "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
 ];
+
+        function extrairApenasNomesArmas(textoBruto) {
+            if (!textoBruto) return [];
+            const normalizado = textoBruto.toLowerCase().replace(/[^a-z0-9\s\-\/]/g, " ");
+            const encontradas = [];
+            for (const arma of ARMAS_STANDOFF2_NOMES) {
+                const padrao = arma.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/[-\/]/g, "[-\\/ ]?");
+                const re = new RegExp("(^|[^a-z0-9])" + padrao + "($|[^a-z0-9])", "i");
+                if (re.test(normalizado) && !encontradas.includes(arma)) encontradas.push(arma);
+            }
+            return encontradas;
+        }
+
+        function carregarImagemDeArquivo(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = function() { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = function(e) { URL.revokeObjectURL(url); reject(e); };
+                img.src = url;
+            });
+        }
+
+        function desenharVarianteOCR(img, escala, contraste) {
+            const maxLado = 2200;
+            let w = img.width * escala, h = img.height * escala;
+            const fator = Math.min(1, maxLado / Math.max(w, h));
+            w = Math.round(w * fator);
+            h = Math.round(h * fator);
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, w, h);
+            if (contraste > 0) {
+                const dados = ctx.getImageData(0, 0, w, h);
+                const px = dados.data;
+                const fatorC = (259 * (contraste + 255)) / (255 * (259 - contraste));
+                for (let i = 0; i < px.length; i += 4) {
+                    const cinza = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+                    const c = Math.max(0, Math.min(255, fatorC * (cinza - 128) + 128));
+                    px[i] = c; px[i + 1] = c; px[i + 2] = c;
+                }
+                ctx.putImageData(dados, 0, 0);
+            }
+            return canvas;
+        }
+
+        async function reconhecerArmasEmFoto(file) {
+            if (!(window.Tesseract && typeof window.Tesseract.recognize === "function")) return [];
+            const armas = [];
+            try {
+                const img = await carregarImagemDeArquivo(file);
+                const tentativas = [
+                    { escala: 1, contraste: 0 },
+                    { escala: 1.5, contraste: 60 },
+                    { escala: 2, contraste: 60 }
+                ];
+                for (const t of tentativas) {
+                    try {
+                        const canvas = desenharVarianteOCR(img, t.escala, t.contraste);
+                        const resultado = await window.Tesseract.recognize(canvas, "eng");
+                        const novas = extrairApenasNomesArmas(resultado && resultado.data ? resultado.data.text : "");
+                        for (const a of novas) {
+                            if (!armas.includes(a)) armas.push(a);
+                        }
+                        if (armas.length >= 3) break;
+                    } catch (e) {
+                        // Variante falhou; tenta a proxima
+                    }
+                }
+            } catch (e) {
+                // OCR falhou para esta foto; segue sem armadilha
+            }
+            return armas;
+        }
 
         async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
@@ -1270,39 +1348,18 @@
                 if (comp) fotosNovasBase64.push(comp);
             }
 
-            // OCR recognition via Tesseract para identificar nomes de armas
+            // OCR roda a partir dos arquivos originais (input.files);
+            // fotosNovasBase64 permanece comprimida em cor natural para o Supabase
             const nomesArmasEncontrados = new Set();
-            const canvasOcr = document.createElement("canvas");
-            const ctxOcr = canvasOcr.getContext("2d");
-
-            for (let i = 0; i < fotosNovasBase64.length; i++) {
-                const img = new Image();
-                img.onload = async function() {
-                    canvasOcr.width = img.width;
-                    canvasOcr.height = img.height;
-                    ctxOcr.clearRect(0, 0, canvasOcr.width, canvasOcr.height);
-                    ctxOcr.drawImage(img, 0, 0);
-                    try {
-                        const { recognize } = await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
-                        const texto = await recognize(canvasOcr, { lang: "eng", oem: 1, psm: 6 });
-                        const linhas = texto.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-                        for (const linha of linhas) {
-                            const upper = linha.toUpperCase();
-                            for (const arma of ARMAS_STANDOFF2_NOMES) {
-                                if (upper.includes(arma.toUpperCase())) {
-                                    nomesArmasEncontrados.add(arma);
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        // OCR falhou silenciosamente; description será deixada vazia para edição manual
-                    }
-                };
-                img.src = fotosNovasBase64[i];
+            const tarefasOCR = [];
+            for (let i = 0; i < Math.min(input.files.length, 7); i++) {
+                tarefasOCR.push(
+                    reconhecerArmasEmFoto(input.files[i])
+                        .then(armas => { for (const a of armas) nomesArmasEncontrados.add(a); })
+                        .catch(() => {})
+                );
             }
-
-            // Aguarda todas as imagens carregarem antes de definir a description
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await Promise.all(tarefasOCR);
 
             // Preencher #conta-desc com os nomes das armas encontradas
             const campoDesc = document.getElementById("conta-desc");
