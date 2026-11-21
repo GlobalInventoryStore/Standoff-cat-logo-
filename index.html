@@ -1503,48 +1503,56 @@
 </script>
 <!-- Modal Como Funcionamos -->
 <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
-    <div class="bg-[#121212] border border-[#262626] rounded-2xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-        <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 text-[#d4ff00] hover:text-white text-sm cursor-pointer">✕</button>
-        <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Intermediação e Custódia -->
-            <div class="bg-[#181818] rounded-xl p-5 border border-[#262626] mb-4">
-                <div class="w-10 h-10 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-[#d4ff00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 14l9-5a1 1 0 000-1.72l-9-5a1 1 0 00-1.72 1L2 14a1 1 0 00.34 1.31l8 4a1 1 0 001.66 0l8-4a1 1 0 00.34-1.31L12 14z"/></svg>
-                </div>
-                <h3 class="text-xl font-bold text-[#d4ff00] mb-3">Intermediação e Custódia</h3>
-                <p class="text-[#b3b3b3] text-sm leading-relaxed">Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento.</p>
-            </div>
-            
-            <!-- Conferência da Conta -->
-            <div class="bg-[#181818] rounded-xl p-5 border border-[#262626] mb-4">
-                <div class="w-10 h-10 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-[#d4ff00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6H6v-6l4-2z"/><path d="M12 18v6l4 2v-6h-2v6l-4 2v-6H4v-6l4-2z"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-                </div>
-                <h3 class="text-xl font-bold text-[#d4ff00] mb-3">Conferência da Conta</h3>
-                <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe conferência a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
-            </div>
+  <div class="bg-[#121212] border border-[#262626] rounded-2xl p-6 relative shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+    <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Intermediação e Custódia -->
+      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
+          </svg>
         </div>
-        
-        <!-- Atendimento Centralizado -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-[#181818] rounded-xl p-5 border border-[#262626] mb-4">
-                <div class="w-12 h-12 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 6v6l4 2v6H6v-6l4-2z"/><path d="M12 18v6l4 2v-6h-2v6l-4 2v-6H4v-6l4-2z"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-                </div>
-                <h3 class="text-xl font-bold text-[#d4ff00] mb-3">Atendimento Centralizado</h3>
-                <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
-            </div>
-            <div class="bg-[#181818] rounded-xl p-5 border border-[#262626] mb-4">
-                <div class="w-12 h-12 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><stroke-width>2</stroke><path d="M12 8v4l3-7h6l3-7 3 7h6l-3 7-3 7H5l3-7H12z"/></svg>
-                </div>
-                <h3 class="text-xl font-bold text-[#d4ff00] mb-3">Benefícios Rápidos</h3>
-                <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
-            </div>
+        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
+        <p class="text-[#b3b3b3] text-sm leading-relaxed">Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento.</p>
+      </div>
+
+      <!-- Conferência da Conta -->
+      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
+        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
+        <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
+      </div>
+
+      <!-- Atendimento Centralizado -->
+      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
+        <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
+      </div>
+
+      <!-- Benefícios Rápidos -->
+      <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+        <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
+        <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
+      </div>
     </div>
+  </div>
 </div>
 
 </body>
