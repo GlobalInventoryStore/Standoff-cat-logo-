@@ -243,6 +243,7 @@
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
                     <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
                     <a href="#" onclick="openPainelBanidos(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-banidos">Usuários Banidos</a>
+                    <a href="#" onclick="abrirConfiguracoes(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-config">Configurações</a>
                     <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Atuamos</a>
                     <div class="pt-3 border-t border-[#222]" id="authSection">
                         <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
@@ -308,6 +309,58 @@
         </div>
     </div>
 
+    <!-- Modal Configurações (usuário logado) -->
+    <div id="modal-config" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[var(--accent)]">Configurações</h3>
+                <button type="button" onclick="closeConfiguracoes()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+            <div id="config-feedback" class="text-xs text-center mb-2"></div>
+
+            <div class="flex items-center gap-3 bg-[#050505] border border-[#222] rounded-xl p-3 mb-3">
+                <img id="config-avatar-img" src="" alt="Avatar" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--accent)]">
+                <div class="min-w-0">
+                    <p class="text-white font-bold text-sm truncate" id="config-nome">—</p>
+                    <p class="text-[11px] text-gray-400 truncate" id="config-email">—</p>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Alterar Foto / Avatar</label>
+                <div class="grid grid-cols-5 gap-2" id="config-avatars-grid"></div>
+                <label for="config-upload-input" class="mt-2 block text-center bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-3 py-2 rounded-lg font-bold cursor-pointer transition">📤 Enviar imagem do dispositivo (200x200)</label>
+                <input type="file" id="config-upload-input" accept="image/*" class="hidden" onchange="salvarAvatarUpload(this.files && this.files[0]); this.value = '';">
+            </div>
+
+            <div class="input-group">
+                <label>Alterar Nome / Nametag <span class="text-[10px] text-gray-500 normal-case">(uma vez a cada 30 dias)</span></label>
+                <div class="flex gap-2">
+                    <input type="text" id="config-novo-nome" placeholder="Ex: [PRO] Shadow">
+                    <button type="button" onclick="salvarNovoNomeConfig()" class="btn-primary text-xs px-3 h-[42px] whitespace-nowrap">Salvar</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>WhatsApp de Contato (opcional)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="config-whatsapp" placeholder="Ex: 11999999999">
+                    <button type="button" onclick="salvarWhatsAppConfig()" class="btn-primary text-xs px-3 h-[42px] whitespace-nowrap">Salvar</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Alterar Senha</label>
+                <input type="password" id="config-senha-antiga" placeholder="Senha Antiga">
+                <div class="h-2"></div>
+                <input type="password" id="config-senha-nova" placeholder="Nova Senha (mín. 6 caracteres)">
+                <div class="h-2"></div>
+                <input type="password" id="config-senha-nova-confirm" placeholder="Confirmar Nova Senha">
+                <button type="button" onclick="salvarNovaSenhaConfig()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-3 py-2.5 rounded-lg font-bold transition cursor-pointer">Atualizar Senha</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Usuários Banidos (Admin) -->
     <div id="modal-banidos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
@@ -370,6 +423,23 @@
                     </div>
                     <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
+                    <button type="button" onclick="mostrarRecuperacaoSenha()" class="mt-2 w-full text-[11px] text-[var(--accent)] hover:underline cursor-pointer">Esqueceu a senha?</button>
+                    <div id="rec-senha-area" class="hidden mt-3 border-t border-[#222] pt-3 space-y-2">
+                        <p class="text-[11px] font-semibold text-[var(--accent)]">Recuperar acesso</p>
+                        <input type="text" id="rec-identifier" placeholder="seuemail@gmail.com ou Nome">
+                        <button type="button" onclick="gerarCodigoRecuperacao()" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Gerar Código de Recuperação</button>
+                        <div id="rec-codigo-box" class="hidden text-center p-2.5 rounded-lg bg-[#111111] border-2 border-[#d4ff00]">
+                            <p class="text-[10px] text-gray-300">Código válido por 5 minutos</p>
+                            <p class="font-mono text-xl font-bold text-[#d4ff00] tracking-widest" id="rec-codigo-valor">------</p>
+                        </div>
+                        <div id="rec-nova-senha-area" class="hidden space-y-2">
+                            <input type="text" id="rec-code-input" placeholder="Código de 6 dígitos">
+                            <input type="password" id="rec-nova-senha" placeholder="Nova Senha (mín. 6 caracteres)">
+                            <input type="password" id="rec-nova-senha-confirm" placeholder="Confirmar Nova Senha">
+                            <button type="button" onclick="confirmarRecuperacaoSenha()" class="w-full btn-primary text-xs py-2.5">Redefinir Senha</button>
+                        </div>
+                        <div id="rec-feedback" class="text-xs text-center text-red-400"></div>
+                    </div>
                 </form>
             </div>
 
@@ -1269,7 +1339,7 @@
             if (campoCodigo) campoCodigo.focus();
         }
 
-        function handleRegister(event) {
+        async function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById("reg-email").value.trim();
             const whatsapp = document.getElementById("reg-whatsapp").value.trim();
@@ -1284,32 +1354,52 @@
 
             if (!username) username = `Player_${Math.floor(1000 + Math.random() * 9000)}`;
             let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
-            if (users.some(u => u.email === email)) { feedback.textContent = "Gmail já cadastrado."; return; }
+            if (users.some(u => normalizarIdentificador(u.email) === normalizarIdentificador(email))) { feedback.textContent = "Gmail já cadastrado."; return; }
+            if (users.some(u => normalizarIdentificador(u.username) === normalizarIdentificador(username))) { feedback.textContent = "Este nome de usuário já está em uso."; return; }
+
+            feedback.textContent = "Verificando disponibilidade no Supabase...";
+            const existente = await buscarUsuarioSupabase(email);
+            if (existente) { feedback.textContent = "Gmail já cadastrado."; return; }
+            if (await verificarNomeEmUso(username, email)) { feedback.textContent = "Este nome de usuário já está em uso."; return; }
 
             const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
             const ehAdminNoCadastro = ehEmailAdmin(email);
-            users.push({ email, whatsapp, username, password, avatar, isAdmin: ehAdminNoCadastro });
+            const emailNormalizado = email.toLowerCase();
+            users.push({ email: emailNormalizado, whatsapp, username, password, avatar, isAdmin: ehAdminNoCadastro });
             localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
 
-            currentUser = { username, email, whatsapp, password, avatar, isAdmin: ehAdminNoCadastro };
+            await cadastrarUsuarioSupabase({ email: emailNormalizado, nome: username, senha: password, avatar: avatar, whatsapp: whatsapp || "", ultimo_ajuste_nome: null });
+
+            currentUser = { username, email: emailNormalizado, whatsapp, password, avatar, isAdmin: ehAdminNoCadastro };
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
             mostrarAlerta("Sucesso!", "Conta criada com sucesso! Bem-vindo ao MARKTPLACE stand2.");
         }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const identifier = document.getElementById("login-identifier").value.trim();
             const password = document.getElementById("login-password").value;
             const feedback = document.getElementById("login-feedback");
             let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
-            let foundUser = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
+            const idLower = identifier.toLowerCase();
+            let foundUser = users.find(u => ((u.email || "").toLowerCase() === idLower || (u.username || "").toLowerCase() === idLower) && u.password === password);
 
             if (!foundUser && ADMIN_SENHA_DIRETA && identifier.toLowerCase() === ADMIN_EMAIL && password === ADMIN_SENHA_DIRETA) {
                 foundUser = { email: ADMIN_EMAIL, whatsapp: "", username: "Admin", password: ADMIN_SENHA_DIRETA, avatar: AVATARES[0], isAdmin: true };
                 users.push(foundUser);
                 localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
+            }
+
+            if (!foundUser && window.supabaseClient) {
+                feedback.textContent = "Verificando sua conta no Supabase...";
+                const row = await buscarUsuarioSupabase(identifier);
+                if (row && row.senha === password) {
+                    foundUser = { email: row.email, whatsapp: row.whatsapp || "", username: row.nome, password: row.senha, avatar: row.avatar || AVATARES[0], isAdmin: ehEmailAdmin(row.email) };
+                    users.push(foundUser);
+                    localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
+                }
             }
 
             if (!foundUser) { feedback.textContent = "Dados incorretos."; return; }
@@ -1334,6 +1424,8 @@
             }
             const menuItemBanidos = document.getElementById("menu-item-banidos");
             if (menuItemBanidos) menuItemBanidos.classList.toggle("hidden", !isAdminUsuario());
+            const menuItemConfig = document.getElementById("menu-item-config");
+            if (menuItemConfig) menuItemConfig.classList.toggle("hidden", !currentUser);
             carregarCatalogo();
         }
 
@@ -1343,6 +1435,262 @@
             aplicarEstadoUsuario();
             document.getElementById("mobile-menu").classList.add("hidden");
             mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
+        }
+
+        // ===== Contas persistentes no Supabase (public.usuarios) com fallback localStorage =====
+        async function buscarUsuarioSupabase(identificador) {
+            if (!window.supabaseClient || !identificador) return null;
+            try {
+                const id = normalizarIdentificador(identificador);
+                let consulta = window.supabaseClient.from("usuarios").select("*");
+                consulta = id.includes("@") ? consulta.eq("email", id) : consulta.ilike("nome", id);
+                const { data, error } = await consulta.maybeSingle();
+                if (error || !data) return null;
+                return data;
+            } catch (e) {
+                return null;
+            }
+        }
+        function normalizarIdentificador(texto) {
+            return String(texto || "").trim().toLowerCase();
+        }
+
+        async function cadastrarUsuarioSupabase(registro) {
+            if (!window.supabaseClient || !registro || !registro.email) return false;
+            try {
+                const { error } = await window.supabaseClient.from("usuarios").insert([registro]);
+                return !error;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function verificarNomeEmUso(nome, ignorarEmail) {
+            if (!window.supabaseClient || !nome) return false;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("usuarios")
+                    .select("email")
+                    .ilike("nome", nome);
+                if (error || !Array.isArray(data)) return false;
+                return data.some(r => normalizarIdentificador(r.email) !== normalizarIdentificador(ignorarEmail));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function atualizarUsuarioSupabase(email, campos) {
+            if (!window.supabaseClient || !email || !campos) return false;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("usuarios")
+                    .update(campos)
+                    .eq("email", normalizarIdentificador(email))
+                    .select("email");
+                return !error && Array.isArray(data) && data.length > 0;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function sincronizarUsuarioLocal(usuarioLocal) {
+            try {
+                const users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+                const indice = users.findIndex(u => normalizarIdentificador(u.email) === normalizarIdentificador(usuarioLocal.email));
+                if (indice >= 0) { users[indice] = Object.assign({}, users[indice], usuarioLocal); } else { users.push(usuarioLocal); }
+                localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
+            } catch (e) {}
+        }
+
+        // ===== Esqueceu a senha (código exibido na tela, sem EmailJS) =====
+        let recSenhaCodigo = null;
+        let recSenhaExpiraEm = 0;
+        let recSenhaEmailConta = null;
+
+        function mostrarRecuperacaoSenha() {
+            const area = document.getElementById("rec-senha-area");
+            if (area) { area.classList.remove("hidden"); const campo = document.getElementById("rec-identifier"); if (campo) campo.focus(); }
+            document.getElementById("login-feedback").textContent = "";
+        }
+
+        async function gerarCodigoRecuperacao() {
+            const identificador = document.getElementById("rec-identifier").value.trim();
+            const feedback = document.getElementById("rec-feedback");
+            const caixa = document.getElementById("rec-codigo-box");
+            feedback.style.color = "#f87171";
+            feedback.textContent = "";
+            if (!identificador) { feedback.textContent = "Informe seu Gmail ou Nome de usuário."; return; }
+            let row = await buscarUsuarioSupabase(identificador);
+            if (!row) {
+                const users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
+                const local = users.find(u => normalizarIdentificador(u.email) === normalizarIdentificador(identificador) || normalizarIdentificador(u.username) === normalizarIdentificador(identificador));
+                if (local) row = { email: local.email, nome: local.username };
+            }
+            if (!row || !row.email) { caixa.classList.add("hidden"); feedback.textContent = "Conta não encontrada. Confira o Gmail ou Nome digitado."; return; }
+            recSenhaCodigo = String(Math.floor(100000 + Math.random() * 900000));
+            recSenhaEmailConta = normalizarIdentificador(row.email);
+            recSenhaExpiraEm = Date.now() + 5 * 60 * 1000;
+            document.getElementById("rec-codigo-valor").textContent = recSenhaCodigo;
+            caixa.classList.remove("hidden");
+            document.getElementById("rec-nova-senha-area").classList.remove("hidden");
+            feedback.style.color = "#10b981";
+            feedback.textContent = "Código gerado na caixa acima. Digite-o e defina a nova senha (5 min).";
+        }
+
+        async function confirmarRecuperacaoSenha() {
+            const feedback = document.getElementById("rec-feedback");
+            feedback.style.color = "#f87171";
+            const codigo = document.getElementById("rec-code-input").value.trim();
+            const nova = document.getElementById("rec-nova-senha").value;
+            const conf = document.getElementById("rec-nova-senha-confirm").value;
+            if (!recSenhaCodigo || Date.now() > recSenhaExpiraEm) { feedback.textContent = "Código expirado. Gere um novo."; return; }
+            if (codigo !== recSenhaCodigo) { feedback.textContent = "Código incorreto."; return; }
+            if (nova.length < 6 || nova !== conf) { feedback.textContent = "Nova senha inválida ou não confere."; return; }
+            const okBanco = await atualizarUsuarioSupabase(recSenhaEmailConta, { senha: nova });
+            sincronizarUsuarioLocal({ email: recSenhaEmailConta, password: nova });
+            if (okBanco) {
+                feedback.style.color = "#10b981";
+                feedback.textContent = "Senha redefinida com sucesso! Faça login com a nova senha.";
+                ["rec-identifier", "rec-code-input", "rec-nova-senha", "rec-nova-senha-confirm"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+                recSenhaCodigo = null; recSenhaEmailConta = null;
+            } else {
+                feedback.textContent = "Não foi possível gravar no Supabase agora. Tente novamente em instantes.";
+            }
+        }
+
+        // ===== Modal Configurações =====
+        function abrirConfiguracoes() {
+            document.getElementById("mobile-menu").classList.add("hidden");
+            if (!currentUser) { mostrarAlerta("Atenção", "Entre na sua conta para abrir as Configurações.", "aviso"); openModal(); return; }
+            document.getElementById("config-avatar-img").src = currentUser.avatar || AVATARES[0];
+            document.getElementById("config-nome").textContent = sanitizarNomePublico(currentUser.username);
+            document.getElementById("config-email").textContent = currentUser.email || "—";
+            document.getElementById("config-novo-nome").value = "";
+            document.getElementById("config-whatsapp").value = (currentUser.whatsapp && currentUser.whatsapp !== "(Não informado)") ? currentUser.whatsapp : "";
+            ["config-senha-antiga", "config-senha-nova", "config-senha-nova-confirm"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+            carregarAvataresConfig();
+            feedbackConfig("", "");
+            setModalVisivel("modal-config", true);
+        }
+        function closeConfiguracoes() { setModalVisivel("modal-config", false); }
+        function feedbackConfig(texto, cor) {
+            const f = document.getElementById("config-feedback");
+            if (!f) return;
+            f.style.color = cor || "";
+            f.textContent = texto;
+        }
+
+        function carregarAvataresConfig() {
+            const grid = document.getElementById("config-avatars-grid");
+            if (!grid) return;
+            grid.innerHTML = "";
+            AVATARES.forEach((url) => {
+                const img = document.createElement("img");
+                img.src = url;
+                img.className = "w-10 h-10 rounded-full cursor-pointer border-2 p-1 bg-[#050505] transition " + (currentUser.avatar === url ? "border-[var(--accent)]" : "border-transparent hover:border-[var(--accent)]");
+                img.onclick = function() { aplicarAvatarUsuario(url); };
+                grid.appendChild(img);
+            });
+        }
+
+        async function aplicarAvatarUsuario(avatarUrl) {
+            if (!currentUser) return;
+            currentUser.avatar = avatarUrl;
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            sincronizarUsuarioLocal({ email: currentUser.email, avatar: avatarUrl });
+            document.getElementById("user-avatar-img").src = avatarUrl;
+            document.getElementById("config-avatar-img").src = avatarUrl;
+            carregarAvataresConfig();
+            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { avatar: avatarUrl });
+            feedbackConfig(okBanco ? "Avatar atualizado!" : "Avatar aplicado localmente (Supabase indisponível).", okBanco ? "#10b981" : "#fbbf24");
+        }
+
+        function comprimirImagemAvatar(file) {
+            return new Promise((resolve) => {
+                if (!file) { resolve(null); return; }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        try {
+                            const canvas = document.createElement("canvas");
+                            let w = img.width, h = img.height;
+                            if (w > h) { h = Math.max(1, Math.round(200 * h / w)); w = 200; } else { w = Math.max(1, Math.round(200 * w / h)); h = 200; }
+                            canvas.width = w || 200;
+                            canvas.height = h || 200;
+                            canvas.getContext("2d").drawImage(img, 0, 0, w || 200, h || 200);
+                            resolve(canvas.toDataURL("image/jpeg", 0.7));
+                        } catch (err) { resolve(null); }
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function salvarAvatarUpload(file) {
+            if (!currentUser) return;
+            feedbackConfig("Processando imagem...", "#9ca3af");
+            const base64 = await comprimirImagemAvatar(file);
+            if (!base64) { feedbackConfig("Falha ao processar a imagem. Tente outro arquivo.", "#f87171"); return; }
+            await aplicarAvatarUsuario(base64);
+        }
+
+        async function salvarNovoNomeConfig() {
+            if (!currentUser) return;
+            const novoNome = document.getElementById("config-novo-nome").value.trim();
+            if (!novoNome || novoNome.length < 3) { feedbackConfig("Informe um nome com pelo menos 3 caracteres.", "#f87171"); return; }
+            feedbackConfig("Verificando regra de 30 dias no Supabase...", "#9ca3af");
+            const row = await buscarUsuarioSupabase(currentUser.email);
+            const ultimo = row ? row.ultimo_ajuste_nome : null;
+            if (ultimo) {
+                const decorrido = Date.now() - new Date(ultimo).getTime();
+                const diasRestantes = 30 - Math.floor(decorrido / 86400000);
+                if (diasRestantes > 0) { feedbackConfig(`Você só pode trocar o nome a cada 30 dias. Faltam ${diasRestantes} dia(s).`, "#fbbf24"); return; }
+            }
+            if (await verificarNomeEmUso(novoNome, currentUser.email)) { feedbackConfig("Este nome já está em uso por outro usuário.", "#f87171"); return; }
+            const agora = new Date().toISOString();
+            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { nome: novoNome, ultimo_ajuste_nome: agora });
+            currentUser.username = novoNome;
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            sincronizarUsuarioLocal({ email: currentUser.email, username: novoNome });
+            document.getElementById("config-nome").textContent = sanitizarNomePublico(novoNome);
+            document.getElementById("config-novo-nome").value = "";
+            aplicarEstadoUsuario();
+            feedbackConfig(okBanco ? "Nome atualizado! Próxima troca liberada em 30 dias." : "Nome atualizado localmente (Supabase indisponível).", okBanco ? "#10b981" : "#fbbf24");
+        }
+
+        async function salvarWhatsAppConfig() {
+            if (!currentUser) return;
+            const wpp = document.getElementById("config-whatsapp").value.trim().replace(/\D/g, "");
+            if (!wpp || wpp.length < 10) { feedbackConfig("Informe um número válido com DDD (ex: 11999999999).", "#f87171"); return; }
+            feedbackConfig("Salvando WhatsApp...", "#9ca3af");
+            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { whatsapp: wpp });
+            currentUser.whatsapp = wpp;
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            sincronizarUsuarioLocal({ email: currentUser.email, whatsapp: wpp });
+            feedbackConfig(okBanco ? "WhatsApp salvo! Ele pré-preencherá o checkout/suporte." : "WhatsApp salvo localmente (Supabase indisponível).", okBanco ? "#10b981" : "#fbbf24");
+        }
+
+        async function salvarNovaSenhaConfig() {
+            if (!currentUser) return;
+            const antiga = document.getElementById("config-senha-antiga").value;
+            const nova = document.getElementById("config-senha-nova").value;
+            const conf = document.getElementById("config-senha-nova-confirm").value;
+            if (nova.length < 6) { feedbackConfig("A nova senha precisa ter pelo menos 6 caracteres.", "#f87171"); return; }
+            if (nova !== conf) { feedbackConfig("A confirmação não confere com a nova senha.", "#f87171"); return; }
+            feedbackConfig("Validando senha antiga no Supabase...", "#9ca3af");
+            const row = await buscarUsuarioSupabase(currentUser.email);
+            const senhaAtual = row ? row.senha : currentUser.password;
+            if (antiga !== senhaAtual) { feedbackConfig("Senha antiga incorreta.", "#f87171"); return; }
+            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { senha: nova });
+            currentUser.password = nova;
+            localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
+            sincronizarUsuarioLocal({ email: currentUser.email, password: nova });
+            ["config-senha-antiga", "config-senha-nova", "config-senha-nova-confirm"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+            feedbackConfig(okBanco ? "Senha atualizada com sucesso!" : "Senha atualizada localmente (Supabase indisponível).", okBanco ? "#10b981" : "#fbbf24");
         }
 
         async function inicializarAnuncios() {
