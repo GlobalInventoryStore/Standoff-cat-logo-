@@ -691,6 +691,11 @@
         const EMAILJS_PUBLIC_KEY = "1vj4x8Vvg6VTECZG7"; // ex: "SuaChavePublicaEmailJS"
         let emailjsInicializado = false;
 
+        // ===== Alerta WhatsApp do admin (chat de suporte) =====
+        const ADMIN_WHATSAPP = ""; // numero do admin em formato internacional, ex: "5511999999999"
+        const WHATSAPP_ALERTA_COOLDOWN_MS = 60000; // minimo 60s por assunto igual
+        const CHAVE_STORAGE_WPP_COOLDOWN = "marktplace_stand2_wpp_alertas";
+
         const STATUS_PEDIDO = {
             aguardando_pagamento: 'Aguardando confirmação do pagamento',
             aguardando_conta_vendedor: 'Pagamento confirmado - aguardando envio dos dados da conta',
@@ -1879,13 +1884,72 @@
 
         function closeChatSuporte() { document.getElementById("modal-chat-suporte").style.display = "none"; }
 
+        function classificarAssuntoSuporte(texto) {
+            const t = (texto || "").toLowerCase();
+            if (!t) return null;
+            const ticketNaMensagem = (texto.match(/TICK-\d+/i) || [""])[0].toUpperCase();
+            const ticketSessao = (!ticketNaMensagem && Array.isArray(pedidosAtivos) && pedidosAtivos[0]) ? String(pedidosAtivos[0].ticketId).toUpperCase() : "";
+            const ticket = ticketNaMensagem || ticketSessao;
+            const regras = [
+                ["suporte_humano", /suporte|atendimento|atendente|falar com (o |a |algu|equipe)/],
+                ["pagamento", /pagamento|comprovante|cobran|pix|cart[aã]o|estorn|reembols|devolu|refund/],
+                ["entrega_rastreio", /entrega|entregue|dados da conta|recebi a conta|rastrei|ticket|status do pedido/],
+                ["acesso_conta", /login|logar|entrar na conta|senha|c[oó]digo|banido|banimento|bloquead|den[uú]ncia|denunciar|golpe|suspeita|fraude|hacker/]
+            ];
+            for (const [assunto, re] of regras) {
+                if (re.test(t)) return { assunto: assunto, ticket: ticket };
+            }
+            return null;
+        }
+
+        function registrarDisparoWhatsApp(assunto) {
+            const agora = Date.now();
+            let registros = {};
+            try { registros = JSON.parse(sessionStorage.getItem(CHAVE_STORAGE_WPP_COOLDOWN) || "{}"); } catch (e) { registros = {}; }
+            if (typeof registros !== "object" || registros === null) registros = {};
+            const ultimo = Number(registros[assunto] || 0);
+            if (agora - ultimo < WHATSAPP_ALERTA_COOLDOWN_MS) return false;
+            registros[assunto] = agora;
+            sessionStorage.setItem(CHAVE_STORAGE_WPP_COOLDOWN, JSON.stringify(registros));
+            return true;
+        }
+
+        function montarMensagemAlertaWhatsApp(assunto, ticket, mensagem) {
+            const origem = "MARKTPLACE stand2 (Suporte)";
+            const usuario = currentUser ? `${sanitizarNomePublico(currentUser.username)} (${currentUser.email})` : "Visitante";
+            return [
+                `[ALERTA] ${origem}`,
+                `Usuario: ${usuario}`,
+                `Ticket: ${ticket || "(nenhum)"}`,
+                `Assunto: ${assunto}`,
+                `Mensagem: ${mensagem}`
+            ].join("\n");
+        }
+
+        function dispararAlertaWhatsAppAdmin(assunto, ticket, mensagem) {
+            if (!ADMIN_WHATSAPP) return false;
+            if (!registrarDisparoWhatsApp(assunto)) return false;
+            const url = "https://wa.me/" + ADMIN_WHATSAPP + "?text=" + encodeURIComponent(montarMensagemAlertaWhatsApp(assunto, ticket, mensagem));
+            const chat = document.getElementById("chat-mensagens");
+            if (chat) {
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#2a2a2a] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>O suporte intermediário foi acionado. Toque abaixo para avisar o admin no WhatsApp:<a href="${url}" target="_blank" rel="noopener" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">📲 Acionar Suporte no WhatsApp</a></div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }
+            return true;
+        }
+
         function enviarMensagemSuporte() {
             const input = document.getElementById("chat-input-texto");
             if (!input.value.trim()) return;
+            const textoUsuario = input.value.trim();
             const chat = document.getElementById("chat-mensagens");
-            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(input.value)}</div>`;
+            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
+
+            const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(textoUsuario) : null;
+            const disparouWhatsApp = classificacao ? dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario) : false;
+
             setTimeout(() => {
                 chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Recebido! Nossa equipe de suporte está à disposição para auxiliar na transferência segura.</div>`;
                 chat.scrollTop = chat.scrollHeight;
