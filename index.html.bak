@@ -178,7 +178,7 @@
 
     <!-- Aviso de Alerta de Golpe (Compacto) -->
     <div class="bg-[#121212] border-b border-yellow-500/20 text-yellow-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
-        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. NUNCA pede senhas por mensagem privada.</span>
+        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKETPLACE stand2 é uma plataforma independente de intermediação, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2. Nunca solicitamos senhas por mensagens privadas.</span>
     </div>
 
     <!-- Modal Obrigatório de Entrada / Termos -->
