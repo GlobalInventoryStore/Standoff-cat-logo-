@@ -556,6 +556,12 @@
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
             <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
 
+            <div id="ticket-codigo-destaque" class="bg-[#111111] border border-[#d4ff00]/40 rounded-xl px-3 py-3 mb-4">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Seu código de ticket:</p>
+                <p id="ticket-codigo-destaque-valor" class="text-lg font-bold text-[#d4ff00] font-mono break-all">TICK-XXXXX</p>
+                <p class="text-[10px] text-gray-500 mt-1">Guarde este código para rastrear o pedido e falar com o suporte.</p>
+            </div>
+
             <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
                 <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Pagamento confirmado - aguardando envio dos dados da conta</span></p>
                 <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
@@ -1983,6 +1989,8 @@
             const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
 
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
+            const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
+            if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
 
             let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
             let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
@@ -2122,14 +2130,25 @@
             if (classificacao) { setTimeout(() => dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario), 200); }
 
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(opcao ? opcao.resposta : "")}</div>`;
+                const respostaFinal = (opcao && opcao.numero === 1) ? respostaOpcaoRastrear() : (opcao ? opcao.resposta : "");
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaFinal)}</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
         }
 
+        // Resposta inteligente para "1. Rastrear pedido / Ticket": consulta os tickets locais do usuario
+        function respostaOpcaoRastrear() {
+            const lista = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId);
+            if (!lista.length) {
+                return "Nenhuma compra/ticket foi encontrada nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819), use o menu 'Rastrear Pedido' para consultar o status, ou acione o Suporte oficial pelo WhatsApp.";
+            }
+            const linhas = lista.slice(0, 5).map(p => `• ${String(p.ticketId).toUpperCase()} — ${p.status || "em custódia"}`).join("\n");
+            return `Encontrei ${lista.length} compra(s) registrada(s) nesta sessão:\n${linhas}\n\nPara acompanhar: menu 'Rastrear Pedido' e digite o código TICK-, ou fale com o Suporte oficial pelo WhatsApp.`;
+        }
+
         function respostaBotPorPalavraChave(texto) {
             const t = (texto || "").toLowerCase();
-            if (/rastr|ticket|t-i-c-k|pedido/.test(t)) return OPCOES_MENU_BOT[0].resposta;
+            if (/rastr|ticket|tick-\d|t-i-c-k|pedido/.test(t)) return respostaOpcaoRastrear();
             if (/cust[oó]dia|intermedi|segur|transfer/.test(t)) return OPCOES_MENU_BOT[1].resposta;
             if (/pag|comprov|pix|cobran|estorn|reembols/.test(t)) return OPCOES_MENU_BOT[2].resposta;
             if (/anunci|vender|publicar|invent/.test(t)) return OPCOES_MENU_BOT[3].resposta;
