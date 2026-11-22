@@ -153,6 +153,9 @@
             if (!modal) {
                 return;
             }
+            if (!aberto && modalId === "modal-rastreio" && typeof window.pararAutoRefreshRastreio === "function") {
+                window.pararAutoRefreshRastreio();
+            }
 
             if (aberto) {
                 modal.style.display = "flex";
@@ -935,11 +938,29 @@
         function openTermosModal() { setModalVisivel("modal-termos", true); }
         function closeTermosModal() { setModalVisivel("modal-termos", false); }
 
+        let rastreioAutoRefreshId = null;
+        let rastreioBuscaEmAndamento = false;
+
+        function pararAutoRefreshRastreio() {
+            if (rastreioAutoRefreshId) { clearInterval(rastreioAutoRefreshId); rastreioAutoRefreshId = null; }
+        }
         function abrirRastreioPedido() {
             document.getElementById("mobile-menu").classList.add("hidden");
-            document.getElementById("modal-rastreio").style.display = "flex";
+            setModalVisivel("modal-rastreio", true);
+            pararAutoRefreshRastreio();
+            rastreioAutoRefreshId = setInterval(atualizarRastreioAutomaticamente, 4000);
         }
-        function closeRastreio() { setModalVisivel("modal-rastreio", false); }
+        function closeRastreio() {
+            setModalVisivel("modal-rastreio", false);
+            pararAutoRefreshRastreio();
+        }
+        function atualizarRastreioAutomaticamente() {
+            const modal = document.getElementById("modal-rastreio");
+            if (!modal || modal.style.display === "none") return;
+            const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
+            if (!codigo || rastreioBuscaEmAndamento) return;
+            consultarStatusPedido(true);
+        }
 
         // ===== Painel de intermediação / custódia =====
         const ETAPAS_CUSTODIA = [
@@ -987,7 +1008,13 @@
             pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, etapa);
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
             const okBanco = await atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, ehConclusao);
-            mostrarAlerta("Admin", `Etapa ${etapa}/5 do ticket ${codigo} aplicada${okBanco ? " no Supabase e localmente" : " localmente (Supabase indisponível)"}.`);
+            if (okBanco) {
+                mostrarAlerta("Admin", `Etapa ${etapa}/5 do ticket ${codigo} aplicada no Supabase e localmente.`);
+            } else {
+                mostrarAlerta("Admin", `Falha ao gravar a etapa ${etapa}/5 do ticket ${codigo} no Supabase. Recarregando os dados reais do banco...`, "aviso");
+                const doBanco = await buscarTicketSupabase(codigo);
+                if (doBanco) { sincronizarPedidoLocal(converterRegistroSupabase(doBanco)); }
+            }
             const codigoAtual = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
             if (codigoAtual) { await consultarStatusPedido(); }
         }
@@ -1002,24 +1029,27 @@
             mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
-        async function consultarStatusPedido() {
-            const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
+        async function consultarStatusPedido(silencioso) {
             const resBox = document.getElementById("resultado-rastreio");
-            if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
+            if (rastreioBuscaEmAndamento) return;
+            rastreioBuscaEmAndamento = true;
+            try {
+                const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
+                if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
 
-            let pedidoEncontrado = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo || normalizarCodigoTicket(p.pedidoId) === codigo);
-            if (!pedidoEncontrado && window.supabaseClient) {
-                resBox.classList.remove("hidden");
-                resBox.innerHTML = '<p class="text-xs text-gray-400">Consultando o Supabase...</p>';
-                const doBanco = await buscarTicketSupabase(codigo);
-                if (doBanco) {
-                    const local = converterRegistroSupabase(doBanco);
-                    pedidosAtivos = [local].concat(pedidosAtivos);
-                    localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
-                    pedidoEncontrado = local;
+                // Prioridade absoluta: Supabase (banco real, qualquer dispositivo); localStorage só como fallback offline
+                let pedidoEncontrado = null;
+                if (window.supabaseClient) {
+                    if (!silencioso) { resBox.classList.remove("hidden"); resBox.innerHTML = '<p class="text-xs text-gray-400">Consultando o Supabase...</p>'; }
+                    const doBanco = await buscarTicketSupabase(codigo);
+                    if (doBanco) {
+                        pedidoEncontrado = sincronizarPedidoLocal(converterRegistroSupabase(doBanco));
+                    }
                 }
-            }
-            resBox.classList.remove("hidden");
+                if (!pedidoEncontrado) {
+                    pedidoEncontrado = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo || normalizarCodigoTicket(p.pedidoId) === codigo) || null;
+                }
+                resBox.classList.remove("hidden");
 
             let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
             if (pedidoEncontrado && isAdminUsuario()) {
@@ -1040,6 +1070,9 @@
                 html += `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
             }
             resBox.innerHTML = html;
+            } finally {
+                rastreioBuscaEmAndamento = false;
+            }
         }
 
         function verificarAutenticacaoAnuncio() {
@@ -2239,6 +2272,17 @@
             };
         }
 
+        // Substitui o registro local correspondente (sem duplicar) e grava o localStorage sincronizado
+        function sincronizarPedidoLocal(pedido) {
+            if (!pedido || !pedido.ticketId) return pedido;
+            const codigo = normalizarCodigoTicket(pedido.ticketId);
+            if (!Array.isArray(pedidosAtivos)) pedidosAtivos = [];
+            const indice = pedidosAtivos.findIndex(p => normalizarCodigoTicket((p && (p.ticketId || p.pedidoId))) === codigo);
+            if (indice >= 0) { pedidosAtivos[indice] = pedido; } else { pedidosAtivos.unshift(pedido); }
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            return pedido;
+        }
+
         async function buscarTicketSupabase(codigo) {
             if (!window.supabaseClient || !codigo) return null;
             try {
@@ -2255,28 +2299,30 @@
         }
 
         async function ticketsAtivosSupabase(email) {
-            if (!window.supabaseClient || !email) return [];
+            if (!window.supabaseClient || !email) return null;
             try {
                 const { data, error } = await window.supabaseClient
                     .from("tickets")
                     .select("*")
                     .eq("comprador_email", String(email).toLowerCase())
                     .eq("concluido", false);
-                if (error || !Array.isArray(data)) return [];
+                if (error || !Array.isArray(data)) return null;
                 return data.map(converterRegistroSupabase);
             } catch (e) {
-                return [];
+                return null;
             }
         }
 
         async function atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, concluido) {
             if (!window.supabaseClient || !codigo) return false;
             try {
-                const { error } = await window.supabaseClient
+                const { data, error } = await window.supabaseClient
                     .from("tickets")
                     .update({ etapa: etapa, status_texto: statusTexto, concluido: concluido })
-                    .eq("codigo", codigo);
-                return !error;
+                    .eq("codigo", codigo)
+                    .select("codigo");
+                if (error || !Array.isArray(data) || data.length === 0) return false;
+                return true;
             } catch (e) {
                 return false;
             }
@@ -2297,12 +2343,17 @@
             return (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId && !ticketConcluido(p) && ticketPertenceAoUsuario(p));
         }
 
-        // Resposta inteligente para "1. Rastrear pedido / Ticket": tickets ativos do Supabase + locais do usuario
+        // Resposta inteligente para "1. Rastrear pedido / Ticket": Supabase primeiro, localStorage apenas como fallback offline
         async function respostaOpcaoRastrear() {
-            const locais = ticketsAtivosDoUsuario();
-            const remotos = (currentUser && currentUser.email) ? await ticketsAtivosSupabase(currentUser.email) : [];
-            const vistos = new Set(locais.map(p => String(p.ticketId).toUpperCase()));
-            const lista = locais.concat(remotos.filter(p => !vistos.has(String(p.ticketId).toUpperCase())));
+            let lista;
+            const remotos = (currentUser && currentUser.email && window.supabaseClient)
+                ? await ticketsAtivosSupabase(currentUser.email)
+                : null;
+            if (Array.isArray(remotos)) {
+                lista = remotos;
+            } else {
+                lista = ticketsAtivosDoUsuario();
+            }
             if (!lista.length) {
                 return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consulta-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
             }
