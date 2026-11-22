@@ -230,8 +230,8 @@
                     <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
                     <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
-                    <a href="#" onclick="setModalVisivel('modal-banidos', isAdminUsuario()); if (!isAdminUsuario()) mostrarAlerta('Admin', 'Apenas a conta admin pode abrir este painel.', 'aviso'); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-banidos">Usuários Banidos</a>
-                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Funcionamos</a>
+                    <a href="#" onclick="openPainelBanidos(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-banidos">Usuários Banidos</a>
+                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Atuamos</a>
                     <div class="pt-3 border-t border-[#222]" id="authSection">
                         <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
                             <div class="flex items-center gap-2">
@@ -1782,8 +1782,18 @@
                     // Tabela usuarios_banidos ausente: segue com localStorage
                 }
             }
+            // Remove todos os anuncios do vendedor do catalogo e do Supabase sem exclusao manual
+            const idsDoVendedor = anunciosEmMemoria
+                .filter(a => sanitizarNomePublico(a.vendedor) === nome)
+                .map(a => String(a.id));
+            for (const idAnuncio of idsDoVendedor) {
+                try { await removerAnuncio(idAnuncio); } catch (e) { /* segue com os demais */ }
+            }
+            if (anuncioSelecionadoAtual && idsDoVendedor.includes(String(anuncioSelecionadoAtual.id))) {
+                closeDetalhes();
+            }
             carregarCatalogo();
-            mostrarAlerta("Admin", `Usuário "${nome}" banido. Anúncios dele ocultos e publicação bloqueada.`, "aviso");
+            mostrarAlerta("Admin", `Usuário "${nome}" banido. Anúncios dele removidos do catálogo e publicação bloqueada.`, "aviso");
         }
 
         async function desbanirVendedorDoAnuncio(id) {
@@ -1809,8 +1819,9 @@
             else { await desbanirVendedorDoAnuncio(id); }
         }
 
-        function openPainelBanidos() {
+        async function openPainelBanidos() {
             if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode abrir este painel.", "aviso"); return; }
+            try { await sincronizarBanidosSupabase(); } catch (e) { /* segue com o localStorage */ }
             renderizarListaBanidos();
             setModalVisivel("modal-banidos", true);
         }
@@ -2201,7 +2212,7 @@
     <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
             <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
-            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Funcionamos</h2>
+            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Atuamos</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
