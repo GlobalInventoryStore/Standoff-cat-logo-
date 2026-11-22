@@ -230,8 +230,8 @@
                     <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
                     <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
+                    <a href="#" onclick="setModalVisivel('modal-banidos', isAdminUsuario()); if (!isAdminUsuario()) mostrarAlerta('Admin', 'Apenas a conta admin pode abrir este painel.', 'aviso'); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-banidos">Usuários Banidos</a>
                     <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Funcionamos</a>
-
                     <div class="pt-3 border-t border-[#222]" id="authSection">
                         <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
                             <div class="flex items-center gap-2">
@@ -296,6 +296,18 @@
         </div>
     </div>
 
+    <!-- Modal de Usuários Banidos (Admin) -->
+    <div id="modal-banidos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-[var(--accent)]">Usuários Banidos</h3>
+                <button type="button" onclick="closeBanidos()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-[var(--muted)] mb-4">Usuários bloqueados de publicar e ver anúncios. Desbanir devolve o acesso ao catálogo.</p>
+            <div id="lista-banidos" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+
     <!-- Modal de Carrinho -->
     <div id="modal-carrinho" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
         <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
@@ -354,21 +366,20 @@
                     <div class="input-group">
                         <label>Gmail</label>
                         <input type="email" id="reg-email" required placeholder="seuemail@gmail.com">
+                        <button type="button" onclick="enviarCodigoGmail()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
                     </div>
                     <div class="input-group">
                         <label>WhatsApp (Com DDD)</label>
                         <input type="text" id="reg-whatsapp" placeholder="Ex: 11999999999">
                     </div>
-                    <div class="input-group">
+                    <div class="input-group hidden" id="reg-codigo-area">
+                        <p class="text-[11px] text-[var(--accent)] font-semibold mb-1.5">Digite o código de 6 dígitos enviado para o seu Gmail</p>
                         <label>Código de Verificação</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="reg-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
-                            <button type="button" onclick="enviarCodigoGmail()" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer flex-grow h-[42px]">Enviar</button>
-                        </div>
+                        <input type="text" id="reg-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
                     </div>
                     <div class="input-group">
                         <label>Nome de Usuário Público (ou Nametag)</label>
-                        <input type="text" id="reg-username" placeholder="Ex: [TAG] SamukaSF">
+                        <input type="text" id="reg-username" placeholder="Ex: [PRO] Shadow">
                     </div>
                     <div class="input-group">
                         <label>Senha</label>
@@ -379,7 +390,7 @@
                         <input type="password" id="reg-password-confirm" required placeholder="••••••••">
                     </div>
                     <div class="input-group">
-                        <label>Escolha seu Avatar (Ghost / Operador)</label>
+                        <label>Escolha seu Avatar</label>
                         <div class="grid grid-cols-5 gap-2 pt-1" id="avatars-grid"></div>
                         <input type="hidden" id="selected-avatar" value="">
                     </div>
@@ -402,13 +413,12 @@
                 <div class="input-group">
                     <label>Gmail de Contato</label>
                     <input type="email" id="anuncio-email" required placeholder="seuemail@gmail.com">
+                    <button type="button" onclick="enviarCodigoAnuncio()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
                 </div>
-                <div class="input-group">
+                <div class="input-group hidden" id="anuncio-codigo-area">
+                    <p class="text-[11px] text-[var(--accent)] font-semibold mb-1.5">Digite o código de 6 dígitos enviado para o seu Gmail</p>
                     <label>Código de Verificação</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="anuncio-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
-                        <button type="button" onclick="enviarCodigoAnuncio()" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer flex-grow h-[42px]">Enviar</button>
-                    </div>
+                    <input type="text" id="anuncio-code" required placeholder="Código" class="w-1/2 max-w-[150px]">
                 </div>
                 <div id="anuncio-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                 <button type="submit" class="btn-primary mt-2">Confirmar</button>
@@ -646,7 +656,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
                     <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#111111] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
-                    <span class="text-[10px] text-emerald-400 mt-1 block">✨ Descreva manualmente os itens no campo abaixo após selecionar os prints.</span>
+                    <span class="text-[10px] text-emerald-400 mt-1 block">✨ O site preenche automaticamente a descrição com os itens identificados nos prints — confira e ajuste antes de publicar.</span>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Descrição</label>
@@ -683,6 +693,12 @@
 
         // ===== Admin e EmailJS (preencha as credenciais abaixo) =====
         const ADMIN_EMAIL = "scruzsamuka@gmail.com";
+        const ADMIN_EMAIL_EXTRA = "globalinventorystore@gmail.com";
+        const ADMIN_EMAILS = [ADMIN_EMAIL, ADMIN_EMAIL_EXTRA];
+        function ehEmailAdmin(email) {
+            const alvo = (email || "").toLowerCase();
+            return ADMIN_EMAILS.some(adm => adm === alvo);
+        }
         const ADMIN_SENHA_DIRETA = ""; // opcional: senha de acesso direto do admin; vazio = login normal pelo cadastro
         const CODIGO_ADMIN_FIXO = "111111";
         const CHAVE_STORAGE_BANIDOS = "marktplace_stand2_banidos";
@@ -719,12 +735,17 @@
 `.trim();
         }
 
+        // Avatares táticos (Ghost / Soldado / Operador) desenhados no tema escuro com detalhes em #d4ff00 e branco
+        function gerarSvgAvatar(newShape, detalhe) {
+            return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#121212'/><rect x='2.5' y='2.5' width='59' height='59' rx='12' fill='none' stroke='#262626' stroke-width='2'/>${newShape}${detalhe}</svg>`)}`;
+        }
+
         const AVATARES = [
-            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostTactical1",
-            "https://api.dicebear.com/7.x/bottts/svg?seed=GhostSkull2",
-            "https://api.dicebear.com/7.x/bottts/svg?seed=OperatorAlpha3",
-            "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowSniper4",
-            "https://api.dicebear.com/7.x/bottts/svg?seed=SpecialForce5"
+            gerarSvgAvatar("<path d='M32 12c-9 0-16 7-16 16v10c0 9 7 16 16 16s16-7 16-16V28c0-9-7-16-16-16z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M22 30h20v8a4 4 0 0 1-4 4H26a4 4 0 0 1-4-4z' fill='#080808'/><rect x='25' y='33' width='14' height='3.5' rx='1.75' fill='#d4ff00'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>GHOST</text>"),
+            gerarSvgAvatar("<circle cx='32' cy='30' r='17' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M21 32h22v7a6 6 0 0 1-6 6H27a6 6 0 0 1-6-6z' fill='#080808'/><rect x='25' y='35' width='5' height='3' rx='1.5' fill='#d4ff00'/><rect x='34' y='35' width='5' height='3' rx='1.5' fill='#d4ff00'/>", "<rect x='30' y='13' width='4' height='10' rx='2' fill='#ffffff' opacity='0.85'/>"),
+            gerarSvgAvatar("<path d='M32 13c-10 0-18 8-18 18v9c0 10 8 18 18 18s18-8 18-18v-9c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><circle cx='32' cy='34' r='9' fill='#080808'/><circle cx='32' cy='34' r='4' fill='none' stroke='#d4ff00' stroke-width='2'/><path d='M32 22v-6' stroke='#d4ff00' stroke-width='2'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>SNIPER</text>"),
+            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v8c0 10 8 18 18 18s18-8 18-18v-8c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M18 34c0-4 6-6 14-6s14 2 14 6v4H18z' fill='#080808'/><rect x='23' y='34' width='18' height='2.5' rx='1.25' fill='#d4ff00'/>", "<path d='M14 20c6-6 12-7 18-7s12 1 18 7' stroke='#ffffff' stroke-width='2' fill='none' opacity='0.85'/>"),
+            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v10c0 9 8 17 18 17s18-8 18-17V30c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M20 33h24v6a5 5 0 0 1-5 5H25a5 5 0 0 1-5-5z' fill='#080808'/><rect x='24' y='35' width='7' height='3' rx='1.5' fill='#d4ff00'/><rect x='35' y='35' width='5' height='3' rx='1.5' fill='#ffffff'/>", "<rect x='28' y='10' width='8' height='6' rx='2' fill='#d4ff00' opacity='0.9'/>")
         ];
 
         function escapeHtml(str) {
@@ -798,7 +819,7 @@
                     currentUser = JSON.parse(storedUser);
                     if (currentUser) {
                         currentUser.username = sanitizarNomePublico(currentUser.username);
-                        currentUser.isAdmin = Boolean(currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL);
+                        currentUser.isAdmin = Boolean(currentUser.email && ehEmailAdmin(currentUser.email));
                         aplicarEstadoUsuario();
                     }
                 } catch (e) {
@@ -914,6 +935,44 @@
         }
         function closeRastreio() { setModalVisivel("modal-rastreio", false); }
 
+        // ===== Painel de intermediação / custódia =====
+        const ETAPAS_CUSTODIA = [
+            "1. Pagamento retido pelo site (custódia segura)",
+            "2. Verificação do comprovante de pagamento pelo admin",
+            "3. Vendedor entrega os dados da conta ao site",
+            "4. Comprador confirma acesso e troca de dados",
+            "5. Pagamento liberado ao vendedor (custódia concluída)"
+        ];
+
+        function conteudoPainelIntermediacao(pedido, codigo) {
+            const etapasHtml = ETAPAS_CUSTODIA.map(etapa => {
+                const concluida = pedido && pedido.etapasCustodia && pedido.etapasCustodia.includes(etapa);
+                return `<p class="${concluida ? "text-emerald-400" : "text-gray-500"}">${escapeHtml(etapa)}${concluida ? " ✓" : ""}</p>`;
+            }).join("");
+            const info = pedido
+                ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
+                : `<p class="text-white font-bold">Status: <span class="text-amber-400">● Não encontrado nesta sessão</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-amber-400 mt-1">Amostras antigas de tickets (TICK-4819 etc.) de demonstração não são reais.</p>`;
+            const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
+            return `${info}<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
+        }
+
+        function atualizarStatusPedidoAdmin(ticketId, acao) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode alterar o status.", "aviso"); return; }
+            const novoStatus = acao === "liberar" ? "Concluído • Custódia Liberada ao Vendedor" : "Em análise pelo Admin";
+            const pedido = pedidosAtivos.find(p => p.ticketId.toUpperCase() === String(ticketId).toUpperCase());
+            if (!pedido) { mostrarAlerta("Admin", `Ticket ${sanitizarNomePublico(ticketId)} não encontrado.`, "aviso"); return; }
+            pedido.status = novoStatus;
+            pedido.etapasCustodia = (pedido.etapasCustodia || []).concat(
+                acao === "liberar"
+                    ? [ETAPAS_CUSTODIA[3], ETAPAS_CUSTODIA[4]]
+                    : [ETAPAS_CUSTODIA[1]]
+            );
+            localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
+            mostrarAlerta("Admin", `Status do ticket ${sanitizarNomePublico(pedido.ticketId)} atualizado para: ${novoStatus}`);
+            const codigoAtual = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
+            if (codigoAtual) consultarStatusPedido();
+        }
+
         function consultarStatusPedido() {
             const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
             const resBox = document.getElementById("resultado-rastreio");
@@ -922,11 +981,11 @@
             const pedidoEncontrado = pedidosAtivos.find(p => p.ticketId.toUpperCase() === codigo || p.pedidoId.toUpperCase() === codigo);
             resBox.classList.remove("hidden");
 
-            if (pedidoEncontrado) {
-                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedidoEncontrado.status)}</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedidoEncontrado.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedidoEncontrado.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedidoEncontrado.ticketId)}</strong></p>`;
-            } else {
-                resBox.innerHTML = `<p class="text-white font-bold">Status: <span class="text-amber-400">● Processando / Em Custódia</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-emerald-400 mt-1">Pagamento verificado pelo intermediador oficial.</p>`;
+            let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
+            if (pedidoEncontrado && isAdminUsuario()) {
+                html += `<div class="mt-2 flex gap-2"><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','analisar')" class="flex-1 bg-amber-500/10 text-amber-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Marcar em análise</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','liberar')" class="flex-1 bg-emerald-500/10 text-emerald-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Liberar custódia</button></div>`;
             }
+            resBox.innerHTML = html;
         }
 
         function verificarAutenticacaoAnuncio() {
@@ -936,17 +995,17 @@
                 openModal();
                 return;
             }
-            if (currentUser && usuarioEstaBanido(sanitizarNomePublico(currentUser.username), currentUser.email)) {
+            if (usuarioEstaBanido(sanitizarNomePublico(currentUser.username), currentUser.email)) {
                 mostrarAlerta("Acesso Bloqueado", "Sua conta está banida e não pode anunciar.", "aviso");
                 return;
             }
-            document.getElementById("anuncio-email").value = currentUser.email || "";
-            setModalVisivel("modal-verificar-anuncio", true);
+            document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
+            setModalVisivel("modal-anuncio", true);
         }
         function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
         function gerarCodigoVerificacao(email) {
-            if ((email || "").toLowerCase() === ADMIN_EMAIL) return CODIGO_ADMIN_FIXO;
+            if (ehEmailAdmin(email)) return CODIGO_ADMIN_FIXO;
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
@@ -982,6 +1041,10 @@
             const enviado = await enviarCodigoPorEmail(email, codigoAnuncioSimulado);
             feedback.style.color = "#10b981";
             feedback.textContent = enviado ? "Código enviado para o seu Gmail! Confira a caixa de entrada." : `Código enviado! (Código: ${codigoAnuncioSimulado})`;
+            const area = document.getElementById("anuncio-codigo-area");
+            if (area) area.classList.remove("hidden");
+            const campoCodigo = document.getElementById("anuncio-code");
+            if (campoCodigo) campoCodigo.focus();
         }
 
         function confirmarCodigoAnuncio(event) {
@@ -1008,6 +1071,10 @@
             const enviado = await enviarCodigoPorEmail(email, codigoEnviadoSimulado);
             feedback.style.color = "#10b981";
             feedback.textContent = enviado ? "Código enviado para o seu Gmail! Confira a caixa de entrada." : `Código enviado! (Código: ${codigoEnviadoSimulado})`;
+            const area = document.getElementById("reg-codigo-area");
+            if (area) area.classList.remove("hidden");
+            const campoCodigo = document.getElementById("reg-code");
+            if (campoCodigo) campoCodigo.focus();
         }
 
         function handleRegister(event) {
@@ -1028,7 +1095,7 @@
             if (users.some(u => u.email === email)) { feedback.textContent = "Gmail já cadastrado."; return; }
 
             const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
-            const ehAdminNoCadastro = email.toLowerCase() === ADMIN_EMAIL;
+            const ehAdminNoCadastro = ehEmailAdmin(email);
             users.push({ email, whatsapp, username, password, avatar, isAdmin: ehAdminNoCadastro });
             localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
 
@@ -1036,7 +1103,7 @@
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
-            mostrarAlerta("Sucesso!", "Conta criada e salva com segurança!");
+            mostrarAlerta("Sucesso!", "Conta criada com sucesso! Bem-vindo ao MARKTPLACE stand2.");
         }
 
         function handleLogin(event) {
@@ -1054,7 +1121,7 @@
             }
 
             if (!foundUser) { feedback.textContent = "Dados incorretos."; return; }
-            const ehAdminNoLogin = foundUser.email && foundUser.email.toLowerCase() === ADMIN_EMAIL;
+            const ehAdminNoLogin = foundUser.email && ehEmailAdmin(foundUser.email);
             currentUser = { username: sanitizarNomePublico(foundUser.username), email: foundUser.email, whatsapp: foundUser.whatsapp || "(Não informado)", password: foundUser.password, avatar: foundUser.avatar, isAdmin: ehAdminNoLogin };
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
@@ -1073,6 +1140,8 @@
                 userPanel.classList.add("hidden");
                 loginBtnContainer.classList.remove("hidden");
             }
+            const menuItemBanidos = document.getElementById("menu-item-banidos");
+            if (menuItemBanidos) menuItemBanidos.classList.toggle("hidden", !isAdminUsuario());
             carregarCatalogo();
         }
 
@@ -1360,6 +1429,8 @@
                 if (menor[i] === maior[j]) { i++; j++; continue; }
                 difs++;
                 if (difs > 1) return false;
+                // Transposicao adjacente (OCR troca letras vizinhas): conta como 1 diferenca
+                if (menor[i] === maior[j + 1] && menor[i + 1] === maior[j]) { i += 2; j += 2; continue; }
                 if (menor.length === maior.length) { i++; j++; } else { j++; }
             }
             return true;
@@ -1381,6 +1452,33 @@
                 }
             }
             return encontradas;
+        }
+
+        // Categorias para agrupar os itens identificados na descricao do anuncio
+        const CATEGORIAS_ITENS_STANDOFF2 = [
+            ["Facas", ["M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe"]],
+            ["Rifles", ["AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60", "FAMAS", "VAL"]],
+            ["Pistolas", ["F/S", "Berettas", "USP-S", "USP", "G22", "Glock-18", "Desert Eagle", "Deagle", "P350", "P250", "Five-SeveN"]],
+            ["SMGs", ["Akimbo Uzi", "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014"]],
+            ["Shotguns", ["FABM", "SPAS"]],
+            ["Luvas e itens", ["Gloves"]]
+        ];
+
+        function montarDescricaoOrganizada(contagem) {
+            const nomes = Object.keys(contagem || {});
+            if (!nomes.length) return "";
+            const usados = new Set();
+            const linhas = [];
+            for (const [categoria, itensCategoria] of CATEGORIAS_ITENS_STANDOFF2) {
+                const parte = itensCategoria
+                    .filter(nome => contagem[nome])
+                    .map(nome => { usados.add(nome); return `${nome} x${contagem[nome]}`; });
+                if (parte.length) linhas.push(`${categoria}: ${parte.join(", ")}`);
+            }
+            const fora = nomes.filter(nome => contagem[nome] && !usados.has(nome))
+                .map(nome => `${nome} x${contagem[nome]}`);
+            if (fora.length) linhas.push(`Outros: ${fora.join(", ")}`);
+            return linhas.join("\n");
         }
 
         function carregarImagemDeArquivo(file) {
@@ -1460,24 +1558,25 @@
             // OCR roda a partir dos arquivos originais (input.files);
             // fotosNovasBase64 permanece comprimida em cor natural para o Supabase
             const campoDesc = document.getElementById("conta-desc");
-            const nomesArmasEncontrados = new Set();
+            const contagemArmas = {};
             if (campoDesc) campoDesc.value = "Lendo nomes das armas nas imagens...";
             try {
                 const tarefasOCR = [];
                 for (let i = 0; i < Math.min(input.files.length, 7); i++) {
                     tarefasOCR.push(
                         reconhecerArmasEmFoto(input.files[i])
-                            .then(armas => { for (const a of armas) nomesArmasEncontrados.add(a); })
+                            .then(armas => {
+                                const unicas = Array.from(new Set(armas));
+                                for (const a of unicas) contagemArmas[a] = (contagemArmas[a] || 0) + 1;
+                            })
                             .catch(() => {})
                     );
                 }
                 await Promise.all(tarefasOCR);
             } finally {
-                // Remove a mensagem de carregamento e preenche apenas com nomes de armas encontradas
+                // Remove a mensagem de carregamento e preenche com os itens agrupados por categoria
                 if (campoDesc) {
-                    campoDesc.value = nomesArmasEncontrados.size > 0
-                        ? Array.from(nomesArmasEncontrados).join(", ")
-                        : "";
+                    campoDesc.value = montarDescricaoOrganizada(contagemArmas);
                 }
             }
         }
@@ -1587,7 +1686,7 @@
         }
 
         function isAdminUsuario() {
-            return Boolean(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL);
+            return Boolean(currentUser && currentUser.email && ehEmailAdmin(currentUser.email));
         }
 
         function carregarBanidos() {
@@ -1708,6 +1807,46 @@
         async function alternarBanimentoVendedor(action, id) {
             if (action === "banir") { await banirVendedorDoAnuncio(id); }
             else { await desbanirVendedorDoAnuncio(id); }
+        }
+
+        function openPainelBanidos() {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode abrir este painel.", "aviso"); return; }
+            renderizarListaBanidos();
+            setModalVisivel("modal-banidos", true);
+        }
+
+        function closeBanidos() { setModalVisivel("modal-banidos", false); }
+
+        function renderizarListaBanidos() {
+            const lista = document.getElementById("lista-banidos");
+            if (!lista) return;
+            const banidos = carregarBanidos();
+            if (!banidos.length) {
+                lista.innerHTML = `<p class="text-xs text-[var(--muted)] text-center py-4">Nenhum usuário banido no momento.</p>`;
+                return;
+            }
+            lista.innerHTML = banidos.map(b => {
+                const nome = sanitizarNomePublico(b.nome || "Usuário");
+                const email = b.email ? `<span class="block text-[10px] text-[var(--muted)]">${escapeHtml(b.email)}</span>` : "";
+                return `<div class="flex justify-between items-center gap-2 bg-[#111111] border border-[#222] rounded-xl px-3 py-2.5"><div class="min-w-0"><p class="text-xs font-bold text-white truncate">${escapeHtml(nome)}</p>${email}</div><button type="button" onclick="desbanirUsuarioPainel('${escapeHtml(b.nome || "")}')" class="bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap">Desbanir</button></div>`;
+            }).join("");
+        }
+
+        async function desbanirUsuarioPainel(nome) {
+            if (!isAdminUsuario()) return;
+            const nomeLimpo = sanitizarNomePublico(nome);
+            if (!confirm(`Desbanir o usuário "${nomeLimpo}"? Os anúncios dele voltam ao catálogo quando recarregar.`)) return;
+            salvarBanidos(carregarBanidos().filter(b => (b.nome || "").toLowerCase() !== nomeLimpo.toLowerCase()));
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient.from("usuarios_banidos").delete().eq("nome", nomeLimpo);
+                } catch (e) {
+                    // Tabela usuarios_banidos ausente: segue com localStorage
+                }
+            }
+            renderizarListaBanidos();
+            carregarCatalogo();
+            mostrarAlerta("Admin", `Usuário "${nomeLimpo}" desbanido.`);
         }
 
         async function alternarBanimentoVendedorSelecionado() {
@@ -1851,7 +1990,8 @@
                 pedidoId: pedidoIdGerado,
                 status: "Aprovado • Custódia Segura",
                 itens: listaItensFormatada,
-                total: valorTotalPedido
+                total: valorTotalPedido,
+                etapasCustodia: [ETAPAS_CUSTODIA[0]]
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
 
@@ -1880,6 +2020,12 @@
         function abrirChatSuporte() {
             closeTicketModal();
             document.getElementById("modal-chat-suporte").style.display = "flex";
+            // Exibe o menu de opcoes logo apos a saudacao quando ainda nao ha respostas no chat
+            const chatMenu = document.getElementById("chat-mensagens");
+            if (chatMenu && !chatMenu.querySelector("[data-menu-bot]")) {
+                chatMenu.innerHTML += construirMenuBot().replace('<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"', '<div data-menu-bot class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"');
+                chatMenu.scrollTop = chatMenu.scrollHeight;
+            }
         }
 
         function closeChatSuporte() { document.getElementById("modal-chat-suporte").style.display = "none"; }
@@ -1893,7 +2039,7 @@
             const regras = [
                 ["suporte_humano", /suporte|atendimento|atendente|falar com (o |a |algu|equipe)/],
                 ["pagamento", /pagamento|comprovante|cobran|pix|cart[aã]o|estorn|reembols|devolu|refund/],
-                ["entrega_rastreio", /entrega|entregue|dados da conta|recebi a conta|rastrei|ticket|status do pedido/],
+                ["entrega_rastreio", /entrega|entregue|dados da conta|recebi a conta|rastrei|ticket|tick-\d+|TICK-\d|status do (meu )?pedido/],
                 ["acesso_conta", /login|logar|entrar na conta|senha|c[oó]digo|banido|banimento|bloquead|den[uú]ncia|denunciar|golpe|suspeita|fraude|hacker/]
             ];
             for (const [assunto, re] of regras) {
@@ -1938,6 +2084,50 @@
             return true;
         }
 
+        // ===== Menu de opcoes do bot do chat =====
+        const OPCOES_MENU_BOT = [
+            { numero: 1, rotulo: "Rastrear pedido / Ticket", resposta: "Digite o codigo do seu ticket (ex: TICK-12345) aqui no chat ou use o menu 'Rastrear Pedido' para consultar o status e as etapas de custodia." },
+            { numero: 2, rotulo: "Intermediacao / custodia", resposta: "A custodia funciona assim: o pagamento fica retido pelo site e liberado ao vendedor somente apos a entrega confirmada da conta. Sem chat direto entre comprador e vendedor." },
+            { numero: 3, rotulo: "Duvidas de pagamento", resposta: "Comprovantes, cobrancas e estornos sao tratados pelo admin manualmente. Se o pagamento ja foi feito, acione o suporte no WhatsApp que o admin recebe um alerta." },
+            { numero: 4, rotulo: "Anunciar conta", resposta: "Use o menu 'Anunciar Conta': faca login, envie os prints do inventario (o site le os itens automaticamente), preencha titulo e preco e publique." },
+            { numero: 5, rotulo: "Login / codigo Gmail / conta", resposta: "O codigo de verificacao chega por Gmail (EmailJS). Nao recebeu? Verifique o spam ou acione o suporte no WhatsApp pelo chat." },
+            { numero: 6, rotulo: "Suporte oficial", resposta: "Acionando o suporte oficial: o admin foi avisado no WhatsApp. Toque no botao acima ou descreva melhor o problema aqui no chat." }
+        ];
+
+        function construirMenuBot() {
+            const Itens = OPCOES_MENU_BOT.map(o => `<button type="button" onclick="escolherOpcaoBot(${o.numero}, '${escapeHtml(o.rotulo)}')" class="block w-full text-left text-left bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white cursor-pointer"><span class="text-[var(--accent)] font-bold">${o.numero}.</span> ${escapeHtml(o.rotulo)}</button>`).join("");
+            return `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"><p class="font-bold text-[var(--accent)] mb-1.5">Bot Oficial</p><p class="text-gray-300 mb-2">Como posso ajudar? Escolha uma opcao ou digite sua mensagem:</p><div class="space-y-1.5">${Itens}</div></div>`;
+        }
+
+        function escolherOpcaoBot(numero, rotulo) {
+            const chat = document.getElementById("chat-mensagens");
+            if (!chat) return;
+            const opcao = OPCOES_MENU_BOT.find(o => o.numero === numero);
+            const textoUsuario = `${numero}. ${rotulo}`;
+            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(rotulo) : null;
+            if (classificacao) { setTimeout(() => dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario), 200); }
+
+            setTimeout(() => {
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(opcao ? opcao.resposta : "")}</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 600);
+        }
+
+        function respostaBotPorPalavraChave(texto) {
+            const t = (texto || "").toLowerCase();
+            if (/rastr|ticket|t-i-c-k|pedido/.test(t)) return OPCOES_MENU_BOT[0].resposta;
+            if (/cust[oó]dia|intermedi|segur|transfer/.test(t)) return OPCOES_MENU_BOT[1].resposta;
+            if (/pag|comprov|pix|cobran|estorn|reembols/.test(t)) return OPCOES_MENU_BOT[2].resposta;
+            if (/anunci|vender|publicar|invent/.test(t)) return OPCOES_MENU_BOT[3].resposta;
+            if (/login|logar|senha|c[oó]digo|gmail|email/.test(t)) return OPCOES_MENU_BOT[4].resposta;
+            if (/suporte|atendente|humano|falar/.test(t)) return OPCOES_MENU_BOT[5].resposta;
+            if (/ol[aá]|oi|bom dia|boa tarde|boa noite|obrigad|teste/.test(t)) return "Olá! Sou o bot do MARKTPLACE stand2. Escolha uma opção abaixo para receber ajuda:";
+            return null;
+        }
+
         function enviarMensagemSuporte() {
             const input = document.getElementById("chat-input-texto");
             if (!input.value.trim()) return;
@@ -1950,8 +2140,14 @@
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(textoUsuario) : null;
             const disparouWhatsApp = classificacao ? dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario) : false;
 
+            const respostaPalavra = respostaBotPorPalavraChave(textoUsuario);
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Recebido! Nossa equipe de suporte está à disposição para auxiliar na transferência segura.</div>`;
+                if (respostaPalavra && !disparouWhatsApp) {
+                    const bordaMenu = respostaBotPorPalavraChave(textoUsuario).includes("Escolha uma opção");
+                    chat.innerHTML += bordaMenu ? construirMenuBot() : `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaPalavra)}</div>`;
+                } else if (!respostaPalavra && !disparouWhatsApp) {
+                    chat.innerHTML += construirMenuBot();
+                }
                 chat.scrollTop = chat.scrollHeight;
             }, 1000);
         }
