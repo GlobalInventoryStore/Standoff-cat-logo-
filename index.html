@@ -556,9 +556,9 @@
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
             <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
 
-            <div id="ticket-codigo-destaque" class="bg-[#111111] border border-[#d4ff00]/40 rounded-xl px-3 py-3 mb-4">
-                <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Seu código de ticket:</p>
-                <p id="ticket-codigo-destaque-valor" class="text-lg font-bold text-[#d4ff00] font-mono break-all">TICK-XXXXX</p>
+            <div id="ticket-codigo-destaque" class="bg-[#111111] border-2 border-[#d4ff00] rounded-xl px-3 py-3 mb-4">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">SEU CÓDIGO DE TICKET</p>
+                <p id="ticket-codigo-destaque-valor" class="text-xl font-bold text-[#d4ff00] font-mono break-all">TICK-XXXXX</p>
                 <p class="text-[10px] text-gray-500 mt-1">Guarde este código para rastrear o pedido e falar com o suporte.</p>
             </div>
 
@@ -950,32 +950,46 @@
             "5. Pagamento liberado ao vendedor (custódia concluída)"
         ];
 
+        function etapaAtualDoPedido(pedido) {
+            if (!pedido) return 0;
+            if (pedido.etapa) return Math.min(5, Math.max(1, Number(pedido.etapa)));
+            if (ticketConcluido(pedido)) return 5;
+            return Math.min(5, Math.max(1, (pedido.etapasCustodia || []).length || 1));
+        }
+
         function conteudoPainelIntermediacao(pedido, codigo) {
-            const etapasHtml = ETAPAS_CUSTODIA.map(etapa => {
-                const concluida = pedido && pedido.etapasCustodia && pedido.etapasCustodia.includes(etapa);
-                return `<p class="${concluida ? "text-emerald-400" : "text-gray-500"}">${escapeHtml(etapa)}${concluida ? " ✓" : ""}</p>`;
+            const etapaAtual = etapaAtualDoPedido(pedido);
+            const etapasHtml = ETAPAS_CUSTODIA.map((etapa, indice) => {
+                const numero = indice + 1;
+                const concluida = pedido && numero <= etapaAtual;
+                const ehAtual = pedido && numero === etapaAtual;
+                const classe = concluida ? "text-emerald-400" : "text-gray-500";
+                const marcador = ehAtual ? ' <span class="text-[var(--accent)] font-bold">← etapa atual</span>' : (concluida ? " ✓" : "");
+                return `<p class="${classe}">${escapeHtml(etapa)}${marcador}</p>`;
             }).join("");
             const info = pedido
-                ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
+                ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Etapa atual: <span class="text-[var(--accent)] font-bold">[${etapaAtual}/5]</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
                 : `<p class="text-white font-bold">Status: <span class="text-amber-400">● Não encontrado nesta sessão</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-amber-400 mt-1">Amostras antigas de tickets (TICK-4819 etc.) de demonstração não são reais.</p>`;
             const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
             return `${info}<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
         }
 
-        function atualizarStatusPedidoAdmin(ticketId, acao) {
-            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode alterar o status.", "aviso"); return; }
-            const novoStatus = acao === "liberar" ? "Concluído • Custódia Liberada ao Vendedor" : (acao === "concluir" ? "Concluído / Entregue" : "Em análise pelo Admin");
-            const pedido = pedidosAtivos.find(p => p.ticketId.toUpperCase() === String(ticketId).toUpperCase());
-            if (!pedido) { mostrarAlerta("Admin", `Ticket ${sanitizarNomePublico(ticketId)} não encontrado.`, "aviso"); return; }
-            pedido.status = novoStatus;
-            const etapasExtrato = acao === "liberar"
-                ? [ETAPAS_CUSTODIA[3], ETAPAS_CUSTODIA[4]]
-                : (acao === "concluir" ? [ETAPAS_CUSTODIA[4]] : [ETAPAS_CUSTODIA[1]]);
-            pedido.etapasCustodia = (pedido.etapasCustodia || []).concat(etapasExtrato.filter(e => !(pedido.etapasCustodia || []).includes(e)));
+        async function definirEtapaTicketAdmin(ticketId, etapa) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode alterar a etapa.", "aviso"); return; }
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo || normalizarCodigoTicket(p.pedidoId) === codigo);
+            if (!pedido) { mostrarAlerta("Admin", `Ticket ${codigo} não encontrado.`, "aviso"); return; }
+            const ehConclusao = etapa >= 5;
+            const statusTexto = ehConclusao ? "Concluído / Entregue (pagamento liberado ao vendedor)" : ETAPAS_CUSTODIA[etapa - 1];
+            pedido.etapa = etapa;
+            pedido.concluido = ehConclusao;
+            pedido.status = statusTexto;
+            pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, etapa);
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
-            mostrarAlerta("Admin", `Status do ticket ${sanitizarNomePublico(pedido.ticketId)} atualizado para: ${novoStatus}`);
-            const codigoAtual = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
-            if (codigoAtual) consultarStatusPedido();
+            const okBanco = await atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, ehConclusao);
+            mostrarAlerta("Admin", `Etapa ${etapa}/5 do ticket ${codigo} aplicada${okBanco ? " no Supabase e localmente" : " localmente (Supabase indisponível)"}.`);
+            const codigoAtual = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
+            if (codigoAtual) { await consultarStatusPedido(); }
         }
 
         function limparTicketsDeTeste() {
@@ -988,17 +1002,39 @@
             mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
-        function consultarStatusPedido() {
-            const codigo = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
+        async function consultarStatusPedido() {
+            const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
             const resBox = document.getElementById("resultado-rastreio");
             if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
 
-            const pedidoEncontrado = pedidosAtivos.find(p => p.ticketId.toUpperCase() === codigo || p.pedidoId.toUpperCase() === codigo);
+            let pedidoEncontrado = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo || normalizarCodigoTicket(p.pedidoId) === codigo);
+            if (!pedidoEncontrado && window.supabaseClient) {
+                resBox.classList.remove("hidden");
+                resBox.innerHTML = '<p class="text-xs text-gray-400">Consultando o Supabase...</p>';
+                const doBanco = await buscarTicketSupabase(codigo);
+                if (doBanco) {
+                    const local = converterRegistroSupabase(doBanco);
+                    pedidosAtivos = [local].concat(pedidosAtivos);
+                    localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
+                    pedidoEncontrado = local;
+                }
+            }
             resBox.classList.remove("hidden");
 
             let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
             if (pedidoEncontrado && isAdminUsuario()) {
-                html += `<div class="mt-2 flex gap-2"><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','analisar')" class="flex-1 bg-amber-500/10 text-amber-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Marcar em análise</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','liberar')" class="flex-1 bg-emerald-500/10 text-emerald-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Liberar custódia</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','concluir')" class="flex-1 bg-blue-500/10 text-blue-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Concluir / Encerrar</button></div>`;
+                const etapaAtual = etapaAtualDoPedido(pedidoEncontrado);
+                const rotulos = ["1. Pagamento retido", "2. Verificar comprovante", "3. Dados do vendedor", "4. Dados enviados", "5. Concluir Pedido"];
+                const botoes = rotulos.map((rotulo, indice) => {
+                    const numero = indice + 1;
+                    const ehEtapa5 = numero === 5;
+                    const ativo = numero === etapaAtual && !(pedidoEncontrado.concluido && !ehEtapa5);
+                    const estilo = ativo
+                        ? (ehEtapa5 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold" : "bg-[var(--accent)] text-black font-bold")
+                        : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#181818] text-gray-300");
+                    return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
+                }).join("");
+                html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div></div>`;
             }
             if (isAdminUsuario()) {
                 html += `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
@@ -1995,10 +2031,14 @@
 
         function closePagamentoDetalhes() { document.getElementById("modal-pagamento-detalhes").style.display = "none"; }
 
-        function enviarComprovanteParaTicket() {
+        async function enviarComprovanteParaTicket() {
             closePagamentoDetalhes();
             const ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
             const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
+            const metodoRadios = document.querySelectorAll('input[name="pagamento"]');
+            let metodoValor = "pix";
+            metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
+            const metodoPagamento = metodoValor === "cartao" ? "Cartão de Crédito" : "PIX";
 
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
             const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
@@ -2026,6 +2066,20 @@
                 etapasCustodia: [ETAPAS_CUSTODIA[0]]
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
+
+            // Persiste o ticket no Supabase (public.tickets) para consulta em qualquer dispositivo
+            await salvarTicketSupabase({
+                codigo: ticketIdGerado,
+                comprador_email: String(gmailUser || "").toLowerCase() === "cliente@gmail.com" ? "" : String(gmailUser || "").toLowerCase(),
+                comprador_nome: currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante",
+                comprador_whatsapp: wppUser || "",
+                itens: listaItensFormatada || "",
+                valor_total: valorTotalPedido || "",
+                metodo_pagamento: metodoPagamento,
+                etapa: 1,
+                status_texto: "Pagamento retido pelo site (custódia segura)",
+                concluido: false
+            });
 
             const statusKey = "aguardando_conta_vendedor";
             const resumoRapido = montarResumoRapidoTicket({
@@ -2142,11 +2196,90 @@
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(rotulo) : null;
             if (classificacao) { setTimeout(() => dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario), 200); }
 
-            setTimeout(() => {
-                const respostaFinal = (opcao && opcao.numero === 1) ? respostaOpcaoRastrear() : (opcao ? opcao.resposta : "");
+            setTimeout(async () => {
+                let respostaFinal;
+                if (opcao && opcao.numero === 1) {
+                    try { respostaFinal = await respostaOpcaoRastrear(); } catch (e) { respostaFinal = opcao.resposta; }
+                } else {
+                    respostaFinal = (opcao ? opcao.resposta : "");
+                }
                 chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaFinal)}</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
+        }
+
+        // ===== Tickets no Supabase (public.tickets) com fallback localStorage =====
+        function normalizarCodigoTicket(texto) {
+            return String(texto || "").toUpperCase().replace(/[^A-Z0-9-]/g, "");
+        }
+
+        async function salvarTicketSupabase(registro) {
+            if (!window.supabaseClient || !registro || !registro.codigo) return false;
+            try {
+                const { error } = await window.supabaseClient.from("tickets").insert([registro]);
+                if (error) { return false; }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function converterRegistroSupabase(row) {
+            const etapa = Math.min(5, Math.max(1, Number(row.etapa) || 1));
+            return {
+                ticketId: String(row.codigo || "").toUpperCase(),
+                pedidoId: String(row.codigo || "").toUpperCase(),
+                comprador: row.comprador_email || "",
+                status: row.status_texto || ETAPAS_CUSTODIA[etapa - 1],
+                itens: row.itens || "",
+                total: row.valor_total != null ? String(row.valor_total) : "",
+                etapa: etapa,
+                concluido: Boolean(row.concluido),
+                etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa)
+            };
+        }
+
+        async function buscarTicketSupabase(codigo) {
+            if (!window.supabaseClient || !codigo) return null;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("tickets")
+                    .select("*")
+                    .eq("codigo", codigo)
+                    .maybeSingle();
+                if (error || !data) return null;
+                return data;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function ticketsAtivosSupabase(email) {
+            if (!window.supabaseClient || !email) return [];
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("tickets")
+                    .select("*")
+                    .eq("comprador_email", String(email).toLowerCase())
+                    .eq("concluido", false);
+                if (error || !Array.isArray(data)) return [];
+                return data.map(converterRegistroSupabase);
+            } catch (e) {
+                return [];
+            }
+        }
+
+        async function atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, concluido) {
+            if (!window.supabaseClient || !codigo) return false;
+            try {
+                const { error } = await window.supabaseClient
+                    .from("tickets")
+                    .update({ etapa: etapa, status_texto: statusTexto, concluido: concluido })
+                    .eq("codigo", codigo);
+                return !error;
+            } catch (e) {
+                return false;
+            }
         }
 
         // Status concluido/encerrado sai da fila ativa do bot (segue consultavel pelo codigo exato)
@@ -2164,13 +2297,16 @@
             return (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId && !ticketConcluido(p) && ticketPertenceAoUsuario(p));
         }
 
-        // Resposta inteligente para "1. Rastrear pedido / Ticket": consulta os tickets locais do usuario
-        function respostaOpcaoRastrear() {
-            const lista = ticketsAtivosDoUsuario();
+        // Resposta inteligente para "1. Rastrear pedido / Ticket": tickets ativos do Supabase + locais do usuario
+        async function respostaOpcaoRastrear() {
+            const locais = ticketsAtivosDoUsuario();
+            const remotos = (currentUser && currentUser.email) ? await ticketsAtivosSupabase(currentUser.email) : [];
+            const vistos = new Set(locais.map(p => String(p.ticketId).toUpperCase()));
+            const lista = locais.concat(remotos.filter(p => !vistos.has(String(p.ticketId).toUpperCase())));
             if (!lista.length) {
                 return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consulta-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
             }
-            const linhas = lista.slice(0, 5).map(p => `• ${String(p.ticketId).toUpperCase()} — ${p.status || "em custódia"}`).join("\n");
+            const linhas = lista.slice(0, 8).map(p => `• ${String(p.ticketId).toUpperCase()} — ${p.status || "em custódia"}`).join("\n");
             return `Você tem ${lista.length} ticket(s) ativo(s):\n${linhas}\n\nPara acompanhar: menu 'Rastrear Pedido' e digite o código TICK-, ou fale com o Suporte oficial pelo WhatsApp. Tickets concluídos saem desta lista e ficam consultáveis pelo código exato.`;
         }
 
@@ -2199,11 +2335,15 @@
             const disparouWhatsApp = classificacao ? dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario) : false;
 
             const respostaPalavra = respostaBotPorPalavraChave(textoUsuario);
-            setTimeout(() => {
-                if (respostaPalavra && !disparouWhatsApp) {
-                    const bordaMenu = respostaBotPorPalavraChave(textoUsuario).includes("Escolha uma opção");
-                    chat.innerHTML += bordaMenu ? construirMenuBot() : `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaPalavra)}</div>`;
-                } else if (!respostaPalavra && !disparouWhatsApp) {
+            setTimeout(async () => {
+                if (disparouWhatsApp) return;
+                let textoFinal = null;
+                try { textoFinal = await respostaPalavra; } catch (e) { textoFinal = null; }
+                if (textoFinal && String(textoFinal).includes("Escolha uma opção")) {
+                    chat.innerHTML += construirMenuBot();
+                } else if (textoFinal) {
+                    chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(textoFinal)}</div>`;
+                } else {
                     chat.innerHTML += construirMenuBot();
                 }
                 chat.scrollTop = chat.scrollHeight;
