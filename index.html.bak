@@ -44,6 +44,15 @@
             border-color: var(--accent);
         }
 
+        /* Autopreenchimento do navegador mantém o tema escuro */
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active,
+        textarea:-webkit-autofill, select:-webkit-autofill {
+            -webkit-text-fill-color: #ffffff;
+            -webkit-box-shadow: 0 0 0 1000px #111111 inset;
+            caret-color: #ffffff;
+            transition: background-color 9999s ease-out 0s;
+        }
+
         .input-group {
             margin-bottom: 0.85rem;
         }
@@ -949,6 +958,13 @@
             setModalVisivel("modal-rastreio", true);
             pararAutoRefreshRastreio();
             rastreioAutoRefreshId = setInterval(atualizarRastreioAutomaticamente, 4000);
+            if (isAdminUsuario()) {
+                const campo = document.getElementById("input-codigo-rastreio");
+                if (campo) campo.value = "";
+                const resBox = document.getElementById("resultado-rastreio");
+                if (resBox) { resBox.classList.remove("hidden"); resBox.innerHTML = '<p class="text-xs text-gray-400">Carregando tickets em aberto do Supabase...</p>'; }
+                consultarStatusPedido();
+            }
         }
         function closeRastreio() {
             setModalVisivel("modal-rastreio", false);
@@ -957,8 +973,9 @@
         function atualizarRastreioAutomaticamente() {
             const modal = document.getElementById("modal-rastreio");
             if (!modal || modal.style.display === "none") return;
+            if (rastreioBuscaEmAndamento) return;
             const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
-            if (!codigo || rastreioBuscaEmAndamento) return;
+            if (!codigo && !isAdminUsuario()) return;
             consultarStatusPedido(true);
         }
 
@@ -1029,13 +1046,100 @@
             mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
+        // ===== Painel do Admin: lista de tickets em aberto (public.tickets) =====
+        async function ticketsEmAbertoSupabase() {
+            if (!window.supabaseClient) return null;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("tickets")
+                    .select("*")
+                    .eq("concluido", false)
+                    .order("created_at", { ascending: true });
+                if (error || !Array.isArray(data)) return null;
+                return data.map(converterRegistroSupabase);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function tempoAbertoFormatado(iso) {
+            if (!iso) return "desconhecido";
+            const abertos = Date.now() - new Date(iso).getTime();
+            if (!(abertos >= 0)) return "desconhecido";
+            const minutos = Math.floor(abertos / 60000);
+            if (minutos < 1) return "menos de 1 min";
+            if (minutos < 60) return `há ${minutos} min`;
+            const horas = Math.floor(minutos / 60);
+            if (horas < 24) return `há ${horas}h${minutos % 60 ? ` ${minutos % 60}m` : ""}`;
+            const dias = Math.floor(horas / 24);
+            return `há ${dias} dia${dias > 1 ? "s" : ""}${horas % 24 ? ` ${horas % 24}h` : ""}`;
+        }
+
+        function estadoPagamentoDoTicket(p) {
+            const metodo = escapeHtml(p.metodo || "");
+            const valor = escapeHtml(p.total || "");
+            if (!metodo && !valor) {
+                return '<span class="text-amber-400 font-semibold">Aguardando comprovante (pendente)</span>';
+            }
+            return `<span class="text-emerald-400 font-semibold">Pagamento em custódia</span> <span class="text-gray-400">(${[metodo, valor].filter(Boolean).join(" — ")})</span>`;
+        }
+
+        function cartaoTicketAdmin(p) {
+            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border border-[#222] rounded-xl p-2.5 transition cursor-pointer">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="font-mono font-bold text-[var(--accent)]">${escapeHtml(p.ticketId)}</span>
+                    <span class="text-[11px] font-bold text-white bg-[#181818] border border-[#2a2a2a] rounded-lg px-1.5 py-0.5">Etapa [${etapaAtualDoPedido(p)}/5]</span>
+                </div>
+                <p class="text-[11px] mt-1">${estadoPagamentoDoTicket(p)}</p>
+                <p class="text-[11px] text-gray-300 mt-0.5">Cliente: <span class="font-semibold text-white">${escapeHtml(p.nome || p.comprador || "—")}</span>${p.comprador ? ` · ${escapeHtml(p.comprador)}` : ""}${p.whatsapp ? ` · ${escapeHtml(p.whatsapp)}` : ""}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5 truncate">Itens: ${escapeHtml(p.itens || "—")}</p>
+                <div class="flex items-center justify-between mt-1 gap-2 flex-wrap">
+                    <span class="text-[10px] text-amber-400 font-semibold">Aguardando ${tempoAbertoFormatado(p.criadoEm)}</span>
+                    <span class="text-[10px] text-[var(--accent)] font-bold">Abrir controles →</span>
+                </div>
+            </button>`;
+        }
+
+        async function renderListaTicketsAdmin() {
+            const resBox = document.getElementById("resultado-rastreio");
+            if (!resBox) return;
+            let lista = await ticketsEmAbertoSupabase();
+            if (lista === null) {
+                lista = (Array.isArray(pedidosAtivos) ? pedidosAtivos : [])
+                    .filter(p => p && p.ticketId && !ticketConcluido(p))
+                    .map(p => Object.assign({ nome: p.comprador || "", whatsapp: p.whatsapp || "", metodo: p.metodo || "", criadoEm: p.criadoEm || null }, p));
+            }
+            resBox.classList.remove("hidden");
+            if (!lista.length) {
+                resBox.innerHTML = '<p class="text-emerald-400 text-xs font-semibold">Nenhum ticket em aberto no momento — todos os pedidos ativos foram concluídos.</p>';
+                return;
+            }
+            resBox.innerHTML = `
+                <p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1.5">Tickets em aberto (${lista.length}) <span class="text-amber-400 normal-case">· atualiza sozinho a cada 4s</span></p>
+                <div class="space-y-2">${lista.map(cartaoTicketAdmin).join("")}</div>`;
+        }
+
+        function abrirTicketAdminDaLista(codigo) {
+            const campo = document.getElementById("input-codigo-rastreio");
+            if (campo) campo.value = normalizarCodigoTicket(codigo);
+            consultarStatusPedido();
+        }
+        function voltarListaTicketsAdmin() {
+            const campo = document.getElementById("input-codigo-rastreio");
+            if (campo) campo.value = "";
+            consultarStatusPedido();
+        }
+
         async function consultarStatusPedido(silencioso) {
             const resBox = document.getElementById("resultado-rastreio");
             if (rastreioBuscaEmAndamento) return;
             rastreioBuscaEmAndamento = true;
             try {
                 const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
-                if (!codigo) { resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return; }
+                if (!codigo) {
+                    if (isAdminUsuario()) { await renderListaTicketsAdmin(); return; }
+                    resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return;
+                }
 
                 // Prioridade absoluta: Supabase (banco real, qualquer dispositivo); localStorage só como fallback offline
                 let pedidoEncontrado = null;
@@ -1053,6 +1157,7 @@
 
             let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
             if (pedidoEncontrado && isAdminUsuario()) {
+                html += `<p class="text-[11px] text-gray-300 mt-1 pt-1 border-t border-[#222]">Cliente: <span class="font-semibold text-white">${escapeHtml(pedidoEncontrado.nome || pedidoEncontrado.comprador || "—")}</span>${pedidoEncontrado.comprador ? ` · ${escapeHtml(pedidoEncontrado.comprador)}` : ""}${pedidoEncontrado.whatsapp ? ` · ${escapeHtml(pedidoEncontrado.whatsapp)}` : ""}</p><p class="text-[11px]">${estadoPagamentoDoTicket(pedidoEncontrado)}</p>`;
                 const etapaAtual = etapaAtualDoPedido(pedidoEncontrado);
                 const rotulos = ["1. Pagamento retido", "2. Verificar comprovante", "3. Dados do vendedor", "4. Dados enviados", "5. Concluir Pedido"];
                 const botoes = rotulos.map((rotulo, indice) => {
@@ -1064,7 +1169,7 @@
                         : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#181818] text-gray-300");
                     return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
                 }).join("");
-                html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div></div>`;
+                html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">← Voltar para lista em aberto</button></div>`;
             }
             if (isAdminUsuario()) {
                 html += `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
@@ -2263,6 +2368,10 @@
                 ticketId: String(row.codigo || "").toUpperCase(),
                 pedidoId: String(row.codigo || "").toUpperCase(),
                 comprador: row.comprador_email || "",
+                nome: row.comprador_nome || "",
+                whatsapp: row.comprador_whatsapp || "",
+                metodo: row.metodo_pagamento || "",
+                criadoEm: row.created_at || null,
                 status: row.status_texto || ETAPAS_CUSTODIA[etapa - 1],
                 itens: row.itens || "",
                 total: row.valor_total != null ? String(row.valor_total) : "",
