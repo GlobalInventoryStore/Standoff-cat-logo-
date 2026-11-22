@@ -964,19 +964,28 @@
 
         function atualizarStatusPedidoAdmin(ticketId, acao) {
             if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode alterar o status.", "aviso"); return; }
-            const novoStatus = acao === "liberar" ? "Concluído • Custódia Liberada ao Vendedor" : "Em análise pelo Admin";
+            const novoStatus = acao === "liberar" ? "Concluído • Custódia Liberada ao Vendedor" : (acao === "concluir" ? "Concluído / Entregue" : "Em análise pelo Admin");
             const pedido = pedidosAtivos.find(p => p.ticketId.toUpperCase() === String(ticketId).toUpperCase());
             if (!pedido) { mostrarAlerta("Admin", `Ticket ${sanitizarNomePublico(ticketId)} não encontrado.`, "aviso"); return; }
             pedido.status = novoStatus;
-            pedido.etapasCustodia = (pedido.etapasCustodia || []).concat(
-                acao === "liberar"
-                    ? [ETAPAS_CUSTODIA[3], ETAPAS_CUSTODIA[4]]
-                    : [ETAPAS_CUSTODIA[1]]
-            );
+            const etapasExtrato = acao === "liberar"
+                ? [ETAPAS_CUSTODIA[3], ETAPAS_CUSTODIA[4]]
+                : (acao === "concluir" ? [ETAPAS_CUSTODIA[4]] : [ETAPAS_CUSTODIA[1]]);
+            pedido.etapasCustodia = (pedido.etapasCustodia || []).concat(etapasExtrato.filter(e => !(pedido.etapasCustodia || []).includes(e)));
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
             mostrarAlerta("Admin", `Status do ticket ${sanitizarNomePublico(pedido.ticketId)} atualizado para: ${novoStatus}`);
             const codigoAtual = document.getElementById("input-codigo-rastreio").value.trim().toUpperCase();
             if (codigoAtual) consultarStatusPedido();
+        }
+
+        function limparTicketsDeTeste() {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode limpar o histórico.", "aviso"); return; }
+            if (!confirm(`Limpar TODOS os tickets locais (${pedidosAtivos.length})? Use para zerar tickets de teste. Tickets no Supabase não são afetados.`)) return;
+            pedidosAtivos = [];
+            localStorage.setItem("marktplace_stand2_pedidos", "[]");
+            const resBox = document.getElementById("resultado-rastreio");
+            if (resBox) { resBox.innerHTML = '<p class="text-emerald-400 text-xs">Histórico local de tickets limpo.</p>'; }
+            mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
         function consultarStatusPedido() {
@@ -989,7 +998,10 @@
 
             let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
             if (pedidoEncontrado && isAdminUsuario()) {
-                html += `<div class="mt-2 flex gap-2"><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','analisar')" class="flex-1 bg-amber-500/10 text-amber-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Marcar em análise</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','liberar')" class="flex-1 bg-emerald-500/10 text-emerald-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Liberar custódia</button></div>`;
+                html += `<div class="mt-2 flex gap-2"><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','analisar')" class="flex-1 bg-amber-500/10 text-amber-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Marcar em análise</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','liberar')" class="flex-1 bg-emerald-500/10 text-emerald-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Liberar custódia</button><button type="button" onclick="atualizarStatusPedidoAdmin('${escapeHtml(pedidoEncontrado.ticketId)}','concluir')" class="flex-1 bg-blue-500/10 text-blue-400 py-2 rounded-xl text-xs font-bold cursor-pointer">Concluir / Encerrar</button></div>`;
+            }
+            if (isAdminUsuario()) {
+                html += `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
             }
             resBox.innerHTML = html;
         }
@@ -2007,6 +2019,7 @@
             pedidosAtivos.unshift({
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
+                comprador: gmailUser,
                 status: "Aprovado • Custódia Segura",
                 itens: listaItensFormatada,
                 total: valorTotalPedido,
@@ -2136,14 +2149,29 @@
             }, 600);
         }
 
+        // Status concluido/encerrado sai da fila ativa do bot (segue consultavel pelo codigo exato)
+        function ticketConcluido(pedido) {
+            const status = String((pedido && pedido.status) || "").toLowerCase();
+            return /(conclu|entregue|encerrad)/.test(status);
+        }
+
+        function ticketPertenceAoUsuario(pedido) {
+            if (!pedido || !pedido.comprador || !currentUser || !currentUser.email) return true;
+            return String(pedido.comprador).toLowerCase() === String(currentUser.email).toLowerCase();
+        }
+
+        function ticketsAtivosDoUsuario() {
+            return (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId && !ticketConcluido(p) && ticketPertenceAoUsuario(p));
+        }
+
         // Resposta inteligente para "1. Rastrear pedido / Ticket": consulta os tickets locais do usuario
         function respostaOpcaoRastrear() {
-            const lista = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId);
+            const lista = ticketsAtivosDoUsuario();
             if (!lista.length) {
-                return "Nenhuma compra/ticket foi encontrada nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819), use o menu 'Rastrear Pedido' para consultar o status, ou acione o Suporte oficial pelo WhatsApp.";
+                return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consulta-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
             }
             const linhas = lista.slice(0, 5).map(p => `• ${String(p.ticketId).toUpperCase()} — ${p.status || "em custódia"}`).join("\n");
-            return `Encontrei ${lista.length} compra(s) registrada(s) nesta sessão:\n${linhas}\n\nPara acompanhar: menu 'Rastrear Pedido' e digite o código TICK-, ou fale com o Suporte oficial pelo WhatsApp.`;
+            return `Você tem ${lista.length} ticket(s) ativo(s):\n${linhas}\n\nPara acompanhar: menu 'Rastrear Pedido' e digite o código TICK-, ou fale com o Suporte oficial pelo WhatsApp. Tickets concluídos saem desta lista e ficam consultáveis pelo código exato.`;
         }
 
         function respostaBotPorPalavraChave(texto) {
