@@ -1039,6 +1039,7 @@
         function closeRastreio() {
             setModalVisivel("modal-rastreio", false);
             pararAutoRefreshRastreio();
+            pararCronometroSaidaFila();
         }
         function atualizarRastreioAutomaticamente() {
             const modal = document.getElementById("modal-rastreio");
@@ -1091,6 +1092,7 @@
             const statusTexto = ehConclusao ? "Concluído / Entregue (pagamento liberado ao vendedor)" : ETAPAS_CUSTODIA[etapa - 1];
             pedido.etapa = etapa;
             pedido.concluido = ehConclusao;
+            pedido.concluidoEm = ehConclusao ? new Date().toISOString() : null;
             pedido.status = statusTexto;
             pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, etapa);
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
@@ -1108,7 +1110,7 @@
 
         function limparTicketsDeTeste() {
             if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode limpar o histórico.", "aviso"); return; }
-            if (!confirm(`Limpar TODOS os tickets locais (${pedidosAtivos.length})? Use para zerar tickets de teste. Tickets no Supabase não são afetados.`)) return;
+            if (!confirm(`Limpar TODOS os tickets locais (${pedidosAtivos.length})? Use para zerar tickets de teste no localStorage. Tickets no Supabase não são afetados aqui — para apagar um ticket de verdade, abra o ticket e use "Excluir este ticket (Supabase + local)".`)) return;
             pedidosAtivos = [];
             localStorage.setItem("marktplace_stand2_pedidos", "[]");
             const resBox = document.getElementById("resultado-rastreio");
@@ -1116,15 +1118,101 @@
             mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
+        // Exclusão REAL do ticket: remove do Supabase (public.tickets) e do localStorage
+        async function excluirTicketSupabase(codigo) {
+            if (!window.supabaseClient || !codigo) return false;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("tickets")
+                    .delete()
+                    .eq("codigo", codigo)
+                    .select("codigo");
+                if (error || !Array.isArray(data)) return false;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function excluirTicketSelecionado(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode excluir tickets.", "aviso"); return; }
+            const codigo = normalizarCodigoTicket(ticketId);
+            if (!codigo) return;
+            if (!confirm(`Excluir o ticket ${codigo} DE VERDADE do Supabase e do histórico local? Essa ação é permanente.`)) return;
+            const okBanco = await excluirTicketSupabase(codigo);
+            const codigoNorm = normalizarCodigoTicket(codigo);
+            pedidosAtivos = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => normalizarCodigoTicket(p && (p.ticketId || p.pedidoId)) !== codigoNorm);
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            const campo = document.getElementById("input-codigo-rastreio");
+            if (campo) campo.value = "";
+            if (okBanco) {
+                mostrarAlerta("Admin", `Ticket ${codigo} excluído do Supabase e do histórico local.`);
+            } else {
+                mostrarAlerta("Admin", `Ticket ${codigo} removido do histórico local, mas o Supabase recusou a exclusão. Verifique a conexão.`, "aviso");
+            }
+            await consultarStatusPedido();
+        }
+
         // ===== Painel do Admin: lista de tickets em aberto (public.tickets) =====
+        const JANELA_SAIDA_FILA_MS = 3600000; // ticket concluído fica 1h visível na fila antes de sair
+        let abaTicketsAdmin = "abertos";
+        let cronometroSaidaFilaId = null;
+
+        function pararCronometroSaidaFila() {
+            if (cronometroSaidaFilaId) { clearInterval(cronometroSaidaFilaId); cronometroSaidaFilaId = null; }
+        }
+
+        // Em aberto = etapas 1-4 OU concluído que ainda está dentro da janela de 1h
+        function ticketNaJanelaAberta(p) {
+            if (!p) return false;
+            if (!p.concluido || !ticketConcluido(p)) return true;
+            if (!p.concluidoEm) return false;
+            const fim = new Date(p.concluidoEm).getTime() + JANELA_SAIDA_FILA_MS;
+            return Date.now() < fim;
+        }
+
+        function restanteSaidaFilaFormatado(iso) {
+            if (!iso) return null;
+            const resta = new Date(iso).getTime() + JANELA_SAIDA_FILA_MS - Date.now();
+            if (!(resta > 0)) return null;
+            const t = Math.floor(resta / 1000);
+            const m = Math.floor(t / 60);
+            const s = t % 60;
+            return resta >= 60000 ? `${m}m ${String(s).padStart(2, "0")}s` : `${s}s`;
+        }
+
+        function trocarAbaTicketsAdmin(aba) {
+            abaTicketsAdmin = aba === "concluidos" ? "concluidos" : "abertos";
+            const campo = document.getElementById("input-codigo-rastreio");
+            if (campo) campo.value = "";
+            consultarStatusPedido();
+        }
+
         async function ticketsEmAbertoSupabase() {
+            if (!window.supabaseClient) return null;
+            try {
+                const limite = new Date(Date.now() - JANELA_SAIDA_FILA_MS).toISOString();
+                const { data, error } = await window.supabaseClient
+                    .from("tickets")
+                    .select("*")
+                    .or(`and(concluido.eq.false),and(concluido.eq.true,concluido_em.gte.${limite})`)
+                    .order("created_at", { ascending: true });
+                if (error || !Array.isArray(data)) return null;
+                return data.map(converterRegistroSupabase).filter(ticketNaJanelaAberta);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function ticketsConcluidosSupabase() {
             if (!window.supabaseClient) return null;
             try {
                 const { data, error } = await window.supabaseClient
                     .from("tickets")
                     .select("*")
-                    .eq("concluido", false)
-                    .order("created_at", { ascending: true });
+                    .eq("concluido", true)
+                    .order("concluido_em", { ascending: false, nullsFirst: false })
+                    .limit(50);
                 if (error || !Array.isArray(data)) return null;
                 return data.map(converterRegistroSupabase);
             } catch (e) {
@@ -1155,38 +1243,100 @@
         }
 
         function cartaoTicketAdmin(p) {
-            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border border-[#222] rounded-xl p-2.5 transition cursor-pointer">
+            const concluidoPopular = p.concluido && ticketConcluido(p);
+            let faixaRodape = `<span class="text-[10px] text-amber-400 font-semibold">Aguardando ${tempoAbertoFormatado(p.criadoEm)}</span>`;
+            if (concluidoPopular) {
+                faixaRodape = `<span class="text-[10px] text-emerald-400 font-bold" data-expira="${escapeHtml(p.concluidoEm || "")}">Sai da fila em ${restanteSaidaFilaFormatado(p.concluidoEm) || "0s"}</span>`;
+            }
+            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border ${concluidoPopular ? "border-emerald-500/40" : "border-[#222]"} rounded-xl p-2.5 transition cursor-pointer">
                 <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="font-mono font-bold text-[var(--accent)]">${escapeHtml(p.ticketId)}</span>
-                    <span class="text-[11px] font-bold text-white bg-[#181818] border border-[#2a2a2a] rounded-lg px-1.5 py-0.5">Etapa [${etapaAtualDoPedido(p)}/5]</span>
+                    <span class="text-[11px] font-bold text-white ${concluidoPopular ? "bg-emerald-500/10 text-emerald-300" : "bg-[#181818]"} border border-[#2a2a2a] rounded-lg px-1.5 py-0.5">Etapa [${etapaAtualDoPedido(p)}/5]${concluidoPopular ? " · concluído" : ""}</span>
                 </div>
                 <p class="text-[11px] mt-1">${estadoPagamentoDoTicket(p)}</p>
                 <p class="text-[11px] text-gray-300 mt-0.5">Cliente: <span class="font-semibold text-white">${escapeHtml(p.nome || p.comprador || "—")}</span>${p.comprador ? ` · ${escapeHtml(p.comprador)}` : ""}${p.whatsapp ? ` · ${escapeHtml(p.whatsapp)}` : ""}</p>
                 <p class="text-[11px] text-gray-400 mt-0.5 truncate">Itens: ${escapeHtml(p.itens || "—")}</p>
                 <div class="flex items-center justify-between mt-1 gap-2 flex-wrap">
-                    <span class="text-[10px] text-amber-400 font-semibold">Aguardando ${tempoAbertoFormatado(p.criadoEm)}</span>
+                    ${faixaRodape}
                     <span class="text-[10px] text-[var(--accent)] font-bold">Abrir controles →</span>
                 </div>
             </button>`;
         }
 
+        function cartaoTicketHistorico(p) {
+            const dataFim = p.concluidoEm ? new Date(p.concluidoEm).toLocaleString("pt-BR") : "data não registrada";
+            const metodo = escapeHtml(p.metodo || "—");
+            const valor = escapeHtml(p.total || "—");
+            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border border-[#222] rounded-xl p-2.5 transition cursor-pointer">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="font-mono font-bold text-[var(--accent)]">${escapeHtml(p.ticketId)}</span>
+                    <span class="text-[11px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-1.5 py-0.5">✓ Concluído</span>
+                </div>
+                <p class="text-[11px] text-gray-300 mt-1">Cliente: <span class="font-semibold text-white">${escapeHtml(p.nome || p.comprador || "—")}</span>${p.comprador ? ` · ${escapeHtml(p.comprador)}` : ""}${p.whatsapp ? ` · ${escapeHtml(p.whatsapp)}` : ""}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5 truncate">Itens: ${escapeHtml(p.itens || "—")}</p>
+                <div class="flex items-center justify-between mt-1 gap-2 flex-wrap">
+                    <span class="text-[11px]">${estadoPagamentoDoTicket(p)}</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">Concluído em: <span class="text-gray-300">${escapeHtml(dataFim)}</span> · Total: <span class="text-white font-semibold">${valor}</span> · Método: ${metodo}</p>
+            </button>`;
+        }
+
+        function barraAbasTicketsAdmin() {
+            const abaBtn = (aba, rotulo) => `<button type="button" onclick="trocarAbaTicketsAdmin('${aba}')" class="flex-1 py-2 rounded-lg text-[11px] font-bold cursor-pointer border ${abaTicketsAdmin === aba ? "bg-[var(--accent)] text-black border-[var(--accent)]" : "bg-[#181818] text-gray-300 border-[#2a2a2a] hover:bg-[#222]"}">${rotulo}</button>`;
+            return `<div class="flex gap-2 mb-3">${abaBtn("abertos", "Em Aberto")}${abaBtn("concluidos", "Concluídos (Histórico)")}</div>`;
+        }
+
         async function renderListaTicketsAdmin() {
             const resBox = document.getElementById("resultado-rastreio");
             if (!resBox) return;
+            pararCronometroSaidaFila();
+            resBox.classList.remove("hidden");
+            if (abaTicketsAdmin === "concluidos") {
+                let historico = await ticketsConcluidosSupabase();
+                if (historico === null) {
+                    historico = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId && ticketConcluido(p));
+                }
+                if (!historico.length) {
+                    resBox.innerHTML = `${barraAbasTicketsAdmin()}<p class="text-emerald-400 text-xs font-semibold">Nenhum ticket concluído no histórico ainda.</p>`;
+                    return;
+                }
+                resBox.innerHTML = `${barraAbasTicketsAdmin()}<p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1.5">Concluídos / arquivados (${historico.length}) <span class="text-gray-500 normal-case">· salvos no Supabase para auditoria</span></p><div class="space-y-2">${historico.map(cartaoTicketHistorico).join("")}</div>`;
+                return;
+            }
             let lista = await ticketsEmAbertoSupabase();
             if (lista === null) {
                 lista = (Array.isArray(pedidosAtivos) ? pedidosAtivos : [])
-                    .filter(p => p && p.ticketId && !ticketConcluido(p))
+                    .filter(p => p && p.ticketId && ticketNaJanelaAberta(p))
                     .map(p => Object.assign({ nome: p.comprador || "", whatsapp: p.whatsapp || "", metodo: p.metodo || "", criadoEm: p.criadoEm || null }, p));
             }
-            resBox.classList.remove("hidden");
             if (!lista.length) {
-                resBox.innerHTML = '<p class="text-emerald-400 text-xs font-semibold">Nenhum ticket em aberto no momento — todos os pedidos ativos foram concluídos.</p>';
+                resBox.innerHTML = `${barraAbasTicketsAdmin()}<p class="text-emerald-400 text-xs font-semibold">Nenhum ticket em aberto no momento — todos os pedidos ativos foram concluídos.</p>`;
                 return;
             }
-            resBox.innerHTML = `
-                <p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1.5">Tickets em aberto (${lista.length}) <span class="text-amber-400 normal-case">· atualiza sozinho a cada 4s</span></p>
-                <div class="space-y-2">${lista.map(cartaoTicketAdmin).join("")}</div>`;
+            resBox.innerHTML = `${barraAbasTicketsAdmin()}<p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1.5">Fila (${lista.length}) <span class="text-amber-400 normal-case">· atualiza sozinho a cada 4s</span></p><div class="space-y-2">${lista.map(cartaoTicketAdmin).join("")}</div>`;
+            iniciarCronometroSaidaFila();
+        }
+
+        // Cronômetro regressivo (1s) dos tickets concluídos que ainda estão na fila "Em Aberto"
+        function iniciarCronometroSaidaFila() {
+            pararCronometroSaidaFila();
+            cronometroSaidaFilaId = setInterval(() => {
+                const modal = document.getElementById("modal-rastreio");
+                if (!modal || modal.style.display === "none" || document.hidden) return;
+                let expirou = false;
+                document.querySelectorAll("[data-expira]").forEach(span => {
+                    const resta = restanteSaidaFilaFormatado(span.getAttribute("data-expira"));
+                    if (resta) {
+                        span.textContent = `Sai da fila em ${resta}`;
+                    } else {
+                        expirou = true;
+                    }
+                });
+                if (expirou && !document.getElementById("input-codigo-rastreio").value) {
+                    pararCronometroSaidaFila();
+                    renderListaTicketsAdmin();
+                }
+            }, 1000);
         }
 
         function abrirTicketAdminDaLista(codigo) {
@@ -1242,7 +1392,9 @@
                 html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">← Voltar para lista em aberto</button></div>`;
             }
             if (isAdminUsuario()) {
-                html += `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
+                html += pedidoEncontrado && pedidoEncontrado.ticketId
+                    ? `<button type="button" onclick="excluirTicketSelecionado('${escapeHtml(pedidoEncontrado.ticketId)}')" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🗑 Excluir este ticket (Supabase + local)</button><button type="button" onclick="limparTicketsDeTeste()" class="mt-1.5 w-full bg-red-500/5 text-red-400/80 py-1.5 rounded-xl text-[10px] cursor-pointer border border-red-500/20">🧹 Limpar histórico local</button>`
+                    : `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
             }
             resBox.innerHTML = html;
             } finally {
@@ -1702,15 +1854,13 @@
                         .order("id", { ascending: false });
 
                     if (error) {
-                        console.error("❌ Erro ao carregar anúncios do Supabase:", error);
+                        // Supabase falhou: segue para o fallback local (localStorage/demo)
                     } else if (Array.isArray(data)) {
-                        if (data.length > 0) {
-                            anunciosEmMemoria = data.map(normalizarAnuncio);
-                            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
-                            carregarCatalogo();
-                            return;
-                        } else {
-                        }
+                        // Supabase acessível: o catálogo espelha o banco, mesmo que vazio
+                        anunciosEmMemoria = data.map(normalizarAnuncio);
+                        localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+                        carregarCatalogo();
+                        return;
                     }
                 } catch (e) {
                     console.error("❌ Exceção ao consultar Supabase:", e);
@@ -2725,6 +2875,7 @@
                 total: row.valor_total != null ? String(row.valor_total) : "",
                 etapa: etapa,
                 concluido: Boolean(row.concluido),
+                concluidoEm: row.concluido_em || null,
                 etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa)
             };
         }
@@ -2775,7 +2926,7 @@
             try {
                 const { data, error } = await window.supabaseClient
                     .from("tickets")
-                    .update({ etapa: etapa, status_texto: statusTexto, concluido: concluido })
+                    .update({ etapa: etapa, status_texto: statusTexto, concluido: concluido, concluido_em: concluido ? new Date().toISOString() : null })
                     .eq("codigo", codigo)
                     .select("codigo");
                 if (error || !Array.isArray(data) || data.length === 0) return false;
