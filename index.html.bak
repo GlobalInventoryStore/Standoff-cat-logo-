@@ -17,9 +17,14 @@
         :root {
             --bg: #080808;
             --card: #121212;
+            --surface: #111111;
             --accent: #d4ff00;
             --accent-hover: #c2eb00;
+            --accent-glow: rgba(212, 255, 0, 0.35);
+            --accent-orange: #f59e0b;
             --muted: #a1a1aa;
+            --border: #262626;
+            --radius: 14px;
         }
 
         html, body {
@@ -28,42 +33,69 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
+        /* Seleção de texto e cursor temáticos */
+        ::selection {
+            background: var(--accent);
+            color: #000000;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080808;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+
+        /* Inputs, selects, textareas - sempre fundo escuro com texto claro */
         input, select, textarea {
             background-color: #111111 !important;
             color: #ffffff !important;
-            border: 1px solid #262626;
+            border: 1px solid #262626 !important;
             border-radius: 0.5rem;
             padding: 0.6rem 0.75rem;
             font-size: 0.875rem;
             width: 100%;
+            box-sizing: border-box;
+        }
+        input::placeholder, select::placeholder, textarea::placeholder {
+            color: #5a5a5a !important;
         }
 
         input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
+            outline: none !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px var(--accent-glow) !important;
         }
 
-        /* Autopreenchimento do navegador mantém o tema escuro */
         input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active,
         textarea:-webkit-autofill, select:-webkit-autofill {
-            -webkit-text-fill-color: #ffffff;
-            -webkit-box-shadow: 0 0 0 1000px #111111 inset;
-            caret-color: #ffffff;
+            -webkit-text-fill-color: #ffffff !important;
+            -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
+            caret-color: #ffffff !important;
             transition: background-color 9999s ease-out 0s;
         }
 
         .input-group {
             margin-bottom: 0.85rem;
         }
-
         .input-group label {
             display: block;
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--muted);
             margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .btn-primary {
@@ -74,32 +106,55 @@
             padding: 0.65rem 1rem;
             border-radius: 0.75rem;
             cursor: pointer;
-            transition: background-color 0.15s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            border: none;
+            letter-spacing: 0.02em;
         }
-
         .btn-primary:hover {
             background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            width: 100%;
+            background-color: #181818;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            border: 1px solid #2a2a2a;
+        }
+        .btn-secondary:hover {
+            background-color: #222222;
+            border-color: #3a3a3a;
         }
 
         .tab {
             flex: 1;
-            padding: 0.5rem;
+            padding: 0.6rem 0.75rem;
             font-size: 0.85rem;
             font-weight: 700;
             color: var(--muted);
             border-bottom: 2px solid transparent;
             cursor: pointer;
+            text-align: center;
+            transition: color 0.2s ease, border-color 0.2s ease;
+            background: none;
+            border: none;
+            border-radius: 0;
         }
-
         .tab.active {
             color: var(--accent);
             border-bottom-color: var(--accent);
         }
-
         .tab-content {
             display: none;
         }
-
         .tab-content.active {
             display: block;
         }
@@ -109,17 +164,11 @@
             grid-template-columns: repeat(1, minmax(0, 1fr));
             gap: 1.25rem;
         }
-
         @media (min-width: 640px) {
-            .accounts-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
+            .accounts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
-
         @media (min-width: 1024px) {
-            .accounts-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
+            .accounts-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
         .alerta-icone-ok, .alerta-icone-aviso {
@@ -133,20 +182,144 @@
             font-size: 1.25rem;
             font-weight: 700;
         }
-
         .alerta-icone-ok {
             background-color: rgba(52, 211, 153, 0.1);
             color: #34d399;
         }
-
         .alerta-icone-aviso {
             background-color: rgba(239, 68, 68, 0.1);
             color: #f87171;
         }
+
+        /* === Animações suaves === */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 12px 4px var(--accent-glow); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Stagger delays para grid de cards */
+        .fade-stagger:nth-child(1) { animation-delay: 0.05s; }
+        .fade-stagger:nth-child(2) { animation-delay: 0.12s; }
+        .fade-stagger:nth-child(3) { animation-delay: 0.19s; }
+        .fade-stagger:nth-child(4) { animation-delay: 0.26s; }
+        .fade-stagger:nth-child(5) { animation-delay: 0.33s; }
+        .fade-stagger:nth-child(6) { animation-delay: 0.40s; }
+
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee-track {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+        .marquee-track span {
+            margin-right: 2rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        /* Hero texto */
+        .text-glow {
+            text-shadow: 0 0 14px var(--accent-glow);
+        }
+        .text-orange-glow {
+            text-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Cards com borda sutil e hover */
+        .card-marketplace {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+        }
+        .card-marketplace:hover {
+            border-color: #3a3a3a;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -8px rgba(0,0,0,0.5);
+        }
+
+        /* Joinha (like) - cinza #777777 ou branco gelo #ffffff */
+        .like-btn {
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+        .like-btn.liked {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.9);
+        }
+
+        /* Footer animado */
+        .footer-marquee {
+            overflow: hidden;
+        }
+        .footer-marquee .track {
+            display: inline-flex;
+            gap: 3rem;
+            animation: marquee 24s linear infinite;
+        }
+
+        /* Modal backdrop blur mais suave */
+        .modal-backdrop {
+            backdrop-filter: blur(12px);
+            background: rgba(0,0,0,0.82);
+        }
+
+        /* Focus visível para teclado */
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Reduzir movimento quando solicitado */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade-in-up, .animate-fade-in, .animate-pulse-glow, .animate-float,
+            .animate-slide-down, .marquee-track, .footer-marquee .track,
+            .card-marketplace:hover { animation: none !important; transform: none !important; transition: none !important; }
+        }
+
+        /* Utilitários de texto */
+        .text-track-wide { letter-spacing: 0.15em; }
+        .text-track-wider { letter-spacing: 0.25em; }
     </style>
     <script>
         (function initSupabaseSeguro() {
-            // Prioridade: config.js gerado de variáveis de ambiente (scripts/gerar-config.mjs) > meta tags do deploy > vazio
             const cfg = window.CONFIG || {};
             const supabaseUrl = cfg.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || null;
             const supabaseKey = cfg.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || null;
@@ -154,100 +327,69 @@
             try {
                 if (supabaseUrl && supabaseKey && window.supabase && typeof window.supabase.createClient === "function") {
                     window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                } else {
                 }
-            } catch (e) {
-            }
+            } catch (e) {}
         })();
 
         window.setModalVisivel = function(modalId, aberto) {
             const modal = document.getElementById(modalId);
-            if (!modal) {
-                return;
-            }
+            if (!modal) return;
             if (!aberto && modalId === "modal-rastreio" && typeof window.pararAutoRefreshRastreio === "function") {
                 window.pararAutoRefreshRastreio();
             }
-
             if (aberto) {
                 modal.style.display = "flex";
                 document.body.style.overflow = "hidden";
                 document.body.style.overscrollBehavior = "contain";
                 const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
-                containers.forEach(el => {
-                    el.style.overscrollBehavior = "contain";
-                });
+                containers.forEach(el => { el.style.overscrollBehavior = "contain"; });
             } else {
                 modal.style.display = "none";
                 document.body.style.overflow = "";
                 const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
-                containers.forEach(el => {
-                    el.style.overscrollBehavior = "";
-                });
+                containers.forEach(el => { el.style.overscrollBehavior = ""; });
             }
         };
     </script>
 </head>
-
-<body>
+<body class="antialiased">
 
     <!-- Aviso de Alerta de Golpe (Compacto) -->
     <div class="bg-[#121212] border-b border-yellow-500/20 text-yellow-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
-        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKETPLACE stand2 é uma plataforma independente de intermediação, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2. Nunca solicitamos senhas por mensagens privadas.</span>
-    </div>
-
-    <!-- Modal Obrigatório de Entrada / Termos -->
-    <div id="modal-boas-vindas" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden items-center justify-center z-[999999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative shadow-2xl">
-            <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Bem-vindo ao MARKTPLACE stand2</h3>
-            <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-6 max-h-[50vh] overflow-y-auto pr-2">
-                <p>O <strong>MARKTPLACE stand2</strong> é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2.</p>
-                <p>Nosso objetivo é proporcionar um ambiente seguro e organizado para transações entre jogadores, garantindo que ambas as partes sejam protegidas.</p>
-                <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
-                <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por dentro da plataforma. Isso garante segurança e rastreio para todas as partes envolvidas.</p>
-                <p>2. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
-                <p>3. <strong>Custódia Protegida:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes.</p>
-                <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
-                <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
-                <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
-            </div>
-            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary">
-                Concordo com os Termos e Entrar
-            </button>
-        </div>
+        <span>⚠️</span> <span><strong>AVISO:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2. Nunca solicitamos senhas por mensagens privadas.</span>
     </div>
 
     <!-- Header / Navbar -->
-    <header class="border-b border-[#222] bg-[#080808]/95 backdrop-blur sticky top-[28px] z-50 w-full">
+    <header class="border-b border-[#222] bg-[#080808]/90 backdrop-blur-md sticky top-[28px] z-50 w-full animate-slide-down">
         <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center relative">
             <div class="flex flex-col cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-                <span class="text-xl font-black text-white tracking-wider uppercase leading-none">MARKTPLACE</span>
-                <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase mt-0.5">stand2</span>
+                <span class="text-xl font-black text-white tracking-wider uppercase leading-none text-glow">MARKTPLACE</span>
+                <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase mt-0.5 text-orange-glow">stand2</span>
             </div>
 
             <div class="flex items-center gap-3 relative">
-                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a]">
+                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a] hover:border-[var(--accent)]">
                     🔍 Rastrear Pedido
                 </button>
 
-                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a]">
-                    🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a] hover:border-[var(--accent)]">
+                    🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold animate-pulse-glow">0</span>
                 </button>
 
-                <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-white focus:outline-none cursor-pointer relative z-[10000]">
+                <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-[var(--accent)] focus:outline-none cursor-pointer relative z-[10000] transition">
                     <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
 
-                <div id="mobile-menu" class="hidden bg-[#121212] border border-[#222] rounded-2xl px-5 py-4 space-y-3 shadow-2xl absolute top-14 right-0 w-64 z-[9999]">
-                    <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Início</a>
-                    <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Rastrear Pedido</a>
-                    <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Termos e Segurança</a>
-                    <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Anunciar Conta</a>
-                    <a href="#" onclick="openPainelBanidos(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-banidos">Usuários Banidos</a>
-                    <a href="#" onclick="abrirConfiguracoes(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] hidden" id="menu-item-config">Configurações</a>
-                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)]">Como Atuamos</a>
+                <div id="mobile-menu" class="hidden bg-[#121212] border border-[#222] rounded-[20px] px-5 py-4 space-y-3 shadow-2xl absolute top-16 right-0 w-64 z-[9999] animate-fade-in-up">
+                    <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Início</a>
+                    <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Rastrear Pedido</a>
+                    <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Termos e Segurança</a>
+                    <a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Anunciar Conta</a>
+                    <a href="#" onclick="openPainelBanidos(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition hidden" id="menu-item-banidos">Usuários Banidos</a>
+                    <a href="#" onclick="abrirConfiguracoes(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition hidden" id="menu-item-config">Configurações</a>
+                    <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Como Atuamos</a>
                     <div class="pt-3 border-t border-[#222]" id="authSection">
                         <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
                             <div class="flex items-center gap-2">
@@ -259,7 +401,6 @@
                             </div>
                             <button type="button" onclick="logout()" class="text-xs text-gray-400 hover:text-white bg-[#1a1a1a] px-2 py-1 rounded-lg transition cursor-pointer">Sair</button>
                         </div>
-
                         <div id="loginButtonContainer">
                             <button type="button" onclick="openModal()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5">
                                 Entrar / Cadastrar
@@ -271,56 +412,152 @@
         </div>
     </header>
 
+    <!-- Marquee promocional -->
+    <div class="marquee-container bg-[#0b0f17] border-b border-[#222]/50 py-2">
+        <div class="marquee-track animate-float">
+            <span>MARKTPLACE stand2</span><span>·</span><span>Intermediação segura de contas</span><span>·</span><span>Sem chat direto entre comprador e vendedor</span><span>·</span><span>Suporte exclusivo pelo site</span><span>·</span><span>PIX com QR Code e Cartão</span><span>·</span><span>MARKTPLACE stand2</span><span>·</span><span>Intermediação segura de contas</span><span>·</span><span>Sem chat direto entre comprador e vendedor</span><span>·</span><span>Suporte exclusivo pelo site</span><span>·</span><span>PIX com QR Code e Cartão</span>
+        </div>
+    </div>
+
     <!-- Balão Flutuante de Chat no Canto Esquerdo -->
     <div class="fixed bottom-5 left-5 z-[9998]">
-        <button type="button" onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)]">
+        <button type="button" onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)] group-hover:shadow-[0_0_20px_var(--accent-glow)]">
             <span class="text-xl">💬</span>
             <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
         </button>
     </div>
 
     <!-- Conteúdo Principal -->
-    <main class="flex-grow max-w-7xl mx-auto w-full px-6">
-        <section id="secao-contas" class="pb-12 pt-12">
-            <h2 class="text-3xl font-bold mb-2 text-white">Catálogo de Contas</h2>
-            <p class="text-[var(--muted)] mb-8">Selecione uma conta abaixo para ver os detalhes ou adicionar ao carrinho:</p>
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6 pb-12">
+        <!-- Hero seco / apresentação -->
+        <section class="mb-12 pt-4 animate-fade-in-up">
+            <div class="text-center">
+                <h2 class="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">MARKTPLACE <span class="text-[var(--accent)] text-[1.1em]">stand2</span></h2>
+                <p class="text-[var(--muted)] text-sm md:text-base max-w-[600px] mx-auto leading-relaxed">
+                    Catálogo de contas com intermediação oficial. Pagamento em custódia, verificação de inventário e entrega com ticket de rastreio. Sem contato direto entre comprador e vendedor.
+                </p>
+            </div>
+        </section>
+
+        <section id="secao-contas" class="pb-12 animate-fade-in-up" style="animation-delay:0.1s;">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Catálogo de Contas</h2>
+                    <p class="text-[var(--muted)] mt-1">Selecione uma conta abaixo para ver os detalhes ou adicionar ao carrinho:</p>
+                </div>
+            </div>
 
             <div class="accounts-grid" id="catalogo-cards"></div>
         </section>
     </main>
 
-    <!-- Rodapé -->
-    <footer class="border-t border-[#222] py-6 text-center text-xs text-[var(--muted)] w-full bg-[#050505]">
-        MARKTPLACE stand2 &copy; 2026 - Todos os direitos reservados. Intermediação Segura. Plataforma independente, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2.
+    <!-- Rodapé Animado -->
+    <footer class="border-t border-[#222] mt-auto bg-[#050505] relative overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="footer-marquee track top-[10%] left-0 animate-[marquee_24s_linear_infinite] text-[var(--muted)] text-[10px] font-semibold tracking-widest uppercase opacity-40"></div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 py-8 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-1 md:col-span-1">
+                    <div class="flex flex-col items-center text-center">
+                        <span class="text-2xl font-black text-white tracking-wider uppercase leading-none text-glow mb-1">MARKTPLACE</span>
+                        <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">stand2</span>
+                        <p class="text-[var(--muted)] text-[10px] mt-3 max-w-xs mx-auto leading-relaxed">
+                            Plataforma independente de intermediação. Sem vínculo oficial com a Axlebolt ou o Standoff 2.
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Plataforma</h4>
+                    <ul class="space-y-2 text-[var(--muted)] text-xs">
+                        <li><a href="#" class="hover:text-[var(--accent)] transition">Catálogo de Contas</a></li>
+                        <li><a href="#" onclick="openModalComoFunciona(); return false;" class="hover:text-[var(--accent)] transition">Como Atuamos</a></li>
+                        <li><a href="#" onclick="abrirRastreioPedido(); return false;" class="hover:text-[var(--accent)] transition">Rastrear Pedido</a></li>
+                        <li><a href="#" onclick="verificarAutenticacaoAnuncio(); return false;" class="hover:text-[var(--accent)] transition">Anunciar Conta</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Segurança</h4>
+                    <ul class="space-y-2 text-[var(--muted)] text-xs">
+                        <li><a href="#" onclick="openTermosModal(); return false;" class="hover:text-[var(--accent)] transition">Termos de Serviço</a></li>
+                        <li><a href="#" onclick="openTermosModal(); return false;" class="hover:text-[var(--accent)] transition">Isenção Legal</a></li>
+                        <li><a href="#" class="hover:text-[var(--accent)] transition">Custódia Protegida</a></li>
+                        <li><a href="#" onclick="abrirChatSuporte(); return false;" class="hover:text-[var(--accent)] transition">Suporte Oficial</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Aviso Legal</h4>
+                    <ul class="space-y-2 text-[var(--muted)] text-[10px] leading-relaxed">
+                        <li>Intermediação obrigatória apenas pela plataforma.</li>
+                        <li>Sem chat direto comprador-vendedor.</li>
+                        <li>Não nos responsabilizamos por acordos externos.</li>
+                        <li>© 2026 MARKTPLACE stand2. Todos os direitos reservados.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-[#222]/50 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
+                <p class="text-[var(--muted)] text-[10px]">
+                    MARKTPLACE stand2 © 2026 — Intermediação Segura. Plataforma independente, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2.
+                </p>
+                <div class="flex gap-3 text-[var(--muted)] text-[10px]">
+                    <span>· PÍX com QR Code</span>
+                    <span>· Cartão de Crédito</span>
+                    <span>· Ticket de Rastreio</span>
+                    <span>· Suporte por Bot</span>
+                </div>
+            </div>
+        </div>
     </footer>
 
+    <!-- Modal Obrigatório de Entrada / Termos -->
+    <div id="modal-boas-vindas" class="modal-backdrop hidden items-center justify-center z-[999999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl">
+            <div class="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-4">
+                <span class="text-[var(--accent)] font-black text-lg">M</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-white">Bem-vindo ao <span class="text-[var(--accent)]">MARKTPLACE stand2</span></h3>
+            <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-6 max-h-[50vh] overflow-y-auto pr-2">
+                <p>O <strong>MARKTPLACE stand2</strong> é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2.</p>
+                <p>Nosso objetivo é proporcionar um ambiente seguro e organizado para transações entre jogadores, garantindo que ambas as partes sejam protegidas.</p>
+                <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
+                <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por dentro da plataforma. Isso garante segurança e rastreio para todas as partes envolvidas.</p>
+                <p>2. <strong>Sem Chat Direto:</strong> Não há comunicação privada entre comprador e vendedor. Todas as tratativas e disputas passam exclusivamente pelo suporte oficial do MARKTPLACE stand2 com registro de ticket de rastreio, evitando acordos por fora ou golpes.</p>
+                <p>3. <strong>Custódia Protegida:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes.</p>
+                <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
+                <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
+                <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
+            </div>
+            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary py-3 text-sm">
+                Concordo com os Termos e Entrar
+            </button>
+        </div>
+    </div>
+
     <!-- Modal de Rastreio -->
-    <div id="modal-rastreio" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+    <div id="modal-rastreio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
                 <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
-
             <div class="input-group flex gap-2">
                 <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
                 <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
             </div>
-
             <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2"></div>
         </div>
     </div>
 
     <!-- Modal Configurações (usuário logado) -->
-    <div id="modal-config" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-config" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Configurações</h3>
                 <button type="button" onclick="closeConfiguracoes()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <div id="config-feedback" class="text-xs text-center mb-2"></div>
-
             <div class="flex items-center gap-3 bg-[#050505] border border-[#222] rounded-xl p-3 mb-3">
                 <img id="config-avatar-img" src="" alt="Avatar" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--accent)]">
                 <div class="min-w-0">
@@ -328,14 +565,12 @@
                     <p class="text-[11px] text-gray-400 truncate" id="config-email">—</p>
                 </div>
             </div>
-
             <div class="input-group">
                 <label>Alterar Foto / Avatar</label>
                 <div class="grid grid-cols-5 gap-2" id="config-avatars-grid"></div>
                 <label for="config-upload-input" class="mt-2 block text-center bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-3 py-2 rounded-lg font-bold cursor-pointer transition">📤 Enviar imagem do dispositivo (200x200)</label>
                 <input type="file" id="config-upload-input" accept="image/*" class="hidden" onchange="salvarAvatarUpload(this.files && this.files[0]); this.value = '';">
             </div>
-
             <div class="input-group">
                 <label>Alterar Nome / Nametag <span class="text-[10px] text-gray-500 normal-case">(uma vez a cada 30 dias)</span></label>
                 <div class="flex gap-2">
@@ -343,7 +578,6 @@
                     <button type="button" onclick="salvarNovoNomeConfig()" class="btn-primary text-xs px-3 h-[42px] whitespace-nowrap">Salvar</button>
                 </div>
             </div>
-
             <div class="input-group">
                 <label>WhatsApp de Contato (opcional)</label>
                 <div class="flex gap-2">
@@ -351,7 +585,6 @@
                     <button type="button" onclick="salvarWhatsAppConfig()" class="btn-primary text-xs px-3 h-[42px] whitespace-nowrap">Salvar</button>
                 </div>
             </div>
-
             <div class="input-group">
                 <label>Alterar Senha</label>
                 <input type="password" id="config-senha-antiga" placeholder="Senha Antiga">
@@ -365,8 +598,8 @@
     </div>
 
     <!-- Modal de Usuários Banidos (Admin) -->
-    <div id="modal-banidos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+    <div id="modal-banidos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Usuários Banidos</h3>
                 <button type="button" onclick="closeBanidos()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -377,21 +610,18 @@
     </div>
 
     <!-- Modal de Carrinho -->
-    <div id="modal-carrinho" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-carrinho" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
                 <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
-
             <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
-
             <div class="bg-[#050505] p-3.5 rounded-xl border border-[#222] mb-4 flex justify-between items-center">
                 <span class="text-xs text-gray-400">Total do Pedido:</span>
                 <span id="carrinho-total" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
             </div>
-
             <div class="space-y-2">
                 <button type="button" onclick="finalizarCompraCarrinho()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Finalizar Compra do Carrinho
@@ -402,18 +632,16 @@
     </div>
 
     <!-- Modal de Login / Cadastro -->
-    <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Acesso à Conta</h3>
+                <h3 class="text-xl font-bold text-white">Acesso à Conta</h3>
                 <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
-
             <div class="flex border-b border-[#222] mb-4">
                 <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
                 <button type="button" class="tab" onclick="showTab('register', event)">Cadastrar</button>
             </div>
-
             <div id="login-tab" class="tab-content active">
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
@@ -445,7 +673,6 @@
                     </div>
                 </form>
             </div>
-
             <div id="register-tab" class="tab-content">
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
@@ -487,8 +714,8 @@
     </div>
 
     <!-- Modal Verificação Vendedor -->
-    <div id="modal-verificar-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+    <div id="modal-verificar-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
                 <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -512,8 +739,8 @@
     </div>
 
     <!-- Modal Detalhes -->
-    <div id="modal-detalhes" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
             <div id="detalhe-img-container" class="mb-4 hidden">
                 <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#222] flex items-center justify-center">
@@ -525,14 +752,13 @@
                 <span id="detalhe-badge" class="bg-amber-500/10 text-amber-500 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Rank</span>
                 <span id="detalhe-vinculo" class="bg-blue-500/10 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg uppercase">Vínculo</span>
             </div>
-            <h3 id="detalhe-titulo" class="text-xl font-bold mb-1">Nome da Conta</h3>
+            <h3 id="detalhe-titulo" class="text-xl font-bold mb-1 text-white">Nome da Conta</h3>
             <p id="detalhe-preco" class="text-lg font-bold text-emerald-400 mb-3">R$ 0,00</p>
             <div class="bg-[#050505] border border-[#222] rounded-xl px-3 py-2 mb-4 flex items-center justify-between">
                 <span class="text-xs text-gray-400">Vendedor: <strong id="detalhe-vendedor" class="text-white"></strong></span>
                 <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-semibold">Protegido</span>
             </div>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
-
             <div class="space-y-3">
                 <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
                     🛒 Adicionar ao Carrinho
@@ -551,21 +777,20 @@
     </div>
 
     <!-- Modal Checkout -->
-    <div id="modal-checkout" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+    <div id="modal-checkout" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
-
             <div class="space-y-3 mb-6">
-                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-emerald-400 font-bold text-lg">⚡</span>
                         <div><p class="text-sm font-bold text-white">PIX</p><span class="text-[10px] text-emerald-400">Aprovação imediata</span></div>
                     </div>
                     <input type="radio" name="pagamento" value="pix" checked class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('pix')">
                 </label>
-                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)]">
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
                         <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
@@ -573,7 +798,6 @@
                     <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
                 </label>
             </div>
-
             <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#222]">
                 <div class="input-group mb-0">
                     <label>Número do Cartão</label>
@@ -599,7 +823,6 @@
                     </select>
                 </div>
             </div>
-
             <div class="space-y-2">
                 <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Prosseguir com Pagamento
@@ -611,8 +834,8 @@
     </div>
 
     <!-- Modal Pagamento Detalhes -->
-    <div id="modal-pagamento-detalhes" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-pagamento-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
@@ -620,9 +843,7 @@
             </div>
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
-
             <div id="pag-conteudo" class="bg-[#050505] border border-[#222] rounded-xl p-4 mb-4 text-center"></div>
-
             <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
                 Já Paguei • Enviar Comprovante e Gerar Ticket
             </button>
@@ -631,8 +852,8 @@
     </div>
 
     <!-- Modal Ticket / Suporte / Bot -->
-    <div id="modal-ticket" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-4 sm:p-6 relative text-center">
+    <div id="modal-ticket" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
                 <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
                 <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
@@ -640,20 +861,17 @@
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
             <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
-
             <div id="ticket-codigo-destaque" class="bg-[#111111] border-2 border-[#d4ff00] rounded-xl px-3 py-3 mb-4">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">SEU CÓDIGO DE TICKET</p>
                 <p id="ticket-codigo-destaque-valor" class="text-xl font-bold text-[#d4ff00] font-mono break-all">TICK-XXXXX</p>
                 <p class="text-[10px] text-gray-500 mt-1">Guarde este código para rastrear o pedido e falar com o suporte.</p>
             </div>
-
             <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
                 <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Pagamento confirmado - aguardando envio dos dados da conta</span></p>
                 <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
                 <p class="text-gray-400"><strong>Comprador (Gmail):</strong> <span id="ticket-info-gmail" class="text-white"></span></p>
                 <p class="text-gray-400"><strong>WhatsApp:</strong> <span id="ticket-info-wpp" class="text-white"></span></p>
             </div>
-
             <div class="space-y-2">
                 <button type="button" onclick="abrirChatSuporte()" class="btn-primary py-3 text-xs">
                     Abrir Chat com o Bot / Ver Dados da Conta
@@ -663,8 +881,8 @@
     </div>
 
     <!-- Modal Chat Bot / Suporte -->
-    <div id="modal-chat-suporte" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-2xl p-5 sm:p-6 relative flex flex-col h-[500px]">
+    <div id="modal-chat-suporte" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-5 sm:p-6 relative flex flex-col h-[500px]">
             <div class="flex justify-between items-center pb-3 border-b border-[#222]">
                 <div class="flex items-center gap-2.5">
                     <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -689,8 +907,8 @@
     </div>
 
     <!-- Modal Termos e Segurança -->
-    <div id="modal-termos" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-termos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Termos de Serviço e Isenção Legal</h3>
             <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por meio do sistema oficial desta plataforma.</p>
@@ -707,8 +925,8 @@
     </div>
 
     <!-- Modal Anúncio -->
-    <div id="modal-anuncio" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Anunciar Nova Conta</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Vendedor: <strong id="preview-vendedor-nome" class="text-white"></strong></p>
             <div class="space-y-4">
@@ -756,18 +974,64 @@
                 <button id="btn-publicar-anuncio" type="button" onclick="publicarAnuncioFinal()" class="btn-primary py-3 text-sm">
                     Publicar Conta
                 </button>
+                <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
-            <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
     </div>
 
     <!-- Modal Alerta -->
-    <div id="modal-alerta" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[99999] p-4">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-sm rounded-2xl p-6 text-center relative shadow-2xl">
+    <div id="modal-alerta" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
+        <div class="bg-[#121212] border border-[#222] w-full max-w-sm rounded-[20px] p-6 text-center relative shadow-2xl">
             <div id="alerta-icone" class="alerta-icone-ok">✓</div>
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
             <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
             <button type="button" onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal Como Funcionamos -->
+    <div id="modal-como-funcionamos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+        <div class="bg-[#121212] border border-[#262626] rounded-[20px] p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Atuamos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
+                </div>
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
+                </div>
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
+                </div>
+                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
+                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
+                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -790,19 +1054,18 @@
             const alvo = (email || "").toLowerCase();
             return ADMIN_EMAILS.some(adm => adm === alvo);
         }
-        // Configuração injetável: prioridade window.CONFIG (config.js, gerado de variáveis de ambiente) > fallback público
         const APP_CONFIG = window.CONFIG || {};
-        const ADMIN_SENHA_DIRETA = APP_CONFIG.ADMIN_SENHA_DIRETA || ""; // opcional: senha de acesso direto do admin; vazio = login normal pelo cadastro
-        const CODIGO_ADMIN_FIXO = APP_CONFIG.CODIGO_ADMIN_FIXO || ""; // segredo: NUNCA voltar ao código-fonte; sem config, o admin recebe código aleatório por email
+        const ADMIN_SENHA_DIRETA = APP_CONFIG.ADMIN_SENHA_DIRETA || "";
+        const CODIGO_ADMIN_FIXO = APP_CONFIG.CODIGO_ADMIN_FIXO || "";
         const CHAVE_STORAGE_BANIDOS = "marktplace_stand2_banidos";
-        const EMAILJS_SERVICE_ID = APP_CONFIG.EMAILJS_SERVICE_ID || "service_cbzumvf"; // ex: "service_xxxxxxx"
-        const EMAILJS_TEMPLATE_ID = APP_CONFIG.EMAILJS_TEMPLATE_ID || "template_2i8efoy"; // ex: "template_xxxxxxx"
-        const EMAILJS_PUBLIC_KEY = APP_CONFIG.EMAILJS_PUBLIC_KEY || "1vj4x8Vvg6VTECZG7"; // ex: "SuaChavePublicaEmailJS"
+        const EMAILJS_SERVICE_ID = APP_CONFIG.EMAILJS_SERVICE_ID || "service_cbzumvf";
+        const EMAILJS_TEMPLATE_ID = APP_CONFIG.EMAILJS_TEMPLATE_ID || "template_2i8efoy";
+        const EMAILJS_PUBLIC_KEY = APP_CONFIG.EMAILJS_PUBLIC_KEY || "1vj4x8Vvg6VTECZG7";
         let emailjsInicializado = false;
 
         // ===== Alerta WhatsApp do admin (chat de suporte) =====
-        const ADMIN_WHATSAPP = APP_CONFIG.ADMIN_WHATSAPP || "5564984156811"; // numero do admin em formato internacional, ex: "5511999999999"
-        const WHATSAPP_ALERTA_COOLDOWN_MS = 60000; // minimo 60s por assunto igual
+        const ADMIN_WHATSAPP = APP_CONFIG.ADMIN_WHATSAPP || "5564984156811";
+        const WHATSAPP_ALERTA_COOLDOWN_MS = 60000;
         const CHAVE_STORAGE_WPP_COOLDOWN = "marktplace_stand2_wpp_alertas";
 
         const STATUS_PEDIDO = {
@@ -814,7 +1077,6 @@
 
         function montarResumoRapidoTicket({ ticketId, statusKey, itensResumo, compradorEmail, compradorWhats }) {
             const statusTexto = STATUS_PEDIDO[statusKey] || STATUS_PEDIDO.aguardando_pagamento;
-
             return `
 🎫 <strong>Ticket:</strong> ${escapeHtml(ticketId)}
 📌 <strong>Status atual:</strong> ${statusTexto}
@@ -825,10 +1087,9 @@
 1. Pagamento validado fica em custódia com o suporte.
 2. Solicitamos os dados da conta ao vendedor e conferimos o anúncio.
 3. Liberamos os dados aqui no suporte e, após sua confirmação, o repasse ao vendedor é concluído.
-`.trim();
+            `.trim();
         }
 
-        // Avatares táticos (Ghost / Soldado / Operador) desenhados no tema escuro com detalhes em #d4ff00 e branco
         function gerarSvgAvatar(newShape, detalhe) {
             return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#121212'/><rect x='2.5' y='2.5' width='59' height='59' rx='12' fill='none' stroke='#262626' stroke-width='2'/>${newShape}${detalhe}</svg>`)}`;
         }
@@ -905,7 +1166,6 @@
                 const modalBoasVindas = document.getElementById("modal-boas-vindas");
                 if (modalBoasVindas) modalBoasVindas.style.display = "flex";
             }
-
             const storedUser = localStorage.getItem("marktplace_stand2_user");
             if (storedUser) {
                 try {
@@ -919,7 +1179,6 @@
                     localStorage.removeItem("marktplace_stand2_user");
                 }
             }
-
             const storedCart = localStorage.getItem("marktplace_stand2_cart");
             if (storedCart) {
                 try {
@@ -929,7 +1188,6 @@
                 }
                 atualizarBadgeCarrinho();
             }
-
             const storedPedidos = localStorage.getItem("marktplace_stand2_pedidos");
             if (storedPedidos) {
                 try {
@@ -954,13 +1212,11 @@
                     e.stopPropagation();
                     mobileMenu.classList.toggle("hidden");
                 });
-
                 document.addEventListener("click", function(e) {
                     if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
                         mobileMenu.classList.add("hidden");
                     }
                 });
-
                 mobileMenu.querySelectorAll(".menu-link").forEach(link => {
                     link.addEventListener("click", function() {
                         mobileMenu.classList.add("hidden");
@@ -1055,7 +1311,6 @@
             consultarStatusPedido(true);
         }
 
-        // ===== Painel de intermediação / custódia =====
         const ETAPAS_CUSTODIA = [
             "1. Pagamento retido pelo site (custódia segura)",
             "2. Verificação do comprovante de pagamento pelo admin",
@@ -1123,15 +1378,10 @@
             mostrarAlerta("Admin", "Histórico local de tickets limpo.");
         }
 
-        // Exclusão REAL do ticket: remove do Supabase (public.tickets) e do localStorage
         async function excluirTicketSupabase(codigo) {
             if (!window.supabaseClient || !codigo) return false;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("tickets")
-                    .delete()
-                    .eq("codigo", codigo)
-                    .select("codigo");
+                const { data, error } = await window.supabaseClient.from("tickets").delete().eq("codigo", codigo).select("codigo");
                 if (error || !Array.isArray(data)) return false;
                 return true;
             } catch (e) {
@@ -1158,8 +1408,7 @@
             await consultarStatusPedido();
         }
 
-        // ===== Painel do Admin: lista de tickets em aberto (public.tickets) =====
-        const JANELA_SAIDA_FILA_MS = 3600000; // ticket concluído fica 1h visível na fila antes de sair
+        const JANELA_SAIDA_FILA_MS = 3600000;
         let abaTicketsAdmin = "abertos";
         let cronometroSaidaFilaId = null;
 
@@ -1167,7 +1416,6 @@
             if (cronometroSaidaFilaId) { clearInterval(cronometroSaidaFilaId); cronometroSaidaFilaId = null; }
         }
 
-        // Em aberto = etapas 1-4 OU concluído que ainda está dentro da janela de 1h
         function ticketNaJanelaAberta(p) {
             if (!p) return false;
             if (!p.concluido || !ticketConcluido(p)) return true;
@@ -1212,12 +1460,7 @@
         async function ticketsConcluidosSupabase() {
             if (!window.supabaseClient) return null;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("tickets")
-                    .select("*")
-                    .eq("concluido", true)
-                    .order("concluido_em", { ascending: false, nullsFirst: false })
-                    .limit(50);
+                const { data, error } = await window.supabaseClient.from("tickets").select("*").eq("concluido", true).order("concluido_em", { ascending: false, nullsFirst: false }).limit(50);
                 if (error || !Array.isArray(data)) return null;
                 return data.map(converterRegistroSupabase);
             } catch (e) {
@@ -1322,7 +1565,6 @@
             iniciarCronometroSaidaFila();
         }
 
-        // Cronômetro regressivo (1s) dos tickets concluídos que ainda estão na fila "Em Aberto"
         function iniciarCronometroSaidaFila() {
             pararCronometroSaidaFila();
             cronometroSaidaFilaId = setInterval(() => {
@@ -1365,8 +1607,6 @@
                     if (isAdminUsuario()) { await renderListaTicketsAdmin(); return; }
                     resBox.classList.remove("hidden"); resBox.innerHTML = '<span class="text-red-400">Insira um código válido.</span>'; return;
                 }
-
-                // Prioridade absoluta: Supabase (banco real, qualquer dispositivo); localStorage só como fallback offline
                 let pedidoEncontrado = null;
                 if (window.supabaseClient) {
                     if (!silencioso) { resBox.classList.remove("hidden"); resBox.innerHTML = '<p class="text-xs text-gray-400">Consultando o Supabase...</p>'; }
@@ -1379,29 +1619,28 @@
                     pedidoEncontrado = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo || normalizarCodigoTicket(p.pedidoId) === codigo) || null;
                 }
                 resBox.classList.remove("hidden");
-
-            let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
-            if (pedidoEncontrado && isAdminUsuario()) {
-                html += `<p class="text-[11px] text-gray-300 mt-1 pt-1 border-t border-[#222]">Cliente: <span class="font-semibold text-white">${escapeHtml(pedidoEncontrado.nome || pedidoEncontrado.comprador || "—")}</span>${pedidoEncontrado.comprador ? ` · ${escapeHtml(pedidoEncontrado.comprador)}` : ""}${pedidoEncontrado.whatsapp ? ` · ${escapeHtml(pedidoEncontrado.whatsapp)}` : ""}</p><p class="text-[11px]">${estadoPagamentoDoTicket(pedidoEncontrado)}</p>`;
-                const etapaAtual = etapaAtualDoPedido(pedidoEncontrado);
-                const rotulos = ["1. Pagamento retido", "2. Verificar comprovante", "3. Dados do vendedor", "4. Dados enviados", "5. Concluir Pedido"];
-                const botoes = rotulos.map((rotulo, indice) => {
-                    const numero = indice + 1;
-                    const ehEtapa5 = numero === 5;
-                    const ativo = numero === etapaAtual && !(pedidoEncontrado.concluido && !ehEtapa5);
-                    const estilo = ativo
-                        ? (ehEtapa5 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold" : "bg-[var(--accent)] text-black font-bold")
-                        : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#181818] text-gray-300");
-                    return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
-                }).join("");
-                html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">← Voltar para lista em aberto</button></div>`;
-            }
-            if (isAdminUsuario()) {
-                html += pedidoEncontrado && pedidoEncontrado.ticketId
-                    ? `<button type="button" onclick="excluirTicketSelecionado('${escapeHtml(pedidoEncontrado.ticketId)}')" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🗑 Excluir este ticket (Supabase + local)</button><button type="button" onclick="limparTicketsDeTeste()" class="mt-1.5 w-full bg-red-500/5 text-red-400/80 py-1.5 rounded-xl text-[10px] cursor-pointer border border-red-500/20">🧹 Limpar histórico local</button>`
-                    : `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
-            }
-            resBox.innerHTML = html;
+                let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
+                if (pedidoEncontrado && isAdminUsuario()) {
+                    html += `<p class="text-[11px] text-gray-300 mt-1 pt-1 border-t border-[#222]">Cliente: <span class="font-semibold text-white">${escapeHtml(pedidoEncontrado.nome || pedidoEncontrado.comprador || "—")}</span>${pedidoEncontrado.comprador ? ` · ${escapeHtml(pedidoEncontrado.comprador)}` : ""}${pedidoEncontrado.whatsapp ? ` · ${escapeHtml(pedidoEncontrado.whatsapp)}` : ""}</p><p class="text-[11px]">${estadoPagamentoDoTicket(pedidoEncontrado)}</p>`;
+                    const etapaAtual = etapaAtualDoPedido(pedidoEncontrado);
+                    const rotulos = ["1. Pagamento retido", "2. Verificar comprovante", "3. Dados do vendedor", "4. Dados enviados", "5. Concluir Pedido"];
+                    const botoes = rotulos.map((rotulo, indice) => {
+                        const numero = indice + 1;
+                        const ehEtapa5 = numero === 5;
+                        const ativo = numero === etapaAtual && !(pedidoEncontrado.concluido && !ehEtapa5);
+                        const estilo = ativo
+                            ? (ehEtapa5 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold" : "bg-[var(--accent)] text-black font-bold")
+                            : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#181818] text-gray-300");
+                        return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
+                    }).join("");
+                    html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">← Voltar para lista em aberto</button></div>`;
+                }
+                if (isAdminUsuario()) {
+                    html += pedidoEncontrado && pedidoEncontrado.ticketId
+                        ? `<button type="button" onclick="excluirTicketSelecionado('${escapeHtml(pedidoEncontrado.ticketId)}')" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🗑 Excluir este ticket (Supabase + local)</button><button type="button" onclick="limparTicketsDeTeste()" class="mt-1.5 w-full bg-red-500/5 text-red-400/80 py-1.5 rounded-xl text-[10px] cursor-pointer border border-red-500/20">🧹 Limpar histórico local</button>`
+                        : `<button type="button" onclick="limparTicketsDeTeste()" class="mt-2 w-full bg-red-500/10 text-red-400 py-2 rounded-xl text-xs font-bold cursor-pointer border border-red-500/30">🧹 Limpar Tickets de Teste / Histórico Local</button>`;
+                }
+                resBox.innerHTML = html;
             } finally {
                 rastreioBuscaEmAndamento = false;
             }
@@ -1594,7 +1833,6 @@
             mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
         }
 
-        // ===== Contas persistentes no Supabase (public.usuarios) com fallback localStorage =====
         async function buscarUsuarioSupabase(identificador) {
             if (!window.supabaseClient || !identificador) return null;
             try {
@@ -1625,10 +1863,7 @@
         async function verificarNomeEmUso(nome, ignorarEmail) {
             if (!window.supabaseClient || !nome) return false;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("usuarios")
-                    .select("email")
-                    .ilike("nome", nome);
+                const { data, error } = await window.supabaseClient.from("usuarios").select("email").ilike("nome", nome);
                 if (error || !Array.isArray(data)) return false;
                 return data.some(r => normalizarIdentificador(r.email) !== normalizarIdentificador(ignorarEmail));
             } catch (e) {
@@ -1639,11 +1874,7 @@
         async function atualizarUsuarioSupabase(email, campos) {
             if (!window.supabaseClient || !email || !campos) return false;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("usuarios")
-                    .update(campos)
-                    .eq("email", normalizarIdentificador(email))
-                    .select("email");
+                const { data, error } = await window.supabaseClient.from("usuarios").update(campos).eq("email", normalizarIdentificador(email)).select("email");
                 return !error && Array.isArray(data) && data.length > 0;
             } catch (e) {
                 return false;
@@ -1659,7 +1890,6 @@
             } catch (e) {}
         }
 
-        // ===== Esqueceu a senha (código exibido na tela, sem EmailJS) =====
         let recSenhaCodigo = null;
         let recSenhaExpiraEm = 0;
         let recSenhaEmailConta = null;
@@ -1715,7 +1945,6 @@
             }
         }
 
-        // ===== Modal Configurações =====
         function abrirConfiguracoes() {
             document.getElementById("mobile-menu").classList.add("hidden");
             if (!currentUser) { mostrarAlerta("Atenção", "Entre na sua conta para abrir as Configurações.", "aviso"); openModal(); return; }
@@ -1853,15 +2082,9 @@
         async function inicializarAnuncios() {
             if (window.supabaseClient) {
                 try {
-                    const { data, error } = await window.supabaseClient
-                        .from("contas")
-                        .select("*")
-                        .order("id", { ascending: false });
-
+                    const { data, error } = await window.supabaseClient.from("contas").select("*").order("id", { ascending: false });
                     if (error) {
-                        // Supabase falhou: segue para o fallback local (localStorage/demo)
                     } else if (Array.isArray(data)) {
-                        // Supabase acessível: o catálogo espelha o banco, mesmo que vazio
                         anunciosEmMemoria = data.map(normalizarAnuncio);
                         localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
                         carregarCatalogo();
@@ -1871,7 +2094,6 @@
                     console.error("❌ Exceção ao consultar Supabase:", e);
                 }
             }
-
             const salvos = localStorage.getItem("marktplace_stand2_anuncios");
             if (salvos) {
                 try {
@@ -1881,10 +2103,8 @@
                         carregarCatalogo();
                         return;
                     }
-                } catch (e) {
-                }
+                } catch (e) {}
             }
-
             anunciosEmMemoria = [normalizarAnuncio({
                 id: "default_1",
                 titulo: "Conta com M9 Bayonet & AKR",
@@ -1920,24 +2140,23 @@
             if (!grid) return;
             grid.innerHTML = "";
             const adminVendo = isAdminUsuario();
-            anunciosEmMemoria.forEach(anuncio => {
+            anunciosEmMemoria.forEach((anuncio, index) => {
                 const item = normalizarAnuncio(anuncio);
                 const vendedorCardBanido = usuarioEstaBanido(sanitizarNomePublico(item.vendedor), "");
                 if (vendedorCardBanido && !adminVendo) return;
                 const card = document.createElement("div");
-                card.className = "bg-[#121212] border border-[#222] rounded-2xl p-5 flex flex-col justify-between hover:border-[#444] transition shadow-xl relative";
+                card.className = "bg-[#121212] border border-[#222] rounded-[20px] p-5 flex flex-col justify-between hover:border-[#3a3a3a] transition shadow-xl relative card-marketplace animate-fade-in-up fade-stagger";
+                card.style.animationDelay = `${0.08 + index * 0.06}s`;
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
-                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-36 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-40 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
                 let barraSuperior = "";
                 if (ehDono) {
                     barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>`;
                 } else if (adminVendo) {
                     barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
                 }
-
                 const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
-
-                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="${corJoinha}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
                 grid.appendChild(card);
             });
         }
@@ -1945,31 +2164,21 @@
         async function curtirAnuncio(id) {
             const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
             if (!anuncio) return;
-
             const likesAtual = Number(anuncio.likes || 0);
             const proximoCurtido = !Boolean(anuncio.curtidoPormim);
             const proximoLikes = proximoCurtido ? likesAtual + 1 : Math.max(0, likesAtual - 1);
-
             anuncio.curtidoPormim = proximoCurtido;
             anuncio.likes = proximoLikes;
-
             localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
-
             if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
                 try {
-                    const { error } = await window.supabaseClient
-                        .from("contas")
-                        .update({
-                            curtidoPormim: proximoCurtido,
-                            likes: proximoLikes
-                        })
-                        .eq("id", Number(anuncio.id));
-
-                    if (error) {
-                    }
-                } catch (e) {
-                }
+                    const { error } = await window.supabaseClient.from("contas").update({
+                        curtidoPormim: proximoCurtido,
+                        likes: proximoLikes
+                    }).eq("id", Number(anuncio.id));
+                    if (error) {}
+                } catch (e) {}
             }
         }
 
@@ -2001,7 +2210,6 @@
             const container = document.getElementById("carrinho-itens");
             const totalEl = document.getElementById("carrinho-total");
             container.innerHTML = "";
-
             if (carrinhoItens.length === 0) {
                 container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Seu carrinho está vazio.</p>';
                 totalEl.textContent = "R$ 0,00";
@@ -2010,7 +2218,6 @@
                 carrinhoItens.forEach((item, index) => {
                     let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                     totalSoma += numPreco;
-
                     const div = document.createElement("div");
                     div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
                     div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
@@ -2079,10 +2286,7 @@
         }
 
         const catalogoStandoff2 = {
-            rifles: [
-                "M4A4", "M4A1-S", "AK-47", "AK-74U", "AWP", "SG 553", "G3SG1", "SCAR-20",
-                "MAG-7", "NOVA", "XM1014"
-            ],
+            rifles: ["M4A4", "M4A1-S", "AK-47", "AK-74U", "AWP", "SG 553", "G3SG1", "SCAR-20", "MAG-7", "NOVA", "XM1014"],
             skins: {
                 "M9 Bayonet": ["Treasure Hunter", "Lore", "Fade", "Doppler", "Chrome"],
                 "Gloves": ["Carbon", "Sport", "Driver", "Motorsports", "Crystalline"],
@@ -2098,18 +2302,15 @@
         };
 
         const ARMAS_STANDOFF2_NOMES = [
-    "M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe",
-    "AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60",
-    "FAMAS", "VAL", "Akimbo Uzi", "F/S", "Berettas", "Gloves",
-    "USP-S", "USP", "G22", "Glock-18", "Desert Eagle", "Deagle", "P350", "P250", "Five-SeveN",
-    "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
-];
+            "M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe",
+            "AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60",
+            "FAMAS", "VAL", "Akimbo Uzi", "F/S", "Berettas", "Gloves",
+            "USP-S", "USP", "G22", "Glock-18", "Desert Eagle", "Deagle", "P350", "P250", "Five-SeveN",
+            "TEC-9", "MAC-10", "MP7", "UMP45", "P90", "SM1014", "FABM", "SPAS"
+        ];
 
         function canonizarParaOCR(valor) {
-            return (valor || "").toLowerCase().replace(/[^a-z0-9]/g, "")
-                .replace(/0/g, "o")
-                .replace(/[1i]/g, "l")
-                .replace(/5/g, "s");
+            return (valor || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/0/g, "o").replace(/[1i]/g, "l").replace(/5/g, "s");
         }
 
         const ARMAS_STANDOFF2_CANON = ARMAS_STANDOFF2_NOMES.map(nome => ({ nome: nome, canon: canonizarParaOCR(nome) }));
@@ -2124,7 +2325,6 @@
                 if (menor[i] === maior[j]) { i++; j++; continue; }
                 difs++;
                 if (difs > 1) return false;
-                // Transposicao adjacente (OCR troca letras vizinhas): conta como 1 diferenca
                 if (menor[i] === maior[j + 1] && menor[i + 1] === maior[j]) { i += 2; j += 2; continue; }
                 if (menor.length === maior.length) { i++; j++; } else { j++; }
             }
@@ -2149,7 +2349,6 @@
             return encontradas;
         }
 
-        // Categorias para agrupar os itens identificados na descricao do anuncio
         const CATEGORIAS_ITENS_STANDOFF2 = [
             ["Facas", ["M9 Bayonet", "Butterfly", "Karambit", "Kunai", "Tanto", "Daggers", "Stiletto", "Flip Knife", "Fang", "Jaws", "Scythe"]],
             ["Rifles", ["AKR12", "AKR", "AK-47", "AK-74U", "M16", "M4A4", "M4A1", "M4", "AWM", "AWP", "M40", "M110", "Mallard", "M60", "FAMAS", "VAL"]],
@@ -2230,28 +2429,20 @@
                             if (!armas.includes(a)) armas.push(a);
                         }
                         if (armas.length >= 6) break;
-                    } catch (e) {
-                        // Variante falhou; tenta a proxima
-                    }
+                    } catch (e) {}
                 }
-            } catch (e) {
-                // OCR falhou para esta foto; segue sem armadilha
-            }
+            } catch (e) {}
             return armas;
         }
 
         async function processarFotosInventario(input) {
             if (!input.files || input.files.length === 0) return;
             fotosNovasBase64 = [];
-
             const totalFotos = Math.min(input.files.length, 7);
             for (let i = 0; i < totalFotos; i++) {
                 const comp = await comprimirImagem(input.files[i]);
                 if (comp) fotosNovasBase64.push(comp);
             }
-
-            // OCR roda a partir dos arquivos originais (input.files);
-            // fotosNovasBase64 permanece comprimida em cor natural para o Supabase
             const campoDesc = document.getElementById("conta-desc");
             const contagemArmas = {};
             if (campoDesc) campoDesc.value = "Lendo nomes das armas nas imagens...";
@@ -2269,7 +2460,6 @@
                 }
                 await Promise.all(tarefasOCR);
             } finally {
-                // Remove a mensagem de carregamento e preenche com os itens agrupados por categoria
                 if (campoDesc) {
                     campoDesc.value = montarDescricaoOrganizada(contagemArmas);
                 }
@@ -2335,11 +2525,7 @@
 
             if (window.supabaseClient) {
                 try {
-                    const { data: inseridos, error } = await window.supabaseClient
-                        .from("contas")
-                        .insert([prepararPayloadSupabase(anuncioParaSalvar, false)])
-                        .select("*");
-
+                    const { data: inseridos, error } = await window.supabaseClient.from("contas").insert([prepararPayloadSupabase(anuncioParaSalvar, false)]).select("*");
                     if (error) {
                         console.error("Erro ao salvar no Supabase:", error);
                         mostrarAlerta("Erro ao Salvar no Banco", `O Supabase recusou o anúncio (${error.code || "erro"}): ${error.message}`, "aviso");
@@ -2421,9 +2607,7 @@
         async function sincronizarBanidosSupabase() {
             if (!window.supabaseClient) return;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("usuarios_banidos")
-                    .select("nome,email");
+                const { data, error } = await window.supabaseClient.from("usuarios_banidos").select("nome,email");
                 if (!error && Array.isArray(data)) {
                     const lista = carregarBanidos();
                     let mudou = false;
@@ -2438,9 +2622,7 @@
                         carregarCatalogo();
                     }
                 }
-            } catch (e) {
-                // Sem tabela usuarios_banidos no Supabase: segue com localStorage
-            }
+            } catch (e) {}
         }
 
         async function excluirAnuncioAdmin(id) {
@@ -2473,16 +2655,13 @@
             if (window.supabaseClient) {
                 try {
                     await window.supabaseClient.from("usuarios_banidos").insert([{ nome, email: resolverEmailDoVendedor(nome) }]);
-                } catch (e) {
-                    // Tabela usuarios_banidos ausente: segue com localStorage
-                }
+                } catch (e) {}
             }
-            // Remove todos os anuncios do vendedor do catalogo e do Supabase sem exclusao manual
             const idsDoVendedor = anunciosEmMemoria
                 .filter(a => sanitizarNomePublico(a.vendedor) === nome)
                 .map(a => String(a.id));
             for (const idAnuncio of idsDoVendedor) {
-                try { await removerAnuncio(idAnuncio); } catch (e) { /* segue com os demais */ }
+                try { await removerAnuncio(idAnuncio); } catch (e) {}
             }
             if (anuncioSelecionadoAtual && idsDoVendedor.includes(String(anuncioSelecionadoAtual.id))) {
                 closeDetalhes();
@@ -2501,9 +2680,7 @@
             if (window.supabaseClient) {
                 try {
                     await window.supabaseClient.from("usuarios_banidos").delete().eq("nome", nome);
-                } catch (e) {
-                    // Tabela usuarios_banidos ausente: segue com localStorage
-                }
+                } catch (e) {}
             }
             carregarCatalogo();
             mostrarAlerta("Admin", `Usuário "${nome}" desbanido.`);
@@ -2516,7 +2693,7 @@
 
         async function openPainelBanidos() {
             if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode abrir este painel.", "aviso"); return; }
-            try { await sincronizarBanidosSupabase(); } catch (e) { /* segue com o localStorage */ }
+            try { await sincronizarBanidosSupabase(); } catch (e) {}
             renderizarListaBanidos();
             setModalVisivel("modal-banidos", true);
         }
@@ -2546,9 +2723,7 @@
             if (window.supabaseClient) {
                 try {
                     await window.supabaseClient.from("usuarios_banidos").delete().eq("nome", nomeLimpo);
-                } catch (e) {
-                    // Tabela usuarios_banidos ausente: segue com localStorage
-                }
+                } catch (e) {}
             }
             renderizarListaBanidos();
             carregarCatalogo();
@@ -2573,19 +2748,12 @@
             anunciosEmMemoria = anunciosEmMemoria.filter(a => String(a.id) !== String(id));
             localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
-
             const idBanco = alvo && ehIdNumerico(alvo.id) ? Number(alvo.id) : (ehIdNumerico(id) ? Number(id) : null);
-
             if (window.supabaseClient && idBanco !== null) {
                 try {
-                    const { error } = await window.supabaseClient
-                        .from("contas")
-                        .delete()
-                        .eq("id", idBanco);
-                    if (error) {
-                    }
-                } catch (e) {
-                }
+                    const { error } = await window.supabaseClient.from("contas").delete().eq("id", idBanco);
+                    if (error) {}
+                } catch (e) {}
             }
         }
 
@@ -2593,19 +2761,16 @@
             const encontrado = anunciosEmMemoria.find(a => String(a.id) === String(id));
             if (!encontrado) return;
             anuncioSelecionadoAtual = normalizarAnuncio(encontrado);
-
             document.getElementById("detalhe-titulo").textContent = anuncioSelecionadoAtual.titulo;
             document.getElementById("detalhe-preco").textContent = anuncioSelecionadoAtual.preco;
             document.getElementById("detalhe-badge").textContent = anuncioSelecionadoAtual.rank;
             document.getElementById("detalhe-vinculo").textContent = anuncioSelecionadoAtual.vinculo;
             document.getElementById("detalhe-desc").textContent = anuncioSelecionadoAtual.descricao ?? anuncioSelecionadoAtual.desc;
             document.getElementById("detalhe-vendedor").textContent = sanitizarNomePublico(anuncioSelecionadoAtual.vendedor);
-
             const imgContainer = document.getElementById("detalhe-img-container");
             const imgElement = document.getElementById("detalhe-imagem");
             const minis = document.getElementById("detalhe-miniaturas");
             minis.innerHTML = "";
-
             if (anuncioSelecionadoAtual.fotos && anuncioSelecionadoAtual.fotos.length > 0) {
                 imgElement.src = anuncioSelecionadoAtual.fotos[0];
                 imgContainer.classList.remove("hidden");
@@ -2644,7 +2809,6 @@
             let totalCarrinhoStr = "R$ 0,00";
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
-
             let somaTotal = 0;
             carrinhoItens.forEach(item => {
                 let p = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
@@ -2654,12 +2818,10 @@
                 somaTotal = parseFloat(anuncioSelecionadoAtual.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
             }
             totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
-
             const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
             document.getElementById("pedido-codigo").textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
             document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
             document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
-
             const conteudoPag = document.getElementById("pag-conteudo");
             if (metodoEscolhido === "pix") {
                 const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
@@ -2680,23 +2842,18 @@
             let metodoValor = "pix";
             metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
             const metodoPagamento = metodoValor === "cartao" ? "Cartão de Crédito" : "PIX";
-
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
             const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
             if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
-
             let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
             let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
-
             document.getElementById("ticket-info-gmail").textContent = gmailUser;
             document.getElementById("ticket-info-wpp").textContent = wppUser;
-
             let nomesItens = carrinhoItens.map(i => i.titulo) || [];
             const listaItensFormatada = Array.isArray(nomesItens)
                 ? nomesItens.filter(Boolean).join(", ")
                 : String(nomesItens || "").trim();
             let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
-
             pedidosAtivos.unshift({
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
@@ -2707,8 +2864,6 @@
                 etapasCustodia: [ETAPAS_CUSTODIA[0]]
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
-
-            // Persiste o ticket no Supabase (public.tickets) para consulta em qualquer dispositivo
             await salvarTicketSupabase({
                 codigo: ticketIdGerado,
                 comprador_email: String(gmailUser || "").toLowerCase() === "cliente@gmail.com" ? "" : String(gmailUser || "").toLowerCase(),
@@ -2721,7 +2876,6 @@
                 status_texto: "Pagamento retido pelo site (custódia segura)",
                 concluido: false
             });
-
             const statusKey = "aguardando_conta_vendedor";
             const resumoRapido = montarResumoRapidoTicket({
                 ticketId: ticketIdGerado,
@@ -2730,13 +2884,10 @@
                 compradorEmail: gmailUser,
                 compradorWhats: wppUser
             });
-
             const chatBox = document.getElementById("chat-mensagens");
             chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-
             document.getElementById("modal-ticket").style.display = "flex";
-
             carrinhoItens = [];
             localStorage.removeItem("marktplace_stand2_cart");
             atualizarBadgeCarrinho();
@@ -2747,7 +2898,6 @@
         function abrirChatSuporte() {
             closeTicketModal();
             document.getElementById("modal-chat-suporte").style.display = "flex";
-            // Exibe o menu de opcoes logo apos a saudacao quando ainda nao ha respostas no chat
             const chatMenu = document.getElementById("chat-mensagens");
             if (chatMenu && !chatMenu.querySelector("[data-menu-bot]")) {
                 chatMenu.innerHTML += construirMenuBot().replace('<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"', '<div data-menu-bot class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"');
@@ -2811,7 +2961,6 @@
             return true;
         }
 
-        // ===== Menu de opcoes do bot do chat =====
         const OPCOES_MENU_BOT = [
             { numero: 1, rotulo: "Rastrear pedido / Ticket", resposta: "Digite o codigo do seu ticket (ex: TICK-12345) aqui no chat ou use o menu 'Rastrear Pedido' para consultar o status e as etapas de custodia." },
             { numero: 2, rotulo: "Intermediacao / custodia", resposta: "A custodia funciona assim: o pagamento fica retido pelo site e liberado ao vendedor somente apos a entrega confirmada da conta. Sem chat direto entre comprador e vendedor." },
@@ -2833,10 +2982,8 @@
             const textoUsuario = `${numero}. ${rotulo}`;
             chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
             chat.scrollTop = chat.scrollHeight;
-
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(rotulo) : null;
             if (classificacao) { setTimeout(() => dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario), 200); }
-
             setTimeout(async () => {
                 let respostaFinal;
                 if (opcao && opcao.numero === 1) {
@@ -2849,7 +2996,6 @@
             }, 600);
         }
 
-        // ===== Tickets no Supabase (public.tickets) com fallback localStorage =====
         function normalizarCodigoTicket(texto) {
             return String(texto || "").toUpperCase().replace(/[^A-Z0-9-]/g, "");
         }
@@ -2885,7 +3031,6 @@
             };
         }
 
-        // Substitui o registro local correspondente (sem duplicar) e grava o localStorage sincronizado
         function sincronizarPedidoLocal(pedido) {
             if (!pedido || !pedido.ticketId) return pedido;
             const codigo = normalizarCodigoTicket(pedido.ticketId);
@@ -2899,11 +3044,7 @@
         async function buscarTicketSupabase(codigo) {
             if (!window.supabaseClient || !codigo) return null;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("tickets")
-                    .select("*")
-                    .eq("codigo", codigo)
-                    .maybeSingle();
+                const { data, error } = await window.supabaseClient.from("tickets").select("*").eq("codigo", codigo).maybeSingle();
                 if (error || !data) return null;
                 return data;
             } catch (e) {
@@ -2914,11 +3055,7 @@
         async function ticketsAtivosSupabase(email) {
             if (!window.supabaseClient || !email) return null;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("tickets")
-                    .select("*")
-                    .eq("comprador_email", String(email).toLowerCase())
-                    .eq("concluido", false);
+                const { data, error } = await window.supabaseClient.from("tickets").select("*").eq("comprador_email", String(email).toLowerCase()).eq("concluido", false);
                 if (error || !Array.isArray(data)) return null;
                 return data.map(converterRegistroSupabase);
             } catch (e) {
@@ -2929,11 +3066,7 @@
         async function atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, concluido) {
             if (!window.supabaseClient || !codigo) return false;
             try {
-                const { data, error } = await window.supabaseClient
-                    .from("tickets")
-                    .update({ etapa: etapa, status_texto: statusTexto, concluido: concluido, concluido_em: concluido ? new Date().toISOString() : null })
-                    .eq("codigo", codigo)
-                    .select("codigo");
+                const { data, error } = await window.supabaseClient.from("tickets").update({ etapa: etapa, status_texto: statusTexto, concluido: concluido, concluido_em: concluido ? new Date().toISOString() : null }).eq("codigo", codigo).select("codigo");
                 if (error || !Array.isArray(data) || data.length === 0) return false;
                 return true;
             } catch (e) {
@@ -2941,7 +3074,6 @@
             }
         }
 
-        // Status concluido/encerrado sai da fila ativa do bot (segue consultavel pelo codigo exato)
         function ticketConcluido(pedido) {
             const status = String((pedido && pedido.status) || "").toLowerCase();
             return /(conclu|entregue|encerrad)/.test(status);
@@ -2956,7 +3088,6 @@
             return (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).filter(p => p && p.ticketId && !ticketConcluido(p) && ticketPertenceAoUsuario(p));
         }
 
-        // Resposta inteligente para "1. Rastrear pedido / Ticket": Supabase primeiro, localStorage apenas como fallback offline
         async function respostaOpcaoRastrear() {
             let lista;
             const remotos = (currentUser && currentUser.email && window.supabaseClient)
@@ -2968,7 +3099,7 @@
                 lista = ticketsAtivosDoUsuario();
             }
             if (!lista.length) {
-                return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consulta-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
+                return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consultá-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
             }
             const linhas = lista.slice(0, 8).map(p => `• ${String(p.ticketId).toUpperCase()} — ${p.status || "em custódia"}`).join("\n");
             return `Você tem ${lista.length} ticket(s) ativo(s):\n${linhas}\n\nPara acompanhar: menu 'Rastrear Pedido' e digite o código TICK-, ou fale com o Suporte oficial pelo WhatsApp. Tickets concluídos saem desta lista e ficam consultáveis pelo código exato.`;
@@ -2994,10 +3125,8 @@
             chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
-
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(textoUsuario) : null;
             const disparouWhatsApp = classificacao ? dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario) : false;
-
             const respostaPalavra = respostaBotPorPalavraChave(textoUsuario);
             setTimeout(async () => {
                 if (disparouWhatsApp) return;
@@ -3015,12 +3144,8 @@
         }
 
         function openModalComoFunciona() { setModalVisivel("modal-como-funcionamos", true); }
+        function closeModalComoFunciona() { setModalVisivel("modal-como-funcionamos", false); }
 
-        function closeModalComoFunciona() {
-            setModalVisivel("modal-como-funcionamos", false);
-        }
-
-        // Header scroll hide/show (apenas transform/opacity - para todas as telas)
         (function() {
             const header = document.querySelector("header.sticky");
             if (!header) return;
@@ -3028,11 +3153,9 @@
             const hideThreshold = 80;
             const showMinDelta = 20;
             const showNearTop = 120;
-
             const updateHeader = () => {
                 const currentScrollY = window.scrollY;
                 const scrollDelta = lastScrollY - currentScrollY;
-
                 if (currentScrollY > hideThreshold && currentScrollY > lastScrollY) {
                     header.style.transform = "translateY(-100%)";
                     header.style.opacity = "0";
@@ -3040,10 +3163,8 @@
                     header.style.transform = "translateY(0)";
                     header.style.opacity = "1";
                 }
-
                 lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
             };
-
             let ticking = false;
             window.addEventListener("scroll", () => {
                 if (!ticking) {
@@ -3054,60 +3175,8 @@
                     ticking = true;
                 }
             }, { passive: true });
-
             updateHeader();
         })();
     </script>
-
-    <!-- Modal Como Funcionamos -->
-    <div id="modal-como-funcionamos" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[99999] p-3 sm:p-6">
-        <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
-            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
-            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Atuamos</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
-                    <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
-                </div>
-
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
-                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
-                </div>
-
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
-                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
-                </div>
-
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
-                    <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
