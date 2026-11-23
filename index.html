@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="config.js"></script>
     <style>
         :root {
             --bg: #080808;
@@ -145,11 +146,13 @@
     </style>
     <script>
         (function initSupabaseSeguro() {
-            const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.content || "https://dumvvprvafzmzqdrenyn.supabase.co";
-            const supabaseKey = document.querySelector('meta[name="supabase-key"]')?.content || "sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ";
+            // Prioridade: config.js gerado de variáveis de ambiente (scripts/gerar-config.mjs) > meta tags do deploy > vazio
+            const cfg = window.CONFIG || {};
+            const supabaseUrl = cfg.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || null;
+            const supabaseKey = cfg.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || null;
             window.supabaseClient = null;
             try {
-                if (window.supabase && typeof window.supabase.createClient === "function") {
+                if (supabaseUrl && supabaseKey && window.supabase && typeof window.supabase.createClient === "function") {
                     window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
                 } else {
                 }
@@ -787,16 +790,18 @@
             const alvo = (email || "").toLowerCase();
             return ADMIN_EMAILS.some(adm => adm === alvo);
         }
-        const ADMIN_SENHA_DIRETA = ""; // opcional: senha de acesso direto do admin; vazio = login normal pelo cadastro
-        const CODIGO_ADMIN_FIXO = "111111";
+        // Configuração injetável: prioridade window.CONFIG (config.js, gerado de variáveis de ambiente) > fallback público
+        const APP_CONFIG = window.CONFIG || {};
+        const ADMIN_SENHA_DIRETA = APP_CONFIG.ADMIN_SENHA_DIRETA || ""; // opcional: senha de acesso direto do admin; vazio = login normal pelo cadastro
+        const CODIGO_ADMIN_FIXO = APP_CONFIG.CODIGO_ADMIN_FIXO || ""; // segredo: NUNCA voltar ao código-fonte; sem config, o admin recebe código aleatório por email
         const CHAVE_STORAGE_BANIDOS = "marktplace_stand2_banidos";
-        const EMAILJS_SERVICE_ID = "service_cbzumvf"; // ex: "service_xxxxxxx"
-        const EMAILJS_TEMPLATE_ID = "template_2i8efoy"; // ex: "template_xxxxxxx"
-        const EMAILJS_PUBLIC_KEY = "1vj4x8Vvg6VTECZG7"; // ex: "SuaChavePublicaEmailJS"
+        const EMAILJS_SERVICE_ID = APP_CONFIG.EMAILJS_SERVICE_ID || "service_cbzumvf"; // ex: "service_xxxxxxx"
+        const EMAILJS_TEMPLATE_ID = APP_CONFIG.EMAILJS_TEMPLATE_ID || "template_2i8efoy"; // ex: "template_xxxxxxx"
+        const EMAILJS_PUBLIC_KEY = APP_CONFIG.EMAILJS_PUBLIC_KEY || "1vj4x8Vvg6VTECZG7"; // ex: "SuaChavePublicaEmailJS"
         let emailjsInicializado = false;
 
         // ===== Alerta WhatsApp do admin (chat de suporte) =====
-        const ADMIN_WHATSAPP = "5564984156811"; // numero do admin em formato internacional, ex: "5511999999999"
+        const ADMIN_WHATSAPP = APP_CONFIG.ADMIN_WHATSAPP || "5564984156811"; // numero do admin em formato internacional, ex: "5511999999999"
         const WHATSAPP_ALERTA_COOLDOWN_MS = 60000; // minimo 60s por assunto igual
         const CHAVE_STORAGE_WPP_COOLDOWN = "marktplace_stand2_wpp_alertas";
 
@@ -1419,7 +1424,7 @@
         function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
         function gerarCodigoVerificacao(email) {
-            if (ehEmailAdmin(email)) return CODIGO_ADMIN_FIXO;
+            if (ehEmailAdmin(email) && CODIGO_ADMIN_FIXO) return CODIGO_ADMIN_FIXO;
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
