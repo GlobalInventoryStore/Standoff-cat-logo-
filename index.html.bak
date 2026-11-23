@@ -335,38 +335,72 @@
         /* Utilitários de texto */
         .text-track-wide { letter-spacing: 0.15em; }
         .text-track-wider { letter-spacing: 0.25em; }
-        /* Atmosfera Standoff 2: brilhos e particulas ambientais discretos (nao interativos) */
-        .bg-atmosfera-fundo, #bg-atmosfera {
-            position: fixed;
-            z-index: -1;
-            pointer-events: none;
+        /* Banner do Esquadrão: foto "viva" — câmera de selfie presa na parede, feita só com CSS (leve) */
+        .squad-banner {
+            position: relative;
+            max-width: 640px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #0b0907;
+            box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55), 0 0 26px rgba(245, 158, 11, 0.12);
+            aspect-ratio: 4 / 3;
         }
 
-        .bg-atmosfera-fundo {
-            border-radius: 9999px;
+        .squad-foto {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            display: block;
+            animation: squad-ken-burns 10s ease-in-out infinite alternate;
             will-change: transform;
         }
 
-        #bg-atmosfera {
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+        @keyframes squad-ken-burns {
+            from { transform: scale(1.03) translate(0, 0) rotate(0deg); }
+            50%  { transform: scale(1.11) translate(1.5%, -2%) rotate(0.4deg); }
+            to   { transform: scale(1.05) translate(-1.5%, -0.5%) rotate(-0.3deg); }
         }
 
-        @keyframes atmosfera-deriva-1 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(4vw, 4vh); }
+        .squad-selo {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: #fff;
+            background: rgba(11, 9, 7, 0.78);
+            border: 1px solid rgba(245, 158, 11, 0.55);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            animation: squad-selo-pulso 2.6s ease-in-out infinite;
         }
 
-        @keyframes atmosfera-deriva-2 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-5vw, -3vh); }
+        @keyframes squad-selo-pulso {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
+            50% { box-shadow: 0 0 14px 3px rgba(245, 158, 11, 0.30); }
+        }
+
+        .squad-cta {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0b0907;
+            background: var(--accent);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-decoration: none;
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .bg-atmosfera-fundo { animation: none !important; }
-            #bg-atmosfera { display: none; }
+            .squad-foto, .squad-selo { animation: none !important; }
         }
     </style>
     <script>
@@ -414,11 +448,6 @@
     </script>
 </head>
 <body class="antialiased">
-
-    <!-- Atmosfera Standoff 2: brilhos ambientais discretos (fundos que derivam lentamente) -->
-    <div class="bg-atmosfera-fundo" style="left:-18vw;top:-22vw;width:56vw;height:56vw;background:radial-gradient(closest-side, rgba(245,158,11,0.07), transparent 70%);animation:atmosfera-deriva-1 26s ease-in-out infinite;"></div>
-    <div class="bg-atmosfera-fundo" style="right:-22vw;bottom:-26vw;width:60vw;height:60vw;background:radial-gradient(closest-side, rgba(191,90,26,0.06), transparent 70%);animation:atmosfera-deriva-2 34s ease-in-out infinite;"></div>
-    <canvas id="bg-atmosfera" aria-hidden="true"></canvas>
 
     <!-- Aviso de Alerta de Golpe (Compacto) -->
     <div class="bg-[#16130e] border-b border-amber-500/20 text-amber-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
@@ -502,6 +531,15 @@
                 <p class="text-[var(--muted)] text-sm md:text-base max-w-[600px] mx-auto leading-relaxed">
                     Catálogo de contas com intermediação oficial. Pagamento em custódia, verificação de inventário e entrega com ticket de rastreio. Sem contato direto entre comprador e vendedor.
                 </p>
+            </div>
+        </section>
+
+        <!-- Banner do Esquadrão: foto animada (ameaça carismática tomando self) -->
+        <section class="mb-12 animate-fade-in-up" style="animation-delay:0.05s;" aria-label="O esquadrão do MARKTPLACE stand2">
+            <div class="squad-banner">
+                <img src="assets/squad-standoff.jpeg" alt="Três operadores do squad MARKTPLACE stand2 tomando uma selfie à noite, com a cidade iluminada ao fundo" class="squad-foto" width="1086" height="1447" loading="lazy" decoding="async">
+                <span class="squad-selo">👋 SQUAD MARKTPLACE stand2</span>
+                <a href="#secao-contas" class="squad-cta">Ver contas →</a>
             </div>
         </section>
 
@@ -3251,85 +3289,5 @@
         })();
     </script>
 
-    <script>
-    // Atmosfera Standoff 2: particulas ambar sutis subindo ao fundo.
-    // Leve: poucas particulas, canvas fixo atras do conteudo, pausa quando a aba esta oculta.
-    (function () {
-        var canvas = document.getElementById("bg-atmosfera");
-        if (!canvas) return;
-        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            canvas.style.display = "none";
-            return;
-        }
-        var ctx = canvas.getContext("2d", { alpha: true });
-        if (!ctx) { canvas.style.display = "none"; return; }
-        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        var particulas = [];
-        var frameId = null;
-        var pausado = document.hidden;
-
-        function criarParticula(diminuir) {
-            var raio = (0.6 + Math.random() * 1.9) * dpr;
-            return {
-                x: Math.random() * canvas.width,
-                y: diminuir ? Math.random() * canvas.height : canvas.height + raio * 4,
-                raio: raio,
-                vy: (0.05 + Math.random() * 0.2) * dpr,
-                vx: (Math.random() - 0.5) * 0.05 * dpr,
-                alpha: 0.05 + Math.random() * 0.2,
-                fase: Math.random() * Math.PI * 2,
-                pulsacao: 0.002 + Math.random() * 0.004
-            };
-        }
-
-        function redimensionar() {
-            canvas.width = Math.floor(window.innerWidth * dpr);
-            canvas.height = Math.floor(window.innerHeight * dpr);
-            canvas.style.width = window.innerWidth + "px";
-            canvas.style.height = window.innerHeight + "px";
-            var alvo = Math.min(
-                Math.max(Math.round((window.innerWidth * window.innerHeight) / 42000), 8),
-                window.innerWidth < 640 ? 20 : 48
-            );
-            while (particulas.length < alvo) particulas.push(criarParticula(true));
-            if (particulas.length > alvo) particulas.length = alvo;
-        }
-
-        function desenhar() {
-            if (pausado) { frameId = null; return; }
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (var i = 0; i < particulas.length; i++) {
-                var p = particulas[i];
-                p.y -= p.vy;
-                p.x += p.vx;
-                p.fase += p.pulsacao;
-                if (p.y < -p.raio * 4 || p.x < -20 * dpr || p.x > canvas.width + 20 * dpr) {
-                    particulas[i] = criarParticula(false);
-                    continue;
-                }
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(245, 158, 11, " + (p.alpha * (0.6 + 0.4 * Math.sin(p.fase))).toFixed(3) + ")";
-                ctx.fill();
-            }
-            frameId = window.requestAnimationFrame(desenhar);
-        }
-
-        function retomar() {
-            if (document.hidden) return;
-            pausado = false;
-            if (frameId === null) frameId = window.requestAnimationFrame(desenhar);
-        }
-
-        window.addEventListener("resize", redimensionar);
-        document.addEventListener("visibilitychange", function () {
-            pausado = document.hidden;
-            retomar();
-        });
-
-        redimensionar();
-        retomar();
-    })();
-    </script>
 </body>
 </html>
