@@ -15,20 +15,20 @@
     <script src="config.js"></script>
     <style>
         :root {
-            --bg: #080808;
-            --card: #121212;
-            --surface: #111111;
-            --accent: #d4ff00;
-            --accent-hover: #c2eb00;
-            --accent-glow: rgba(212, 255, 0, 0.35);
+            --bg: #0b0907;
+            --card: #16130e;
+            --surface: #14110c;
+            --accent: #f59e0b;
+            --accent-hover: #fbbf24;
+            --accent-glow: rgba(245, 158, 11, 0.35);
             --accent-orange: #f59e0b;
-            --muted: #a1a1aa;
-            --border: #262626;
+            --muted: #a8a29e;
+            --border: #2b251c;
             --radius: 14px;
         }
 
         html, body {
-            background-color: #080808;
+            background-color: #0b0907;
             color: #ffffff;
             min-height: 100vh;
             display: flex;
@@ -46,21 +46,21 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #080808;
+            background: #0b0907;
         }
         ::-webkit-scrollbar-thumb {
-            background: #262626;
+            background: #2b251c;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #3a3a3a;
+            background: #41382a;
         }
 
         /* Inputs, selects, textareas - sempre fundo escuro com texto claro */
         input, select, textarea {
-            background-color: #111111 !important;
+            background-color: #14110c !important;
             color: #ffffff !important;
-            border: 1px solid #262626 !important;
+            border: 1px solid #2b251c !important;
             border-radius: 0.5rem;
             padding: 0.6rem 0.75rem;
             font-size: 0.875rem;
@@ -80,7 +80,7 @@
         input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active,
         textarea:-webkit-autofill, select:-webkit-autofill {
             -webkit-text-fill-color: #ffffff !important;
-            -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
+            -webkit-box-shadow: 0 0 0 1000px #14110c inset !important;
             caret-color: #ffffff !important;
             transition: background-color 9999s ease-out 0s;
         }
@@ -120,18 +120,18 @@
         }
         .btn-secondary {
             width: 100%;
-            background-color: #181818;
+            background-color: #1c1812;
             color: #ffffff;
             font-weight: 700;
             padding: 0.65rem 1rem;
             border-radius: 0.75rem;
             cursor: pointer;
             transition: background-color 0.2s ease, border-color 0.2s ease;
-            border: 1px solid #2a2a2a;
+            border: 1px solid #2f2920;
         }
         .btn-secondary:hover {
-            background-color: #222222;
-            border-color: #3a3a3a;
+            background-color: #26211a;
+            border-color: #41382a;
         }
 
         .tab {
@@ -271,7 +271,7 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
         }
         .card-marketplace:hover {
-            border-color: #3a3a3a;
+            border-color: #41382a;
             transform: translateY(-2px);
             box-shadow: 0 12px 32px -8px rgba(0,0,0,0.5);
         }
@@ -295,11 +295,25 @@
             animation: marquee 24s linear infinite;
         }
 
-        /* Modal backdrop blur mais suave */
+        /* Modais/painéis: overlay fixo em tela cheia, oculto por padrão.
+           O fechamento por padrão NÃO depende do Tailwind CDN: display:none no CSS
+           garante que nunca nasçam visíveis/empilhados; a abertura é sempre via
+           style.display="flex" no JS (inline vence qualquer classe). */
         .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
             backdrop-filter: blur(12px);
-            background: rgba(0,0,0,0.82);
+            background: rgba(5, 4, 2, 0.88);
         }
+        #modal-boas-vindas { z-index: 999999; }
+
+        /* Menu hambúrguer: fallback próprio de visibilidade (independe do Tailwind) */
+        #mobile-menu { display: none; }
+        #mobile-menu.menu-aberto { display: block; }
 
         /* Focus visível para teclado */
         :focus-visible {
@@ -331,6 +345,16 @@
             } catch (e) {}
         })();
 
+        window.fecharMenuMobile = function() {
+            const menu = document.getElementById("mobile-menu");
+            if (menu) {
+                menu.classList.add("hidden");
+                menu.classList.remove("menu-aberto");
+            }
+            const btn = document.getElementById("hamburger-btn");
+            if (btn) btn.setAttribute("aria-expanded", "false");
+        };
+
         window.setModalVisivel = function(modalId, aberto) {
             const modal = document.getElementById(modalId);
             if (!modal) return;
@@ -355,12 +379,12 @@
 <body class="antialiased">
 
     <!-- Aviso de Alerta de Golpe (Compacto) -->
-    <div class="bg-[#121212] border-b border-yellow-500/20 text-yellow-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
+    <div class="bg-[#16130e] border-b border-amber-500/20 text-amber-400 px-3 py-1.5 text-[10px] font-medium text-center flex items-center justify-center gap-1.5 z-50">
         <span>⚠️</span> <span><strong>AVISO:</strong> O MARKTPLACE stand2 é uma plataforma independente de intermediação, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2. Nunca solicitamos senhas por mensagens privadas.</span>
     </div>
 
     <!-- Header / Navbar -->
-    <header class="border-b border-[#222] bg-[#080808]/90 backdrop-blur-md sticky top-[28px] z-50 w-full animate-slide-down">
+    <header class="border-b border-[#26211a] bg-[#0b0907]/90 backdrop-blur-md sticky top-[28px] z-50 w-full animate-slide-down">
         <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center relative">
             <div class="flex flex-col cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
                 <span class="text-xl font-black text-white tracking-wider uppercase leading-none text-glow">MARKTPLACE</span>
@@ -368,11 +392,11 @@
             </div>
 
             <div class="flex items-center gap-3 relative">
-                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#181818] hover:bg-[#222] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2a2a2a] hover:border-[var(--accent)]">
+                <button type="button" onclick="abrirRastreioPedido()" class="hidden md:flex bg-[#1c1812] hover:bg-[#26211a] text-gray-300 px-3 py-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition cursor-pointer border border-[#2f2920] hover:border-[var(--accent)]">
                     🔍 Rastrear Pedido
                 </button>
 
-                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#181818] hover:bg-[#222] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2a2a2a] hover:border-[var(--accent)]">
+                <button type="button" onclick="abrirCarrinho()" class="relative bg-[#1c1812] hover:bg-[#26211a] text-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-[#2f2920] hover:border-[var(--accent)]">
                     🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold animate-pulse-glow">0</span>
                 </button>
 
@@ -382,7 +406,7 @@
                     </svg>
                 </button>
 
-                <div id="mobile-menu" class="hidden bg-[#121212] border border-[#222] rounded-[20px] px-5 py-4 space-y-3 shadow-2xl absolute top-16 right-0 w-64 z-[9999] animate-fade-in-up">
+                <div id="mobile-menu" class="hidden bg-[#16130e] border border-[#26211a] rounded-[20px] px-5 py-4 space-y-3 shadow-2xl absolute top-16 right-0 w-64 z-[9999] animate-fade-in-up">
                     <a href="#secao-contas" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Início</a>
                     <a href="#" onclick="abrirRastreioPedido(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Rastrear Pedido</a>
                     <a href="#" onclick="openTermosModal(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Termos e Segurança</a>
@@ -390,8 +414,8 @@
                     <a href="#" onclick="openPainelBanidos(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition hidden" id="menu-item-banidos">Usuários Banidos</a>
                     <a href="#" onclick="abrirConfiguracoes(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition hidden" id="menu-item-config">Configurações</a>
                     <a href="#" onclick="openModalComoFunciona(); return false;" class="menu-link block text-sm font-medium hover:text-[var(--accent)] transition">Como Atuamos</a>
-                    <div class="pt-3 border-t border-[#222]" id="authSection">
-                        <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#222]">
+                    <div class="pt-3 border-t border-[#26211a]" id="authSection">
+                        <div id="userPanel" class="hidden flex items-center justify-between bg-[#050505] p-2.5 rounded-xl border border-[#26211a]">
                             <div class="flex items-center gap-2">
                                 <img id="user-avatar-img" src="" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-[var(--accent)]">
                                 <div>
@@ -413,7 +437,7 @@
     </header>
 
     <!-- Marquee promocional -->
-    <div class="marquee-container bg-[#0b0f17] border-b border-[#222]/50 py-2">
+    <div class="marquee-container bg-[#0b0f17] border-b border-[#26211a]/50 py-2">
         <div class="marquee-track animate-float">
             <span>MARKTPLACE stand2</span><span>·</span><span>Intermediação segura de contas</span><span>·</span><span>Sem chat direto entre comprador e vendedor</span><span>·</span><span>Suporte exclusivo pelo site</span><span>·</span><span>PIX com QR Code e Cartão</span><span>·</span><span>MARKTPLACE stand2</span><span>·</span><span>Intermediação segura de contas</span><span>·</span><span>Sem chat direto entre comprador e vendedor</span><span>·</span><span>Suporte exclusivo pelo site</span><span>·</span><span>PIX com QR Code e Cartão</span>
         </div>
@@ -421,7 +445,7 @@
 
     <!-- Balão Flutuante de Chat no Canto Esquerdo -->
     <div class="fixed bottom-5 left-5 z-[9998]">
-        <button type="button" onclick="abrirChatSuporte()" class="bg-[#121212] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)] group-hover:shadow-[0_0_20px_var(--accent-glow)]">
+        <button type="button" onclick="abrirChatSuporte()" class="bg-[#16130e] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)] group-hover:shadow-[0_0_20px_var(--accent-glow)]">
             <span class="text-xl">💬</span>
             <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
         </button>
@@ -452,7 +476,7 @@
     </main>
 
     <!-- Rodapé Animado -->
-    <footer class="border-t border-[#222] mt-auto bg-[#050505] relative overflow-hidden">
+    <footer class="border-t border-[#26211a] mt-auto bg-[#050505] relative overflow-hidden">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="footer-marquee track top-[10%] left-0 animate-[marquee_24s_linear_infinite] text-[var(--muted)] text-[10px] font-semibold tracking-widest uppercase opacity-40"></div>
         </div>
@@ -496,7 +520,7 @@
                 </div>
             </div>
 
-            <div class="border-t border-[#222]/50 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="border-t border-[#26211a]/50 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
                 <p class="text-[var(--muted)] text-[10px]">
                     MARKTPLACE stand2 © 2026 — Intermediação Segura. Plataforma independente, sem vínculo oficial, patrocínio ou afiliação com a Axlebolt ou o Standoff 2.
                 </p>
@@ -512,7 +536,7 @@
 
     <!-- Modal Obrigatório de Entrada / Termos -->
     <div id="modal-boas-vindas" class="modal-backdrop hidden items-center justify-center z-[999999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl">
             <div class="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-4">
                 <span class="text-[var(--accent)] font-black text-lg">M</span>
             </div>
@@ -536,7 +560,7 @@
 
     <!-- Modal de Rastreio -->
     <div id="modal-rastreio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
                 <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -546,19 +570,19 @@
                 <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
                 <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
             </div>
-            <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#222] rounded-xl p-4 text-xs space-y-2"></div>
+            <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#26211a] rounded-xl p-4 text-xs space-y-2"></div>
         </div>
     </div>
 
     <!-- Modal Configurações (usuário logado) -->
     <div id="modal-config" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Configurações</h3>
                 <button type="button" onclick="closeConfiguracoes()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <div id="config-feedback" class="text-xs text-center mb-2"></div>
-            <div class="flex items-center gap-3 bg-[#050505] border border-[#222] rounded-xl p-3 mb-3">
+            <div class="flex items-center gap-3 bg-[#050505] border border-[#26211a] rounded-xl p-3 mb-3">
                 <img id="config-avatar-img" src="" alt="Avatar" class="w-14 h-14 rounded-full object-cover border-2 border-[var(--accent)]">
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate" id="config-nome">—</p>
@@ -568,7 +592,7 @@
             <div class="input-group">
                 <label>Alterar Foto / Avatar</label>
                 <div class="grid grid-cols-5 gap-2" id="config-avatars-grid"></div>
-                <label for="config-upload-input" class="mt-2 block text-center bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-3 py-2 rounded-lg font-bold cursor-pointer transition">📤 Enviar imagem do dispositivo (200x200)</label>
+                <label for="config-upload-input" class="mt-2 block text-center bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs text-white px-3 py-2 rounded-lg font-bold cursor-pointer transition">📤 Enviar imagem do dispositivo (200x200)</label>
                 <input type="file" id="config-upload-input" accept="image/*" class="hidden" onchange="salvarAvatarUpload(this.files && this.files[0]); this.value = '';">
             </div>
             <div class="input-group">
@@ -592,14 +616,14 @@
                 <input type="password" id="config-senha-nova" placeholder="Nova Senha (mín. 6 caracteres)">
                 <div class="h-2"></div>
                 <input type="password" id="config-senha-nova-confirm" placeholder="Confirmar Nova Senha">
-                <button type="button" onclick="salvarNovaSenhaConfig()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-3 py-2.5 rounded-lg font-bold transition cursor-pointer">Atualizar Senha</button>
+                <button type="button" onclick="salvarNovaSenhaConfig()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs text-white px-3 py-2.5 rounded-lg font-bold transition cursor-pointer">Atualizar Senha</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Usuários Banidos (Admin) -->
     <div id="modal-banidos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Usuários Banidos</h3>
                 <button type="button" onclick="closeBanidos()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -611,14 +635,14 @@
 
     <!-- Modal de Carrinho -->
     <div id="modal-carrinho" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
                 <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
             <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
-            <div class="bg-[#050505] p-3.5 rounded-xl border border-[#222] mb-4 flex justify-between items-center">
+            <div class="bg-[#050505] p-3.5 rounded-xl border border-[#26211a] mb-4 flex justify-between items-center">
                 <span class="text-xs text-gray-400">Total do Pedido:</span>
                 <span id="carrinho-total" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
             </div>
@@ -626,19 +650,19 @@
                 <button type="button" onclick="finalizarCompraCarrinho()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Finalizar Compra do Carrinho
                 </button>
-                <button type="button" onclick="closeCarrinho()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Continuar Comprando</button>
+                <button type="button" onclick="closeCarrinho()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Continuar Comprando</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Login / Cadastro -->
     <div id="modal" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-white">Acesso à Conta</h3>
                 <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
-            <div class="flex border-b border-[#222] mb-4">
+            <div class="flex border-b border-[#26211a] mb-4">
                 <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
                 <button type="button" class="tab" onclick="showTab('register', event)">Cadastrar</button>
             </div>
@@ -655,13 +679,13 @@
                     <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
                     <button type="button" onclick="mostrarRecuperacaoSenha()" class="mt-2 w-full text-[11px] text-[var(--accent)] hover:underline cursor-pointer">Esqueceu a senha?</button>
-                    <div id="rec-senha-area" class="hidden mt-3 border-t border-[#222] pt-3 space-y-2">
+                    <div id="rec-senha-area" class="hidden mt-3 border-t border-[#26211a] pt-3 space-y-2">
                         <p class="text-[11px] font-semibold text-[var(--accent)]">Recuperar acesso</p>
                         <input type="text" id="rec-identifier" placeholder="seuemail@gmail.com ou Nome">
-                        <button type="button" onclick="gerarCodigoRecuperacao()" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Gerar Código de Recuperação</button>
-                        <div id="rec-codigo-box" class="hidden text-center p-2.5 rounded-lg bg-[#111111] border-2 border-[#d4ff00]">
+                        <button type="button" onclick="gerarCodigoRecuperacao()" class="w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Gerar Código de Recuperação</button>
+                        <div id="rec-codigo-box" class="hidden text-center p-2.5 rounded-lg bg-[#14110c] border-2 border-[#f59e0b]">
                             <p class="text-[10px] text-gray-300">Código válido por 5 minutos</p>
-                            <p class="font-mono text-xl font-bold text-[#d4ff00] tracking-widest" id="rec-codigo-valor">------</p>
+                            <p class="font-mono text-xl font-bold text-[#f59e0b] tracking-widest" id="rec-codigo-valor">------</p>
                         </div>
                         <div id="rec-nova-senha-area" class="hidden space-y-2">
                             <input type="text" id="rec-code-input" placeholder="Código de 6 dígitos">
@@ -678,7 +702,7 @@
                     <div class="input-group">
                         <label>Gmail</label>
                         <input type="email" id="reg-email" required placeholder="seuemail@gmail.com">
-                        <button type="button" onclick="enviarCodigoGmail()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
+                        <button type="button" onclick="enviarCodigoGmail()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
                     </div>
                     <div class="input-group">
                         <label>WhatsApp (Com DDD)</label>
@@ -715,7 +739,7 @@
 
     <!-- Modal Verificação Vendedor -->
     <div id="modal-verificar-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
                 <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
@@ -725,7 +749,7 @@
                 <div class="input-group">
                     <label>Gmail de Contato</label>
                     <input type="email" id="anuncio-email" required placeholder="seuemail@gmail.com">
-                    <button type="button" onclick="enviarCodigoAnuncio()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
+                    <button type="button" onclick="enviarCodigoAnuncio()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs text-white px-4 py-2.5 rounded-lg font-bold transition cursor-pointer">Enviar Código</button>
                 </div>
                 <div class="input-group hidden" id="anuncio-codigo-area">
                     <p class="text-[11px] text-[var(--accent)] font-semibold mb-1.5">Digite o código de 6 dígitos enviado para o seu Gmail</p>
@@ -740,10 +764,10 @@
 
     <!-- Modal Detalhes -->
     <div id="modal-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
             <div id="detalhe-img-container" class="mb-4 hidden">
-                <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#222] flex items-center justify-center">
+                <div class="relative w-full h-56 bg-black rounded-xl overflow-hidden border border-[#26211a] flex items-center justify-center">
                     <img id="detalhe-imagem" src="" alt="Print da Conta" class="w-full h-full object-contain">
                 </div>
                 <div id="detalhe-miniaturas" class="flex gap-2 mt-2 overflow-x-auto pb-1"></div>
@@ -754,19 +778,19 @@
             </div>
             <h3 id="detalhe-titulo" class="text-xl font-bold mb-1 text-white">Nome da Conta</h3>
             <p id="detalhe-preco" class="text-lg font-bold text-emerald-400 mb-3">R$ 0,00</p>
-            <div class="bg-[#050505] border border-[#222] rounded-xl px-3 py-2 mb-4 flex items-center justify-between">
+            <div class="bg-[#050505] border border-[#26211a] rounded-xl px-3 py-2 mb-4 flex items-center justify-between">
                 <span class="text-xs text-gray-400">Vendedor: <strong id="detalhe-vendedor" class="text-white"></strong></span>
                 <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-semibold">Protegido</span>
             </div>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
             <div class="space-y-3">
-                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2a2a2a]">
+                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2f2920]">
                     🛒 Adicionar ao Carrinho
                 </button>
                 <button type="button" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
                     Comprar Agora
                 </button>
-                <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#181818] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
+                <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#1c1812] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
             </div>
             <div id="detalhes-acoes-admin" class="hidden space-y-2 mt-4">
                 <button type="button" onclick="excluirAnuncioAdminSelecionado()" class="w-full bg-red-500/15 text-red-400 border border-red-500/30 py-2.5 rounded-xl font-bold text-xs cursor-pointer">🗑 Excluir Anúncio (Admin)</button>
@@ -778,19 +802,19 @@
 
     <!-- Modal Checkout -->
     <div id="modal-checkout" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
-            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
+            <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Escolha como deseja pagar com total segurança:</p>
             <div class="space-y-3 mb-6">
-                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-emerald-400 font-bold text-lg">⚡</span>
                         <div><p class="text-sm font-bold text-white">PIX</p><span class="text-[10px] text-emerald-400">Aprovação imediata</span></div>
                     </div>
                     <input type="radio" name="pagamento" value="pix" checked class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('pix')">
                 </label>
-                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#222] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
                         <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
@@ -798,7 +822,7 @@
                     <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
                 </label>
             </div>
-            <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#222]">
+            <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#26211a]">
                 <div class="input-group mb-0">
                     <label>Número do Cartão</label>
                     <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
@@ -827,7 +851,7 @@
                 <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Prosseguir com Pagamento
                 </button>
-                <button type="button" onclick="closeCheckout()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Voltar</button>
+                <button type="button" onclick="closeCheckout()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Voltar</button>
             </div>
             <button type="button" onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
@@ -835,25 +859,25 @@
 
     <!-- Modal Pagamento Detalhes -->
     <div id="modal-pagamento-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-            <div class="bg-[#111111] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
-                <span id="pedido-codigo" class="text-xs font-bold bg-[#181818] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2a2a2a]">Pedido #SO2-0000</span>
+                <span id="pedido-codigo" class="text-xs font-bold bg-[#1c1812] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2f2920]">Pedido #SO2-0000</span>
                 <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
-            <div id="pag-conteudo" class="bg-[#050505] border border-[#222] rounded-xl p-4 mb-4 text-center"></div>
+            <div id="pag-conteudo" class="bg-[#050505] border border-[#26211a] rounded-xl p-4 mb-4 text-center"></div>
             <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
                 Já Paguei • Enviar Comprovante e Gerar Ticket
             </button>
-            <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2a2a2a]">Cancelar</button>
+            <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2f2920]">Cancelar</button>
         </div>
     </div>
 
     <!-- Modal Ticket / Suporte / Bot -->
     <div id="modal-ticket" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative text-center">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
                 <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
                 <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
@@ -861,12 +885,12 @@
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
             <p id="ticket-status-texto" class="text-xs text-[var(--muted)] mb-4 leading-relaxed">Ticket gerado com sucesso. O suporte intermediará a entrega dos dados.</p>
-            <div id="ticket-codigo-destaque" class="bg-[#111111] border-2 border-[#d4ff00] rounded-xl px-3 py-3 mb-4">
+            <div id="ticket-codigo-destaque" class="bg-[#14110c] border-2 border-[#f59e0b] rounded-xl px-3 py-3 mb-4">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">SEU CÓDIGO DE TICKET</p>
-                <p id="ticket-codigo-destaque-valor" class="text-xl font-bold text-[#d4ff00] font-mono break-all">TICK-XXXXX</p>
+                <p id="ticket-codigo-destaque-valor" class="text-xl font-bold text-[#f59e0b] font-mono break-all">TICK-XXXXX</p>
                 <p class="text-[10px] text-gray-500 mt-1">Guarde este código para rastrear o pedido e falar com o suporte.</p>
             </div>
-            <div class="bg-[#050505] p-3 rounded-xl border border-[#222] mb-4 text-left text-xs space-y-1">
+            <div class="bg-[#050505] p-3 rounded-xl border border-[#26211a] mb-4 text-left text-xs space-y-1">
                 <p class="text-gray-400"><strong>Status Atual:</strong> <span class="text-[var(--accent)]">Pagamento confirmado - aguardando envio dos dados da conta</span></p>
                 <p class="text-gray-400"><strong>Comprovante:</strong> <span class="text-emerald-400">Validado (Hash #98231-SAFE)</span></p>
                 <p class="text-gray-400"><strong>Comprador (Gmail):</strong> <span id="ticket-info-gmail" class="text-white"></span></p>
@@ -882,8 +906,8 @@
 
     <!-- Modal Chat Bot / Suporte -->
     <div id="modal-chat-suporte" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-md rounded-[20px] p-5 sm:p-6 relative flex flex-col h-[500px]">
-            <div class="flex justify-between items-center pb-3 border-b border-[#222]">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-5 sm:p-6 relative flex flex-col h-[500px]">
+            <div class="flex justify-between items-center pb-3 border-b border-[#26211a]">
                 <div class="flex items-center gap-2.5">
                     <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
                     <div>
@@ -894,13 +918,13 @@
                 <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
             </div>
             <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-3">
-                <div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[85%]">
+                <div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[85%]">
                     <p class="font-bold text-[var(--accent)] mb-0.5">Bot Oficial</p>
                     Olá! Bem-vindo ao suporte automatizado do MARKTPLACE stand2.
                 </div>
             </div>
-            <div class="pt-3 border-t border-[#222] flex gap-2">
-                <input type="text" id="chat-input-texto" placeholder="Digite sua mensagem..." class="flex-grow bg-[#050505] border border-[#222] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)]">
+            <div class="pt-3 border-t border-[#26211a] flex gap-2">
+                <input type="text" id="chat-input-texto" placeholder="Digite sua mensagem..." class="flex-grow bg-[#050505] border border-[#26211a] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)]">
                 <button type="button" onclick="enviarMensagemSuporte()" class="btn-primary px-4 py-2.5 text-xs">Enviar</button>
             </div>
         </div>
@@ -908,7 +932,7 @@
 
     <!-- Modal Termos e Segurança -->
     <div id="modal-termos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Termos de Serviço e Isenção Legal</h3>
             <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por meio do sistema oficial desta plataforma.</p>
@@ -920,13 +944,13 @@
                 <p>5. <strong>Custódia e Entrega:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes. Mantenha sempre provas do seu pedido/ticket e não compartilhe dados sensíveis fora do fluxo oficial.</p>
                 <p>6. <strong>Aviso de Fraudes e Disputas Indevidas:</strong> O MARKTPLACE stand2 não se responsabiliza por disputas resultantes de acordos feitos por fora da plataforma ou por falhas relacionadas ao uso indevido das contas do jogo. Em caso de disputa, registre imediatamente um ticket de rastreio pelo suporte oficial e mantenha todas as provas de comunicação e transação.</p>
             </div>
-            <button type="button" onclick="closeTermosModal()" class="w-full bg-[#181818] hover:bg-[#222] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2a2a2a]">Entendido e Concordo</button>
+            <button type="button" onclick="closeTermosModal()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Entendido e Concordo</button>
         </div>
     </div>
 
     <!-- Modal Anúncio -->
     <div id="modal-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Anunciar Nova Conta</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Vendedor: <strong id="preview-vendedor-nome" class="text-white"></strong></p>
             <div class="space-y-4">
@@ -964,7 +988,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
-                    <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#111111] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
+                    <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#14110c] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
                     <span class="text-[10px] text-emerald-400 mt-1 block">✨ O site preenche automaticamente a descrição com os itens identificados nos prints — confira e ajuste antes de publicar.</span>
                 </div>
                 <div>
@@ -981,7 +1005,7 @@
 
     <!-- Modal Alerta -->
     <div id="modal-alerta" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
-        <div class="bg-[#121212] border border-[#222] w-full max-w-sm rounded-[20px] p-6 text-center relative shadow-2xl">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-sm rounded-[20px] p-6 text-center relative shadow-2xl">
             <div id="alerta-icone" class="alerta-icone-ok">✓</div>
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
             <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
@@ -991,44 +1015,44 @@
 
     <!-- Modal Como Funcionamos -->
     <div id="modal-como-funcionamos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
-        <div class="bg-[#121212] border border-[#262626] rounded-[20px] p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
-            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#d4ff00] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
-            <h2 class="text-2xl font-bold text-[#d4ff00] mb-6 text-center">Como Atuamos</h2>
+        <div class="bg-[#16130e] border border-[#2b251c] rounded-[20px] p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#f59e0b] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h2 class="text-2xl font-bold text-[#f59e0b] mb-6 text-center">Como Atuamos</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="bg-[#1c1812] rounded-xl p-5 border border-[#2b251c]">
+                    <div class="w-11 h-11 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#f59e0b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4v5c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V7l8-4z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Intermediação e Custódia</h3>
+                    <h3 class="text-lg font-bold text-[#f59e0b] mb-2">Intermediação e Custódia</h3>
                     <p class="text-[#b3b3b3] text-sm leading-relaxed">O MARKTPLACE stand2 é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2. Todos os pagamentos ficam em custódia com o suporte intermediário. Isso garante segurança para ambas as partes, assegurando que a liberação dos dados da conta só ocorra após a confirmação do pagamento e mediante registro de ticket de rastreio. Não há chat direto entre comprador e vendedor (evitando acordos por fora ou golpes).</p>
                 </div>
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="bg-[#1c1812] rounded-xl p-5 border border-[#2b251c]">
+                    <div class="w-11 h-11 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#f59e0b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Conferência da Conta</h3>
+                    <h3 class="text-lg font-bold text-[#f59e0b] mb-2">Conferência da Conta</h3>
                     <p class="text-[#b3b3b3] text-sm leading-relaxed">Antes da liberação, nossa equipe confere a conta verificando: status do jogo, itens reivindicados e autenticidade do anúncio. Isso previne fraudes e garante que você receba o que foi combinado.</p>
                 </div>
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="bg-[#1c1812] rounded-xl p-5 border border-[#2b251c]">
+                    <div class="w-11 h-11 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#f59e0b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Atendimento Centralizado</h3>
+                    <h3 class="text-lg font-bold text-[#f59e0b] mb-2">Atendimento Centralizado</h3>
                     <p class="text-[#b3b3b3] text-sm leading-relaxed">Não há chat direto entre comprador e vendedor. Todas as comunicações passam pelo suporte do MARKTPLACE stand2, garantindo privacidade e proteção jurídica conforme os Termos de Serviço.</p>
                 </div>
-                <div class="bg-[#181818] rounded-xl p-5 border border-[#262626]">
-                    <div class="w-11 h-11 rounded-xl bg-[#d4ff00]/10 flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-[#d4ff00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="bg-[#1c1812] rounded-xl p-5 border border-[#2b251c]">
+                    <div class="w-11 h-11 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-[#f59e0b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-[#d4ff00] mb-2">Benefícios Rápidos</h3>
+                    <h3 class="text-lg font-bold text-[#f59e0b] mb-2">Benefícios Rápidos</h3>
                     <p class="text-[#b3b3b3] text-sm leading-relaxed">Para comprador: conta entregue em custódia rápida. Para vendedor: repasse liberado após confirmação. Processo simplificado sem complicações desnecessárias.</p>
                 </div>
             </div>
@@ -1091,15 +1115,15 @@
         }
 
         function gerarSvgAvatar(newShape, detalhe) {
-            return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#121212'/><rect x='2.5' y='2.5' width='59' height='59' rx='12' fill='none' stroke='#262626' stroke-width='2'/>${newShape}${detalhe}</svg>`)}`;
+            return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#16130e'/><rect x='2.5' y='2.5' width='59' height='59' rx='12' fill='none' stroke='#2b251c' stroke-width='2'/>${newShape}${detalhe}</svg>`)}`;
         }
 
         const AVATARES = [
-            gerarSvgAvatar("<path d='M32 12c-9 0-16 7-16 16v10c0 9 7 16 16 16s16-7 16-16V28c0-9-7-16-16-16z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M22 30h20v8a4 4 0 0 1-4 4H26a4 4 0 0 1-4-4z' fill='#080808'/><rect x='25' y='33' width='14' height='3.5' rx='1.75' fill='#d4ff00'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>GHOST</text>"),
-            gerarSvgAvatar("<circle cx='32' cy='30' r='17' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M21 32h22v7a6 6 0 0 1-6 6H27a6 6 0 0 1-6-6z' fill='#080808'/><rect x='25' y='35' width='5' height='3' rx='1.5' fill='#d4ff00'/><rect x='34' y='35' width='5' height='3' rx='1.5' fill='#d4ff00'/>", "<rect x='30' y='13' width='4' height='10' rx='2' fill='#ffffff' opacity='0.85'/>"),
-            gerarSvgAvatar("<path d='M32 13c-10 0-18 8-18 18v9c0 10 8 18 18 18s18-8 18-18v-9c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><circle cx='32' cy='34' r='9' fill='#080808'/><circle cx='32' cy='34' r='4' fill='none' stroke='#d4ff00' stroke-width='2'/><path d='M32 22v-6' stroke='#d4ff00' stroke-width='2'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>SNIPER</text>"),
-            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v8c0 10 8 18 18 18s18-8 18-18v-8c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M18 34c0-4 6-6 14-6s14 2 14 6v4H18z' fill='#080808'/><rect x='23' y='34' width='18' height='2.5' rx='1.25' fill='#d4ff00'/>", "<path d='M14 20c6-6 12-7 18-7s12 1 18 7' stroke='#ffffff' stroke-width='2' fill='none' opacity='0.85'/>"),
-            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v10c0 9 8 17 18 17s18-8 18-17V30c0-10-8-18-18-18z' fill='#181818' stroke='#080808' stroke-width='1.5'/><path d='M20 33h24v6a5 5 0 0 1-5 5H25a5 5 0 0 1-5-5z' fill='#080808'/><rect x='24' y='35' width='7' height='3' rx='1.5' fill='#d4ff00'/><rect x='35' y='35' width='5' height='3' rx='1.5' fill='#ffffff'/>", "<rect x='28' y='10' width='8' height='6' rx='2' fill='#d4ff00' opacity='0.9'/>")
+            gerarSvgAvatar("<path d='M32 12c-9 0-16 7-16 16v10c0 9 7 16 16 16s16-7 16-16V28c0-9-7-16-16-16z' fill='#1c1812' stroke='#0b0907' stroke-width='1.5'/><path d='M22 30h20v8a4 4 0 0 1-4 4H26a4 4 0 0 1-4-4z' fill='#0b0907'/><rect x='25' y='33' width='14' height='3.5' rx='1.75' fill='#f59e0b'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>GHOST</text>"),
+            gerarSvgAvatar("<circle cx='32' cy='30' r='17' fill='#1c1812' stroke='#0b0907' stroke-width='1.5'/><path d='M21 32h22v7a6 6 0 0 1-6 6H27a6 6 0 0 1-6-6z' fill='#0b0907'/><rect x='25' y='35' width='5' height='3' rx='1.5' fill='#f59e0b'/><rect x='34' y='35' width='5' height='3' rx='1.5' fill='#f59e0b'/>", "<rect x='30' y='13' width='4' height='10' rx='2' fill='#ffffff' opacity='0.85'/>"),
+            gerarSvgAvatar("<path d='M32 13c-10 0-18 8-18 18v9c0 10 8 18 18 18s18-8 18-18v-9c0-10-8-18-18-18z' fill='#1c1812' stroke='#0b0907' stroke-width='1.5'/><circle cx='32' cy='34' r='9' fill='#0b0907'/><circle cx='32' cy='34' r='4' fill='none' stroke='#f59e0b' stroke-width='2'/><path d='M32 22v-6' stroke='#f59e0b' stroke-width='2'/>", "<text x='32' y='12' font-size='6' text-anchor='middle' fill='#ffffff' font-family='monospace'>SNIPER</text>"),
+            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v8c0 10 8 18 18 18s18-8 18-18v-8c0-10-8-18-18-18z' fill='#1c1812' stroke='#0b0907' stroke-width='1.5'/><path d='M18 34c0-4 6-6 14-6s14 2 14 6v4H18z' fill='#0b0907'/><rect x='23' y='34' width='18' height='2.5' rx='1.25' fill='#f59e0b'/>", "<path d='M14 20c6-6 12-7 18-7s12 1 18 7' stroke='#ffffff' stroke-width='2' fill='none' opacity='0.85'/>"),
+            gerarSvgAvatar("<path d='M32 12c-10 0-18 8-18 18v10c0 9 8 17 18 17s18-8 18-17V30c0-10-8-18-18-18z' fill='#1c1812' stroke='#0b0907' stroke-width='1.5'/><path d='M20 33h24v6a5 5 0 0 1-5 5H25a5 5 0 0 1-5-5z' fill='#0b0907'/><rect x='24' y='35' width='7' height='3' rx='1.5' fill='#f59e0b'/><rect x='35' y='35' width='5' height='3' rx='1.5' fill='#ffffff'/>", "<rect x='28' y='10' width='8' height='6' rx='2' fill='#f59e0b' opacity='0.9'/>")
         ];
 
         function escapeHtml(str) {
@@ -1206,19 +1230,19 @@
                 if (hamburgerBtn && mobileMenu) {
                     hamburgerBtn.addEventListener("click", function(e) {
                         e.stopPropagation();
-                        mobileMenu.classList.toggle("hidden");
-                        hamburgerBtn.setAttribute("aria-expanded", mobileMenu.classList.contains("hidden") ? "false" : "true");
+                        const abrir = mobileMenu.classList.contains("hidden");
+                        mobileMenu.classList.toggle("hidden", !abrir);
+                        mobileMenu.classList.toggle("menu-aberto", abrir);
+                        hamburgerBtn.setAttribute("aria-expanded", abrir ? "true" : "false");
                     });
                     document.addEventListener("click", function(e) {
                         if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                            mobileMenu.classList.add("hidden");
-                            hamburgerBtn.setAttribute("aria-expanded", "false");
+                            fecharMenuMobile();
                         }
                     });
                     mobileMenu.querySelectorAll(".menu-link").forEach(link => {
                         link.addEventListener("click", function() {
-                            mobileMenu.classList.add("hidden");
-                            hamburgerBtn.setAttribute("aria-expanded", "false");
+                            fecharMenuMobile();
                         });
                     });
                 }
@@ -1279,7 +1303,7 @@
             if (event && event.currentTarget) event.currentTarget.classList.add("active");
         }
 
-        function openModal() { setModalVisivel("modal", true); document.getElementById("mobile-menu").classList.add("hidden"); }
+        function openModal() { setModalVisivel("modal", true); fecharMenuMobile(); }
         function closeModal() { setModalVisivel("modal", false); }
         function openTermosModal() { setModalVisivel("modal-termos", true); }
         function closeTermosModal() { setModalVisivel("modal-termos", false); }
@@ -1291,7 +1315,7 @@
             if (rastreioAutoRefreshId) { clearInterval(rastreioAutoRefreshId); rastreioAutoRefreshId = null; }
         }
         function abrirRastreioPedido() {
-            document.getElementById("mobile-menu").classList.add("hidden");
+            fecharMenuMobile();
             setModalVisivel("modal-rastreio", true);
             pararAutoRefreshRastreio();
             rastreioAutoRefreshId = setInterval(atualizarRastreioAutomaticamente, 4000);
@@ -1345,8 +1369,8 @@
             const info = pedido
                 ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Etapa atual: <span class="text-[var(--accent)] font-bold">[${etapaAtual}/5]</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
                 : `<p class="text-white font-bold">Status: <span class="text-amber-400">● Não encontrado nesta sessão</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-amber-400 mt-1">Amostras antigas de tickets (TICK-4819 etc.) de demonstração não são reais.</p>`;
-            const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
-            return `${info}<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
+            const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
+            return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
         }
 
         async function definirEtapaTicketAdmin(ticketId, etapa) {
@@ -1502,10 +1526,10 @@
             if (concluidoPopular) {
                 faixaRodape = `<span class="text-[10px] text-emerald-400 font-bold" data-expira="${escapeHtml(p.concluidoEm || "")}">Sai da fila em ${restanteSaidaFilaFormatado(p.concluidoEm) || "0s"}</span>`;
             }
-            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border ${concluidoPopular ? "border-emerald-500/40" : "border-[#222]"} rounded-xl p-2.5 transition cursor-pointer">
+            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#14110c] border ${concluidoPopular ? "border-emerald-500/40" : "border-[#26211a]"} rounded-xl p-2.5 transition cursor-pointer">
                 <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="font-mono font-bold text-[var(--accent)]">${escapeHtml(p.ticketId)}</span>
-                    <span class="text-[11px] font-bold text-white ${concluidoPopular ? "bg-emerald-500/10 text-emerald-300" : "bg-[#181818]"} border border-[#2a2a2a] rounded-lg px-1.5 py-0.5">Etapa [${etapaAtualDoPedido(p)}/5]${concluidoPopular ? " · concluído" : ""}</span>
+                    <span class="text-[11px] font-bold text-white ${concluidoPopular ? "bg-emerald-500/10 text-emerald-300" : "bg-[#1c1812]"} border border-[#2f2920] rounded-lg px-1.5 py-0.5">Etapa [${etapaAtualDoPedido(p)}/5]${concluidoPopular ? " · concluído" : ""}</span>
                 </div>
                 <p class="text-[11px] mt-1">${estadoPagamentoDoTicket(p)}</p>
                 <p class="text-[11px] text-gray-300 mt-0.5">Cliente: <span class="font-semibold text-white">${escapeHtml(p.nome || p.comprador || "—")}</span>${p.comprador ? ` · ${escapeHtml(p.comprador)}` : ""}${p.whatsapp ? ` · ${escapeHtml(p.whatsapp)}` : ""}</p>
@@ -1521,7 +1545,7 @@
             const dataFim = p.concluidoEm ? new Date(p.concluidoEm).toLocaleString("pt-BR") : "data não registrada";
             const metodo = escapeHtml(p.metodo || "—");
             const valor = escapeHtml(p.total || "—");
-            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#111111] border border-[#222] rounded-xl p-2.5 transition cursor-pointer">
+            return `<button type="button" onclick="abrirTicketAdminDaLista('${escapeHtml(p.ticketId)}')" class="w-full text-left bg-[#050505] hover:bg-[#14110c] border border-[#26211a] rounded-xl p-2.5 transition cursor-pointer">
                 <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="font-mono font-bold text-[var(--accent)]">${escapeHtml(p.ticketId)}</span>
                     <span class="text-[11px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-1.5 py-0.5">✓ Concluído</span>
@@ -1536,7 +1560,7 @@
         }
 
         function barraAbasTicketsAdmin() {
-            const abaBtn = (aba, rotulo) => `<button type="button" onclick="trocarAbaTicketsAdmin('${aba}')" class="flex-1 py-2 rounded-lg text-[11px] font-bold cursor-pointer border ${abaTicketsAdmin === aba ? "bg-[var(--accent)] text-black border-[var(--accent)]" : "bg-[#181818] text-gray-300 border-[#2a2a2a] hover:bg-[#222]"}">${rotulo}</button>`;
+            const abaBtn = (aba, rotulo) => `<button type="button" onclick="trocarAbaTicketsAdmin('${aba}')" class="flex-1 py-2 rounded-lg text-[11px] font-bold cursor-pointer border ${abaTicketsAdmin === aba ? "bg-[var(--accent)] text-black border-[var(--accent)]" : "bg-[#1c1812] text-gray-300 border-[#2f2920] hover:bg-[#26211a]"}">${rotulo}</button>`;
             return `<div class="flex gap-2 mb-3">${abaBtn("abertos", "Em Aberto")}${abaBtn("concluidos", "Concluídos (Histórico)")}</div>`;
         }
 
@@ -1627,7 +1651,7 @@
                 resBox.classList.remove("hidden");
                 let html = conteudoPainelIntermediacao(pedidoEncontrado, codigo);
                 if (pedidoEncontrado && isAdminUsuario()) {
-                    html += `<p class="text-[11px] text-gray-300 mt-1 pt-1 border-t border-[#222]">Cliente: <span class="font-semibold text-white">${escapeHtml(pedidoEncontrado.nome || pedidoEncontrado.comprador || "—")}</span>${pedidoEncontrado.comprador ? ` · ${escapeHtml(pedidoEncontrado.comprador)}` : ""}${pedidoEncontrado.whatsapp ? ` · ${escapeHtml(pedidoEncontrado.whatsapp)}` : ""}</p><p class="text-[11px]">${estadoPagamentoDoTicket(pedidoEncontrado)}</p>`;
+                    html += `<p class="text-[11px] text-gray-300 mt-1 pt-1 border-t border-[#26211a]">Cliente: <span class="font-semibold text-white">${escapeHtml(pedidoEncontrado.nome || pedidoEncontrado.comprador || "—")}</span>${pedidoEncontrado.comprador ? ` · ${escapeHtml(pedidoEncontrado.comprador)}` : ""}${pedidoEncontrado.whatsapp ? ` · ${escapeHtml(pedidoEncontrado.whatsapp)}` : ""}</p><p class="text-[11px]">${estadoPagamentoDoTicket(pedidoEncontrado)}</p>`;
                     const etapaAtual = etapaAtualDoPedido(pedidoEncontrado);
                     const rotulos = ["1. Pagamento retido", "2. Verificar comprovante", "3. Dados do vendedor", "4. Dados enviados", "5. Concluir Pedido"];
                     const botoes = rotulos.map((rotulo, indice) => {
@@ -1636,10 +1660,10 @@
                         const ativo = numero === etapaAtual && !(pedidoEncontrado.concluido && !ehEtapa5);
                         const estilo = ativo
                             ? (ehEtapa5 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold" : "bg-[var(--accent)] text-black font-bold")
-                            : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#181818] text-gray-300");
+                            : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#1c1812] text-gray-300");
                         return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
                     }).join("");
-                    html += `<div class="mt-2 border-t border-[#222] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#181818] hover:bg-[#222] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2a2a2a]">← Voltar para lista em aberto</button></div>`;
+                    html += `<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
                 }
                 if (isAdminUsuario()) {
                     html += pedidoEncontrado && pedidoEncontrado.ticketId
@@ -1653,7 +1677,7 @@
         }
 
         function verificarAutenticacaoAnuncio() {
-            document.getElementById("mobile-menu").classList.add("hidden");
+            fecharMenuMobile();
             if (!currentUser) {
                 mostrarAlerta("Atenção", "Você precisa estar logado para anunciar uma conta!", "aviso");
                 openModal();
@@ -1835,7 +1859,7 @@
             currentUser = null;
             localStorage.removeItem("marktplace_stand2_user");
             aplicarEstadoUsuario();
-            document.getElementById("mobile-menu").classList.add("hidden");
+            fecharMenuMobile();
             mostrarAlerta("Sessão Encerrada", "Você saiu com sucesso.");
         }
 
@@ -1952,7 +1976,7 @@
         }
 
         function abrirConfiguracoes() {
-            document.getElementById("mobile-menu").classList.add("hidden");
+            fecharMenuMobile();
             if (!currentUser) { mostrarAlerta("Atenção", "Entre na sua conta para abrir as Configurações.", "aviso"); openModal(); return; }
             document.getElementById("config-avatar-img").src = currentUser.avatar || AVATARES[0];
             document.getElementById("config-nome").textContent = sanitizarNomePublico(currentUser.username);
@@ -2151,18 +2175,18 @@
                 const vendedorCardBanido = usuarioEstaBanido(sanitizarNomePublico(item.vendedor), "");
                 if (vendedorCardBanido && !adminVendo) return;
                 const card = document.createElement("div");
-                card.className = "bg-[#121212] border border-[#222] rounded-[20px] p-5 flex flex-col justify-between hover:border-[#3a3a3a] transition shadow-xl relative card-marketplace animate-fade-in-up fade-stagger";
+                card.className = "bg-[#16130e] border border-[#26211a] rounded-[20px] p-5 flex flex-col justify-between hover:border-[#41382a] transition shadow-xl relative card-marketplace animate-fade-in-up fade-stagger";
                 card.style.animationDelay = `${0.08 + index * 0.06}s`;
                 const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
-                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-40 bg-black rounded-xl overflow-hidden mb-4 border border-[#222] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-40 bg-black rounded-xl overflow-hidden mb-4 border border-[#26211a] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
                 let barraSuperior = "";
                 if (ehDono) {
-                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>`;
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#26211a]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>`;
                 } else if (adminVendo) {
-                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#222]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#26211a]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
                 }
                 const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
-                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#181818] border border-[#2a2a2a] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#1c1812] border border-[#2f2920] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
                 grid.appendChild(card);
             });
         }
@@ -2225,7 +2249,7 @@
                     let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                     totalSoma += numPreco;
                     const div = document.createElement("div");
-                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#222]";
+                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#26211a]";
                     div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
                     container.appendChild(div);
                 });
@@ -2717,7 +2741,7 @@
             lista.innerHTML = banidos.map(b => {
                 const nome = sanitizarNomePublico(b.nome || "Usuário");
                 const email = b.email ? `<span class="block text-[10px] text-[var(--muted)]">${escapeHtml(b.email)}</span>` : "";
-                return `<div class="flex justify-between items-center gap-2 bg-[#111111] border border-[#222] rounded-xl px-3 py-2.5"><div class="min-w-0"><p class="text-xs font-bold text-white truncate">${escapeHtml(nome)}</p>${email}</div><button type="button" onclick="desbanirUsuarioPainel('${escapeHtml(b.nome || "")}')" class="bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap">Desbanir</button></div>`;
+                return `<div class="flex justify-between items-center gap-2 bg-[#14110c] border border-[#26211a] rounded-xl px-3 py-2.5"><div class="min-w-0"><p class="text-xs font-bold text-white truncate">${escapeHtml(nome)}</p>${email}</div><button type="button" onclick="desbanirUsuarioPainel('${escapeHtml(b.nome || "")}')" class="bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap">Desbanir</button></div>`;
             }).join("");
         }
 
@@ -2891,7 +2915,7 @@
                 compradorWhats: wppUser
             });
             const chatBox = document.getElementById("chat-mensagens");
-            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             document.getElementById("modal-ticket").style.display = "flex";
             carrinhoItens = [];
@@ -2906,7 +2930,7 @@
             document.getElementById("modal-chat-suporte").style.display = "flex";
             const chatMenu = document.getElementById("chat-mensagens");
             if (chatMenu && !chatMenu.querySelector("[data-menu-bot]")) {
-                chatMenu.innerHTML += construirMenuBot().replace('<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"', '<div data-menu-bot class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"');
+                chatMenu.innerHTML += construirMenuBot().replace('<div class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 max-w-[90%]"', '<div data-menu-bot class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 max-w-[90%]"');
                 chatMenu.scrollTop = chatMenu.scrollHeight;
             }
         }
@@ -2961,7 +2985,7 @@
             const url = "https://wa.me/" + ADMIN_WHATSAPP + "?text=" + encodeURIComponent(montarMensagemAlertaWhatsApp(assunto, ticket, mensagem));
             const chat = document.getElementById("chat-mensagens");
             if (chat) {
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#2a2a2a] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>O suporte intermediário foi acionado. Toque abaixo para avisar o admin no WhatsApp:<a href="${url}" target="_blank" rel="noopener" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">📲 Acionar Suporte no WhatsApp</a></div>`;
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#2f2920] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>O suporte intermediário foi acionado. Toque abaixo para avisar o admin no WhatsApp:<a href="${url}" target="_blank" rel="noopener" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">📲 Acionar Suporte no WhatsApp</a></div>`;
                 chat.scrollTop = chat.scrollHeight;
             }
             return true;
@@ -2977,8 +3001,8 @@
         ];
 
         function construirMenuBot() {
-            const Itens = OPCOES_MENU_BOT.map(o => `<button type="button" onclick="escolherOpcaoBot(${o.numero}, '${escapeHtml(o.rotulo)}')" class="block w-full text-left text-left bg-[#181818] hover:bg-[#222] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white cursor-pointer"><span class="text-[var(--accent)] font-bold">${o.numero}.</span> ${escapeHtml(o.rotulo)}</button>`).join("");
-            return `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 max-w-[90%]"><p class="font-bold text-[var(--accent)] mb-1.5">Bot Oficial</p><p class="text-gray-300 mb-2">Como posso ajudar? Escolha uma opcao ou digite sua mensagem:</p><div class="space-y-1.5">${Itens}</div></div>`;
+            const Itens = OPCOES_MENU_BOT.map(o => `<button type="button" onclick="escolherOpcaoBot(${o.numero}, '${escapeHtml(o.rotulo)}')" class="block w-full text-left text-left bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] rounded-xl px-3 py-2 text-white cursor-pointer"><span class="text-[var(--accent)] font-bold">${o.numero}.</span> ${escapeHtml(o.rotulo)}</button>`).join("");
+            return `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 max-w-[90%]"><p class="font-bold text-[var(--accent)] mb-1.5">Bot Oficial</p><p class="text-gray-300 mb-2">Como posso ajudar? Escolha uma opcao ou digite sua mensagem:</p><div class="space-y-1.5">${Itens}</div></div>`;
         }
 
         function escolherOpcaoBot(numero, rotulo) {
@@ -2986,7 +3010,7 @@
             if (!chat) return;
             const opcao = OPCOES_MENU_BOT.find(o => o.numero === numero);
             const textoUsuario = `${numero}. ${rotulo}`;
-            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
+            chat.innerHTML += `<div class="bg-[#1c1812] border border-[#2f2920] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
             chat.scrollTop = chat.scrollHeight;
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(rotulo) : null;
             if (classificacao) { setTimeout(() => dispararAlertaWhatsAppAdmin(classificacao.assunto, classificacao.ticket, textoUsuario), 200); }
@@ -2997,7 +3021,7 @@
                 } else {
                     respostaFinal = (opcao ? opcao.resposta : "");
                 }
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaFinal)}</div>`;
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(respostaFinal)}</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
         }
@@ -3128,7 +3152,7 @@
             if (!input.value.trim()) return;
             const textoUsuario = input.value.trim();
             const chat = document.getElementById("chat-mensagens");
-            chat.innerHTML += `<div class="bg-[#181818] border border-[#2a2a2a] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
+            chat.innerHTML += `<div class="bg-[#1c1812] border border-[#2f2920] rounded-xl p-2.5 text-white ml-auto max-w-[85%] text-right"><p class="font-bold text-[var(--accent)]">Você</p>${escapeHtml(textoUsuario)}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
             const classificacao = (!isAdminUsuario()) ? classificarAssuntoSuporte(textoUsuario) : null;
@@ -3141,7 +3165,7 @@
                 if (textoFinal && String(textoFinal).includes("Escolha uma opção")) {
                     chat.innerHTML += construirMenuBot();
                 } else if (textoFinal) {
-                    chat.innerHTML += `<div class="bg-[#050505] border border-[#222] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(textoFinal)}</div>`;
+                    chat.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 text-gray-300 max-w-[85%] whitespace-pre-line"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>${escapeHtml(textoFinal)}</div>`;
                 } else {
                     chat.innerHTML += construirMenuBot();
                 }
