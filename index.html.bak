@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23d4ff00'/></svg>">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
+    <meta name="description" content="Marketplace de contas de Standoff 2 com intermediação oficial: pagamento em custódia, verificação de inventário e entrega com ticket de rastreio. Sem contato direto entre comprador e vendedor.">
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
@@ -368,6 +371,11 @@
             position: absolute;
             bottom: 12px;
             left: 12px;
+            right: 110px;
+            max-width: calc(100% - 134px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             padding: 6px 12px;
             border-radius: 9999px;
             font-size: 11px;
@@ -471,7 +479,7 @@
                     🛒 Carrinho <span id="cart-badge" class="bg-[var(--accent)] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold animate-pulse-glow">0</span>
                 </button>
 
-                <button id="hamburger-btn" type="button" class="p-2 text-gray-300 hover:text-[var(--accent)] focus:outline-none cursor-pointer relative z-[10000] transition">
+                <button id="hamburger-btn" type="button" aria-label="Abrir menu" class="p-2 text-gray-300 hover:text-[var(--accent)] focus:outline-none cursor-pointer relative z-[10000] transition">
                     <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -643,7 +651,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
-                <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeRastreio()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
             <div class="input-group flex gap-2">
@@ -659,7 +667,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Configurações</h3>
-                <button type="button" onclick="closeConfiguracoes()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeConfiguracoes()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <div id="config-feedback" class="text-xs text-center mb-2"></div>
             <div class="flex items-center gap-3 bg-[#050505] border border-[#26211a] rounded-xl p-3 mb-3">
@@ -706,7 +714,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Usuários Banidos</h3>
-                <button type="button" onclick="closeBanidos()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeBanidos()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Usuários bloqueados de publicar e ver anúncios. Desbanir devolve o acesso ao catálogo.</p>
             <div id="lista-banidos" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div>
@@ -719,7 +727,7 @@
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Seu Carrinho</h3>
-                <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeCarrinho()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <div id="carrinho-itens" class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1"></div>
             <div class="bg-[#050505] p-3.5 rounded-xl border border-[#26211a] mb-4 flex justify-between items-center">
@@ -740,7 +748,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-white">Acesso à Conta</h3>
-                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <div class="flex border-b border-[#26211a] mb-4">
                 <button type="button" class="tab active" onclick="showTab('login', event)">Entrar</button>
@@ -822,7 +830,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
-                <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer">✕</button>
+                <button type="button" onclick="closeVerificarAnuncio()" class="text-gray-400 hover:text-white text-lg cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <p class="text-xs text-[var(--muted)] mb-4">Confirme seu Gmail para receber o código:</p>
             <form onsubmit="confirmarCodigoAnuncio(event)">
@@ -876,7 +884,7 @@
                 <button type="button" onclick="excluirAnuncioAdminSelecionado()" class="w-full bg-red-500/15 text-red-400 border border-red-500/30 py-2.5 rounded-xl font-bold text-xs cursor-pointer">🗑 Excluir Anúncio (Admin)</button>
                 <button type="button" id="btn-banir-detalhes" onclick="alternarBanimentoVendedorSelecionado()" class="w-full bg-amber-500/10 text-amber-400 border border-amber-500/30 py-2.5 rounded-xl font-bold text-xs cursor-pointer">🚫 Banir Vendedor</button>
             </div>
-            <button type="button" onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            <button type="button" onclick="closeDetalhes()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
         </div>
     </div>
 
@@ -933,7 +941,7 @@
                 </button>
                 <button type="button" onclick="closeCheckout()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Voltar</button>
             </div>
-            <button type="button" onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+            <button type="button" onclick="closeCheckout()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
         </div>
     </div>
 
@@ -943,7 +951,7 @@
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
                 <span id="pedido-codigo" class="text-xs font-bold bg-[#1c1812] text-[var(--accent)] px-2.5 py-1 rounded border border-[#2f2920]">Pedido #SO2-0000</span>
-                <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closePagamentoDetalhes()" class="text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
@@ -960,7 +968,7 @@
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
                 <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
-                <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <div id="ticket-status-icone" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold bg-emerald-500/10 text-emerald-400">✓</div>
             <h3 id="ticket-status-titulo" class="text-xl font-bold text-white mb-1">Compra Aprovada!</h3>
@@ -995,7 +1003,7 @@
                         <span class="text-[10px] text-emerald-400 font-medium">● Online</span>
                     </div>
                 </div>
-                <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closeChatSuporte()" class="text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
             </div>
             <div id="chat-mensagens" class="flex-grow overflow-y-auto py-3 space-y-3 text-xs pr-3">
                 <div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[85%]">
@@ -1078,7 +1086,7 @@
                 <button id="btn-publicar-anuncio" type="button" onclick="publicarAnuncioFinal()" class="btn-primary py-3 text-sm">
                     Publicar Conta
                 </button>
-                <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer">✕</button>
+                <button type="button" onclick="closeAnuncioModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm cursor-pointer" aria-label="Fechar">✕</button>
             </div>
         </div>
     </div>
