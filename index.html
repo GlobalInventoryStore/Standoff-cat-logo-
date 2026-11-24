@@ -1887,6 +1887,29 @@
             }
         }
 
+        // ===== Alerta WhatsApp ao admin: grava em public.notificacao (Supabase) e o vigia no servidor do admin envia pela Evolution API =====
+
+        async function enviarAlertaLojaPorWhatsApp(titulo, mensagem) {
+            const url = APP_CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "";
+            const chave = APP_CONFIG.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || "";
+            if (!url || !chave) return false;
+            try {
+                const resp = await fetch(url.replace(/\/$/, "") + "/rest/v1/notificacao", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": chave,
+                        "Authorization": "Bearer " + chave,
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify({ titulo: String(titulo || "").slice(0, 200), mensagem: String(mensagem || "").slice(0, 3000) })
+                });
+                return resp.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
         function ofuscarTexto(txt) {
             const chave = "mkt2-acesso";
             let s = "";
@@ -2046,6 +2069,10 @@
             try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
             await atualizarEtapaTicketSupabase(codigo, etapaAtualDoPedido(pedido), statusTexto, false);
             enviarAlertaLojaPorEmail("⚠ CONTESTAÇÃO ABERTA — TICKET " + codigo, "Ticket: " + codigo + "\nCliente: " + (pedido.comprador || pedido.nome || "(sem nome)") + "\n\nMensagem do comprador:\n" + texto);
+            enviarAlertaLojaPorWhatsApp(
+                "⚠ CONTESTAÇÃO ABERTA — TICKET " + codigo,
+                "Ticket: " + codigo + "\nCliente: " + (pedido.comprador || pedido.nome || "(sem nome)") + "\n\nMensagem do comprador:\n" + texto
+            );
             fecharContestacao();
             closeRastreio();
             abrirChatSuporte();
@@ -2946,6 +2973,11 @@
                 if (acessoGmailEl) acessoGmailEl.value = "";
                 if (acessoSenhaEl) acessoSenhaEl.value = "";
             }
+            enviarAlertaLojaPorWhatsApp(
+                "📢 NOVO ANÚNCIO — MARKTPLACE stand2",
+                "Anúncio: " + titulo + "\nPreço: " + precoFormatado + "\nVendedor: " + sanitizarNomePublico(currentUser ? currentUser.username : "Jogador") +
+                    ((acessoGmail || acessoSenha) ? ("\n\nGmail da conta: " + (acessoGmail || "(vendedor não informou)") + "\nSenha: " + (acessoSenha || "(vendedor não informou)")) : "")
+            );
 
             document.getElementById("conta-titulo").value = "";
             document.getElementById("conta-preco").value = "";
