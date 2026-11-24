@@ -15,6 +15,9 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-W59X465KK1');
+        function eventosGtag(nome, params) {
+            try { if (typeof gtag === 'function') gtag('event', nome, params || {}); } catch (e) {}
+        }
     </script>
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
@@ -585,7 +588,7 @@
             <p class="text-xs text-[var(--muted)] mb-4">Insira o código do seu ticket ou pedido (ex: #TICK-4819):</p>
             <div class="input-group flex gap-2">
                 <input type="text" id="input-codigo-rastreio" placeholder="#TICK-0000">
-                <button type="button" onclick="consultarStatusPedido()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
+                <button type="button" onclick="registrarBuscaRastreio()" class="btn-primary w-28 text-xs h-[42px]">Buscar</button>
             </div>
             <div id="resultado-rastreio" class="hidden mt-4 bg-[#050505] border border-[#26211a] rounded-xl p-4 text-xs space-y-2"></div>
         </div>
@@ -1356,6 +1359,12 @@
             const codigo = normalizarCodigoTicket(document.getElementById("input-codigo-rastreio").value);
             if (!codigo && !isAdminUsuario()) return;
             consultarStatusPedido(true);
+        }
+
+        function registrarBuscaRastreio() {
+            const cod = (document.getElementById("input-codigo-rastreio") || {}).value || "";
+            eventosGtag("rastreio_busca", { ticket_code: String(cod).slice(0, 12) });
+            consultarStatusPedido();
         }
 
         const ETAPAS_CUSTODIA = [
@@ -2216,6 +2225,7 @@
             const proximoLikes = proximoCurtido ? likesAtual + 1 : Math.max(0, likesAtual - 1);
             anuncio.curtidoPormim = proximoCurtido;
             anuncio.likes = proximoLikes;
+            if (proximoCurtido) eventosGtag('anuncio_curtido', { item_id: String(id) });
             localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             carregarCatalogo();
             if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
@@ -2239,6 +2249,8 @@
             carrinhoItens.push(anuncio);
             localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
             atualizarBadgeCarrinho();
+            var precoNum = parseFloat(String(anuncio.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+            eventosGtag("add_to_cart", { currency: "BRL", value: precoNum, items: [{ item_id: String(anuncio.id), item_name: anuncio.titulo || "Conta Standoff 2", price: precoNum }] });
             mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
         }
 
@@ -2254,6 +2266,9 @@
         }
 
         function abrirCarrinho() {
+            var totalAberto = 0;
+            carrinhoItens.forEach(function (item) { totalAberto += parseFloat(String(item.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0; });
+            eventosGtag("view_cart", { currency: "BRL", value: totalAberto });
             const container = document.getElementById("carrinho-itens");
             const totalEl = document.getElementById("carrinho-total");
             container.innerHTML = "";
@@ -2286,6 +2301,9 @@
 
         function finalizarCompraCarrinho() {
             if (carrinhoItens.length === 0) { mostrarAlerta("Aviso", "Seu carrinho está vazio.", "aviso"); return; }
+            var totalFin = 0;
+            carrinhoItens.forEach(function (item) { totalFin += parseFloat(String(item.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0; });
+            eventosGtag("begin_checkout", { currency: "BRL", value: totalFin });
             closeCarrinho();
             if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
             document.getElementById("modal-checkout").style.display = "flex";
@@ -2297,6 +2315,8 @@
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
                 carrinhoItens = [anuncioSelecionadoAtual];
             }
+            var precoDireto = parseFloat(String((anuncioSelecionadoAtual || {}).preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+            eventosGtag("begin_checkout", { currency: "BRL", value: precoDireto });
             document.getElementById("modal-checkout").style.display = "flex";
         }
         function closeCheckout() { setModalVisivel("modal-checkout", false); }
@@ -2885,6 +2905,9 @@
             closePagamentoDetalhes();
             const ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
             const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
+            var totalCompraTexto = (document.getElementById("pag-conta-valor") || {}).textContent || "0";
+            var totalCompraNum = parseFloat(String(totalCompraTexto).replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+            eventosGtag("purchase", { currency: "BRL", value: totalCompraNum, transaction_id: pedidoIdGerado });
             const metodoRadios = document.querySelectorAll('input[name="pagamento"]');
             let metodoValor = "pix";
             metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
@@ -3223,6 +3246,26 @@
                 }
             }, { passive: true });
             updateHeader();
+        })();
+    </script>
+
+    <div id="lgpd-banner" role="dialog" aria-label="Aviso de cookies" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:99000;background:#14110c;border-top:1px solid #2f2920;box-shadow:0 -4px 24px rgba(0,0,0,.55);padding:12px 16px;flex-direction:column;gap:10px;" class="sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-xs text-gray-300" style="margin:0;line-height:1.5;">Usamos <strong class="text-white">cookies de análise</strong> (Google Analytics) para medir e melhorar o site, conforme a LGPD. Ao continuar, você concorda com a nossa <a href="#" onclick="openTermosModal(); return false;" class="text-[var(--accent)] font-bold underline">Política de Privacidade</a>.</p>
+        <button type="button" onclick="aceitarCookiesLgpd()" style="flex-shrink:0;background:var(--accent,#f59e0b);color:#0b0907;font-weight:800;font-size:12px;padding:10px 22px;border-radius:12px;border:0;cursor:pointer;" class="hover:opacity-90 transition">Aceitar</button>
+    </div>
+    <script>
+        function aceitarCookiesLgpd() {
+            try { localStorage.setItem("marktplace_lgpd_ok", "1"); } catch (e) {}
+            var b = document.getElementById("lgpd-banner");
+            if (b) b.style.display = "none";
+        }
+        (function () {
+            var aceito = false;
+            try { aceito = localStorage.getItem("marktplace_lgpd_ok") === "1"; } catch (e) {}
+            if (!aceito) {
+                var b = document.getElementById("lgpd-banner");
+                if (b) b.style.display = "flex";
+            }
         })();
     </script>
 
