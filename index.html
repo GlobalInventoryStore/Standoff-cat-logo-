@@ -32,9 +32,6 @@
 
         html {
             background-color: #0b0907;
-            /* Fundo fauna estilizado: raposa line-art âmbar + pegadas, estático e discreto (SVG inline, sem requisição) */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='none' stroke='%23f59e0b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' opacity='0.07'%3E%3Cpath d='M150 70 L185 150 L120 165 Z'/%3E%3Cpath d='M290 70 L255 150 L320 165 Z'/%3E%3Cpath d='M150 70 C145 130 130 170 165 215 C185 245 220 258 220 258 C220 258 255 245 275 215 C310 170 295 130 290 70'/%3E%3Cpath d='M165 215 C155 245 165 275 185 290 C205 305 220 305 220 305 C220 305 235 305 255 290 C275 275 285 245 275 215'/%3E%3Ccircle cx='190' cy='165' r='6'/%3E%3Ccircle cx='250' cy='165' r='6'/%3E%3Cpath d='M212 205 L228 205 L220 216 Z' fill='%23f59e0b'/%3E%3Cg transform='translate(395 400)'%3E%3Cellipse cx='0' cy='6' rx='13' ry='10'/%3E%3Cellipse cx='-16' cy='-12' rx='5' ry='8' transform='rotate(-20 -16 -12)'/%3E%3Cellipse cx='0' cy='-17' rx='5' ry='8'/%3E%3Cellipse cx='16' cy='-12' rx='5' ry='8' transform='rotate(20 16 -12)'/%3E%3C/g%3E%3Cg transform='translate(90 440) rotate(-25)'%3E%3Cellipse cx='0' cy='6' rx='11' ry='8'/%3E%3Cellipse cx='-13' cy='-11' rx='4' ry='7' transform='rotate(-20 -13 -11)'/%3E%3Cellipse cx='0' cy='-15' rx='4' ry='7'/%3E%3Cellipse cx='13' cy='-11' rx='4' ry='7' transform='rotate(20 13 -11)'/%3E%3C/g%3E%3Cg transform='translate(420 120) rotate(30)'%3E%3Cellipse cx='0' cy='5' rx='9' ry='7'/%3E%3Cellipse cx='-11' cy='-9' rx='3.5' ry='6' transform='rotate(-20 -11 -9)'/%3E%3Cellipse cx='0' cy='-12' rx='3.5' ry='6'/%3E%3Cellipse cx='11' cy='-9' rx='3.5' ry='6' transform='rotate(20 11 -9)'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            background-size: 520px 520px;
         }
 
         body {
@@ -341,20 +338,6 @@
         /* Utilitários de texto */
         .text-track-wide { letter-spacing: 0.15em; }
         .text-track-wider { letter-spacing: 0.25em; }
-        /* Vídeo do squad no rodapé: card pequeno com brilho âmbar, autoplay mudo em loop (leve: 1 vídeo curto, sem JS pesado) */
-        .rodape-video {
-            width: 170px;
-            aspect-ratio: 1 / 1;
-            border-radius: 14px;
-            object-fit: cover;
-            display: block;
-            margin: 12px auto 0;
-            border: 1px solid rgba(245, 158, 11, 0.45);
-            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 18px rgba(245, 158, 11, 0.18);
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .rodape-video { display: none; }
-        }
     </style>
     <script>
         (function initSupabaseSeguro() {
@@ -510,7 +493,6 @@
                     <div class="flex flex-col items-center text-center">
                         <span class="text-2xl font-black text-white tracking-wider uppercase leading-none text-glow mb-1">MARKTPLACE</span>
                         <span class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">stand2</span>
-                        <video class="rodape-video" autoplay muted loop playsinline preload="metadata" src="assets/squad-joinha.mp4" aria-label="O squad do MARKTPLACE stand2 tomando uma selfie, terminando com um joinha e a frase Confia no PIX"></video>
                         <p class="text-[var(--muted)] text-[10px] mt-3 max-w-xs mx-auto leading-relaxed">
                             Plataforma independente de intermediação. Sem vínculo oficial com a Axlebolt ou o Standoff 2.
                         </p>
@@ -1248,13 +1230,6 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Vídeo do rodapé: pausa de verdade se o usuário pede menos movimento (o CSS já esconde)
-            try {
-                if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                    const v = document.querySelector(".rodape-video");
-                    if (v) { v.pause(); v.removeAttribute("autoplay"); }
-                }
-            } catch (e) { /* decorativo: nunca bloqueia o resto */ }
             // Menu hambúrguer: wiring independente — falha em qualquer inicialização abaixo não pode deixar o botão morto
             try {
                 const hamburgerBtn = document.getElementById("hamburger-btn");
