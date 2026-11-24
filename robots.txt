@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://globalinventorystore.github.io/Standoff-cat-logo-/sitemap.xml
