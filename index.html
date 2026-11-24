@@ -981,7 +981,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Preço R$</label>
-                        <input id="conta-preco" type="text" placeholder="150,00">
+                        <input id="conta-preco" type="text" inputmode="decimal" placeholder="150,00" oninput="atualizarRecebimentoVendedor()">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Rank</label>
@@ -997,6 +997,7 @@
                         </select>
                     </div>
                 </div>
+                <div id="info-comissao" class="hidden rounded-xl border border-emerald-500/25 bg-[#10231a] p-3"></div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Vínculo</label>
                     <select id="conta-vinculo">
@@ -1715,6 +1716,7 @@
             }
             document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
             setModalVisivel("modal-anuncio", true);
+            atualizarRecebimentoVendedor();
         }
         function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
@@ -1774,8 +1776,27 @@
             feedback.textContent = "";
             document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
             setModalVisivel("modal-anuncio", true);
+            atualizarRecebimentoVendedor();
         }
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
+
+        function calcularComissaoVendedor(preco) {
+            if (preco <= 100) return { taxa: 3, regra: "taxa fixa de R$3" };
+            if (preco <= 250) return { taxa: preco * 0.06, regra: "comissão de 6%" };
+            return { taxa: preco * 0.07, regra: "comissão de 7%" };
+        }
+
+        function atualizarRecebimentoVendedor() {
+            const brute = parseFloat(String(document.getElementById("conta-preco").value || "").replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
+            const box = document.getElementById("info-comissao");
+            if (!brute) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+            const { taxa, regra } = calcularComissaoVendedor(brute);
+            const recebe = Math.max(0, brute - taxa);
+            const fmt = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(recebe) + '</p>' +
+                '<p class="text-[10px] text-gray-400 mt-0.5">Comissão da loja: ' + fmt(taxa) + ' (' + regra + ') — só é cobrada quando a conta vender.</p>';
+            box.classList.remove("hidden");
+        }
 
         async function enviarCodigoGmail() {
             const email = document.getElementById("reg-email").value.trim();
