@@ -450,13 +450,18 @@
         </div>
     </div>
 
-    <!-- Balão Flutuante de Chat no Canto Esquerdo -->
+    <!-- Animação Flutuante do Squad no Canto Esquerdo (abre o chat de ajuda) -->
     <div class="fixed bottom-5 left-5 z-[9998]">
-        <button type="button" onclick="abrirChatSuporte()" class="bg-[#16130e] hover:bg-[#1a1a1a] border border-[#333] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition cursor-pointer group-hover:border-[var(--accent)] group-hover:shadow-[0_0_20px_var(--accent-glow)]">
-            <span class="text-xl">💬</span>
-            <span class="text-xs font-bold hidden group-hover:inline-block pr-1 text-[var(--accent)]">Suporte & Bot</span>
+        <button type="button" onclick="abrirChatSuporte()" aria-label="Abrir suporte" class="block cursor-pointer rounded-2xl overflow-hidden border border-[#333] shadow-2xl transition hover:border-[var(--accent)] hover:shadow-[0_0_20px_var(--accent-glow)]">
+            <video id="video-squad-suporte" src="assets/trio-joinha.mp4" autoplay muted loop playsinline preload="metadata" class="block w-[72px] h-auto pointer-events-none select-none"></video>
         </button>
     </div>
+    <script>
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            const vss = document.getElementById("video-squad-suporte");
+            if (vss) { vss.pause(); vss.removeAttribute("autoplay"); vss.removeAttribute("loop"); vss.classList.add("opacity-80"); }
+        }
+    </script>
 
     <!-- Conteúdo Principal -->
     <main class="flex-grow max-w-7xl mx-auto w-full px-6 pb-12">
