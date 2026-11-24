@@ -1040,6 +1040,23 @@
         </div>
     </div>
 
+    <!-- Modal Contestação do comprador -->
+    <div id="modal-contestacao" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
+        <div class="bg-[#16130e] border border-red-500/30 w-full max-w-sm rounded-[20px] p-5 relative shadow-2xl max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="fecharContestacao()" class="absolute top-3 right-3 min-w-[36px] min-h-[36px] flex items-center justify-center text-red-400 hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h3 class="text-base font-bold text-red-400 mb-1">Tenho um problema</h3>
+            <p class="text-[11px] text-gray-400 mb-3 leading-relaxed">Escolha o que aconteceu. O prazo da venda fica pausado e a mensagem abaixo é enviada ao suporte com o código do seu ticket. <strong class="text-amber-300">Avise sempre dentro das 24 horas.</strong></p>
+            <div class="space-y-1.5 mb-3 text-[11px] text-gray-200">
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="2fa" checked onchange="atualizarTextoContestacao()" class="mt-0.5"> A conta veio com verificação em duas etapas (2FA)</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="itens" onchange="atualizarTextoContestacao()" class="mt-0.5"> Os itens não são como no anúncio</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="recuperada" onchange="atualizarTextoContestacao()" class="mt-0.5"> A conta foi bloqueada ou recuperada pelo vendedor</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="outro" onchange="atualizarTextoContestacao()" class="mt-0.5"> Outro problema</label>
+            </div>
+            <textarea id="contestacao-texto" rows="6" class="w-full bg-[#050505] border border-[#26211a] rounded-xl p-2.5 text-[11px] text-white leading-relaxed focus:outline-none focus:border-[var(--accent)] mb-3" placeholder="Descreva o problema..."></textarea>
+            <button type="button" onclick="confirmarContestacaoComprador()" class="w-full bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 py-2.5 rounded-xl text-xs font-bold cursor-pointer">⚠ Abrir contestação e enviar ao suporte</button>
+        </div>
+    </div>
+
     <!-- Modal Como Funcionamos -->
     <div id="modal-como-funcionamos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
         <div class="bg-[#16130e] border border-[#2b251c] rounded-[20px] p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
@@ -1415,8 +1432,8 @@
                 blocoComprador = `<div class="mt-2 bg-red-500/10 border border-red-500/30 rounded-xl p-2.5"><p class="text-[11px] text-red-300 font-bold">⚠ Pedido em contestação</p><p class="text-[11px] text-gray-300">O prazo de conclusão está pausado. Use o botão de suporte abaixo para resolver seu caso.</p></div>`;
             } else if (pedido && !ticketConcluido(pedido) && etapaAtual === 4 && ticketPertenceAoUsuario(pedido)) {
                 const restaMs = pedido.entregaEm ? (new Date(pedido.entregaEm).getTime() + PRAZO_AUTO_CONCLUSAO_MS - Date.now()) : null;
-                const restaTxt = (restaMs && restaMs > 0) ? `Conclui sozinho em ${Math.ceil(restaMs / 3600000)}h se ninguém contestar. ` : "";
-                blocoComprador = `<div class="mt-2 border-t border-emerald-500/30 pt-2"><p class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Você já recebeu os dados da conta?</p><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-1.5 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Entrei na conta e confirmei que os itens estão lá</label><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-2 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Já troquei e-mail/senha e removi a verificação em duas etapas</label><button type="button" onclick="confirmarRecebimentoComprador('${escapeHtml(pedido.ticketId)}')" class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 py-2 rounded-xl text-xs font-bold cursor-pointer">✓ Confirmar Recebimento</button><button type="button" onclick="abrirContestacaoComprador('${escapeHtml(pedido.ticketId)}')" class="mt-1.5 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 py-2 rounded-xl text-[11px] cursor-pointer">⚠ Tenho um problema contestar</button><p class="text-[10px] text-gray-500 mt-1.5">${restaTxt}Confirmando aqui, a venda fecha na hora.</p></div>`;
+                const restaTxt = (restaMs && restaMs > 0) ? `⏳ Tempo restante: <span class="text-amber-300 font-bold">${formatarRestanteAuto(restaMs)}</span>` : `<span class="text-red-300 font-bold">⏰ Prazo de 24h expirando — a venda fecha em instantes se ninguém abrir problema.</span>`;
+                blocoComprador = `<div class="mt-3 rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-3.5"><p class="text-[13px] font-extrabold uppercase tracking-wide text-amber-400 text-center">⏰ Aviso importante — você tem 24 horas</p><div class="mt-2 space-y-1.5 text-[12px] text-gray-200 leading-relaxed"><p>• Você já recebeu os dados da conta. Agora você tem <strong class="text-amber-300">24 horas</strong> para confirmar o recebimento abaixo ou avisar sobre um problema.</p><p>• Se depois de 24 horas você não confirmar e nem abrir problema, a venda é <strong class="text-amber-300">concluída automaticamente</strong> e o dinheiro é liberado ao vendedor.</p><p>• A conta chegou com verificação em duas etapas (2FA) ou e-mail de recuperação? <strong class="text-red-300">Avise AGORA pelo botão "Tenho um problema"</strong> — dentro do prazo. A conta precisa ser devolvida limpa (sem 2FA e sem tentativa de recuperação), senão o direito ao reembolso é perdido.</p></div><p class="text-center text-[11px] mt-2">${restaTxt}</p></div><div class="mt-2 border-t border-emerald-500/30 pt-2"><p class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Você já recebeu os dados da conta?</p><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-1.5 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Entrei na conta e confirmei que os itens estão lá (sem 2FA e sem tentativa de recuperação)</label><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-2 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Já troquei e-mail/senha e mantive a conta limpa</label><button type="button" onclick="confirmarRecebimentoComprador('${escapeHtml(pedido.ticketId)}')" class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 py-2 rounded-xl text-xs font-bold cursor-pointer">✓ Confirmar Recebimento</button><button type="button" onclick="abrirContestacaoComprador('${escapeHtml(pedido.ticketId)}')" class="mt-1.5 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 py-2 rounded-xl text-[11px] cursor-pointer">⚠ Tenho um problema</button><p class="text-[10px] text-gray-500 mt-1.5">Confirmando aqui, a venda fecha na hora.</p></div>`;
             }
             return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${blocoComprador}${botaoSuporte}`;
         }
@@ -1963,22 +1980,66 @@
             consultarStatusPedido();
         }
 
-        async function abrirContestacaoComprador(ticketId) {
+        let ticketContestacaoAtual = null;
+
+        const TEXTOS_CONTESTACAO = {
+            "2fa": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Subi com os dados que recebi e a conta JÁ está com verificação em duas etapas (2FA) ativa — não consigo acessar. Aviso dentro do prazo de 24 horas: sei que a conta precisa ser devolvida limpa (sem 2FA e sem tentativa de recuperação de e-mail/senha), senão perco o direito ao reembolso. Preciso de solução imediata ou reembolso.`,
+            "itens": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas: entrei na conta e os itens NÃO são como no anúncio (estão faltando/diferentes). Peço verificação do anúncio pelo suporte. Se não for resolvido, quero o reembolso.`,
+            "recuperada": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas: a conta foi bloqueada ou recuperada pelo vendedor depois que recebi os dados. Perdi o acesso. Preciso do reembolso ou da devolução do acesso.`,
+            "outro": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas. Problema: `
+        };
+
+        function abrirContestacaoComprador(ticketId) {
             const codigo = normalizarCodigoTicket(ticketId);
             const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
             if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
             if (!ticketPertenceAoUsuario(pedido)) { mostrarAlerta("Ops", "Somente o comprador deste pedido pode contestar.", "aviso"); return; }
             if (ticketConcluido(pedido)) { mostrarAlerta("Info", "Este ticket já está concluído; fale com o suporte.", "aviso"); return; }
+            ticketContestacaoAtual = codigo;
+            const sel = document.querySelector('input[name="contestacao-opcao"][value="2fa"]');
+            if (sel) sel.checked = true;
+            atualizarTextoContestacao();
+            document.getElementById("modal-contestacao").style.display = "flex";
+        }
+
+        function fecharContestacao() {
+            document.getElementById("modal-contestacao").style.display = "none";
+            ticketContestacaoAtual = null;
+        }
+
+        function atualizarTextoContestacao() {
+            const checado = document.querySelector('input[name="contestacao-opcao"]:checked');
+            const opcao = checado ? checado.value : "2fa";
+            const gerador = TEXTOS_CONTESTACAO[opcao] || TEXTOS_CONTESTACAO["2fa"];
+            document.getElementById("contestacao-texto").value = gerador(ticketContestacaoAtual);
+        }
+
+        async function confirmarContestacaoComprador() {
+            const texto = (document.getElementById("contestacao-texto").value || "").trim();
+            if (texto.length < 20) { mostrarAlerta("Antes de enviar", "Complete a descrição do problema antes de enviar.", "aviso"); return; }
+            const codigo = ticketContestacaoAtual || normalizarCodigoTicket(texto);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
             const statusTexto = "Em contestação — prazo de conclusão pausado; suporte verificando";
             pedido.contestacao = true;
             pedido.status = statusTexto;
             try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
             await atualizarEtapaTicketSupabase(codigo, etapaAtualDoPedido(pedido), statusTexto, false);
-            mostrarAlerta("Contestação Aberta", "O prazo de conclusão foi pausado e a loja vai analisar seu caso pelo suporte oficial.");
-            consultarStatusPedido();
+            fecharContestacao();
+            closeRastreio();
+            abrirChatSuporte();
+            const input = document.getElementById("chat-input-texto");
+            input.value = texto;
+            enviarMensagemSuporte();
         }
 
-        const PRAZO_AUTO_CONCLUSAO_MS = 48 * 60 * 60 * 1000;
+        const PRAZO_AUTO_CONCLUSAO_MS = 24 * 60 * 60 * 1000;
+
+        function formatarRestanteAuto(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            return h > 0 ? `${h}h ${String(m).padStart(2, "0")}min` : `${m}min`;
+        }
 
         async function processarAutoConclusao() {
             let mudou = false;
@@ -1988,7 +2049,7 @@
                 if (etapaAtualDoPedido(p) < 4 || !p.entregaEm) continue;
                 const entregaTs = new Date(p.entregaEm).getTime();
                 if (!(entregaTs >= 0) || (Date.now() - entregaTs) < PRAZO_AUTO_CONCLUSAO_MS) continue;
-                const statusTexto = "Concluído automaticamente — 48h sem contestação, pagamento liberado ao vendedor";
+                const statusTexto = "Concluído automaticamente — 24h sem contestação, pagamento liberado ao vendedor";
                 p.etapa = 5;
                 p.concluido = true;
                 p.concluidoEm = new Date().toISOString();
