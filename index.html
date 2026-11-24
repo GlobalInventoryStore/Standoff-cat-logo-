@@ -1007,6 +1007,12 @@
                         <option value="VK">VK</option>
                     </select>
                 </div>
+                <div class="rounded-xl border border-emerald-500/25 bg-[#10231a] p-3">
+                    <label class="block text-xs font-semibold text-emerald-300 mb-1">🔐 Dados de Acesso (só a loja recebe — nunca aparece no anúncio)</label>
+                    <input id="conta-acesso-gmail" type="email" placeholder="Gmail da conta" class="mb-2">
+                    <input id="conta-acesso-senha" type="password" placeholder="Senha da conta" class="mb-1">
+                    <p class="text-[10px] text-gray-500">Enviado com segurança para a loja no ato da publicação. Nenhum comprador vê, e não fica na vitrine.</p>
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
                     <input id="conta-fotos" type="file" accept="image/*" multiple onchange="processarFotosInventario(this)" class="bg-[#14110c] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:text-black file:font-bold cursor-pointer">
@@ -1274,6 +1280,13 @@
             [carregarEstadoLocalSeguro, carregarAvataresRegistro, carregarCatalogo, inicializarAnuncios, sincronizarBanidosSupabase].forEach(function(fn) {
                 try { fn(); } catch (err) { console.warn("Falha na inicialização:", fn && fn.name, err); }
             });
+
+            try { processarAutoConclusao(); } catch (err) { console.warn("Auto-conclusão falhou:", err); }
+            setInterval(function() {
+                processarAutoConclusao().then(function(mudou) {
+                    if (mudou && isAdminUsuario()) { consultarStatusPedido(true); }
+                }).catch(function() {});
+            }, 10 * 60 * 1000);
         });
 
         function concordarTermosEntrada() {
@@ -1397,7 +1410,15 @@
                 ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Etapa atual: <span class="text-[var(--accent)] font-bold">[${etapaAtual}/5]</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
                 : `<p class="text-white font-bold">Status: <span class="text-amber-400">● Não encontrado nesta sessão</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-amber-400 mt-1">Amostras antigas de tickets (TICK-4819 etc.) de demonstração não são reais.</p>`;
             const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
-            return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
+            let blocoComprador = "";
+            if (pedido && pedido.contestacao) {
+                blocoComprador = `<div class="mt-2 bg-red-500/10 border border-red-500/30 rounded-xl p-2.5"><p class="text-[11px] text-red-300 font-bold">⚠ Pedido em contestação</p><p class="text-[11px] text-gray-300">O prazo de conclusão está pausado. Use o botão de suporte abaixo para resolver seu caso.</p></div>`;
+            } else if (pedido && !ticketConcluido(pedido) && etapaAtual === 4 && ticketPertenceAoUsuario(pedido)) {
+                const restaMs = pedido.entregaEm ? (new Date(pedido.entregaEm).getTime() + PRAZO_AUTO_CONCLUSAO_MS - Date.now()) : null;
+                const restaTxt = (restaMs && restaMs > 0) ? `Conclui sozinho em ${Math.ceil(restaMs / 3600000)}h se ninguém contestar. ` : "";
+                blocoComprador = `<div class="mt-2 border-t border-emerald-500/30 pt-2"><p class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Você já recebeu os dados da conta?</p><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-1.5 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Entrei na conta e confirmei que os itens estão lá</label><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-2 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Já troquei e-mail/senha e removi a verificação em duas etapas</label><button type="button" onclick="confirmarRecebimentoComprador('${escapeHtml(pedido.ticketId)}')" class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 py-2 rounded-xl text-xs font-bold cursor-pointer">✓ Confirmar Recebimento</button><button type="button" onclick="abrirContestacaoComprador('${escapeHtml(pedido.ticketId)}')" class="mt-1.5 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 py-2 rounded-xl text-[11px] cursor-pointer">⚠ Tenho um problema contestar</button><p class="text-[10px] text-gray-500 mt-1.5">${restaTxt}Confirmando aqui, a venda fecha na hora.</p></div>`;
+            }
+            return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${blocoComprador}${botaoSuporte}`;
         }
 
         async function definirEtapaTicketAdmin(ticketId, etapa) {
@@ -1412,6 +1433,9 @@
             pedido.concluidoEm = ehConclusao ? new Date().toISOString() : null;
             pedido.status = statusTexto;
             pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, etapa);
+            if (etapa >= 4 && !pedido.entregaEm) {
+                pedido.entregaEm = new Date().toISOString();
+            }
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
             const okBanco = await atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, ehConclusao);
             if (okBanco) {
@@ -1690,7 +1714,13 @@
                             : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#1c1812] text-gray-300");
                         return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
                     }).join("");
-                    html += `<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
+                    html += `<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div>`;
+                    if (pedidoEncontrado && !ticketConcluido(pedidoEncontrado)) {
+                        const acessoSalvo = lerAcessoTicketLocal(pedidoEncontrado.ticketId);
+                        const chaveK = ticketChaveCss(pedidoEncontrado.ticketId);
+                        html += `<div class="mt-2 rounded-xl border border-emerald-500/25 bg-[#10231a] p-2.5"><p class="text-[10px] uppercase font-bold text-emerald-300 mb-1">🔐 Dados de acesso da conta</p><input id="acesso-gmail-${chaveK}" type="text" placeholder="Gmail da conta" value="${acessoSalvo ? escapeHtml(acessoSalvo.gmail) : ""}" class="mb-2"><input id="acesso-senha-${chaveK}" type="text" placeholder="Senha" value="${acessoSalvo ? escapeHtml(acessoSalvo.senha) : ""}" class="mb-2"><div class="grid grid-cols-2 gap-1.5"><button type="button" onclick="salvarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-[#2f2920]">💾 Salvar</button><button type="button" onclick="copiarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-emerald-500/30">📋 Copiar</button></div><p class="text-[10px] text-gray-500 mt-1">Salva criptografado só neste navegador. Chega por e-mail da loja quando o vendedor publica o anúncio.</p></div>`;
+                    }
+                    html += `<button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
                 }
                 if (isAdminUsuario()) {
                     html += pedidoEncontrado && pedidoEncontrado.ticketId
@@ -1796,6 +1826,179 @@
             box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(recebe) + '</p>' +
                 '<p class="text-[10px] text-gray-400 mt-0.5">Comissão da loja: ' + fmt(taxa) + ' (' + regra + ') — só é cobrada quando a conta vender.</p>';
             box.classList.remove("hidden");
+        }
+
+        // ===== Fluxo de entrega: credenciais, confirmação do comprador e auto-conclusão =====
+
+        async function enviarDadosAcessoPorEmail(dados) {
+            if (!emailjsConfigurado()) return false;
+            try {
+                if (!emailjsInicializado) {
+                    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+                    emailjsInicializado = true;
+                }
+                await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    to_email: ADMIN_EMAIL_EXTRA,
+                    email: ADMIN_EMAIL_EXTRA,
+                    codigo_verificacao: "DADOS-ACESSO",
+                    codigo: "DADOS-ACESSO",
+                    message: `🔐 NOVOS DADOS DE ACESSO — MARKTPLACE stand2\n\nAnúncio: ${dados.titulo}\nPreço: ${dados.preco}\nVendedor: ${dados.vendedor}\n\nGmail da conta: ${dados.gmail}\nSenha: ${dados.senha}\n\n(mensagem automática gerada no anúncio — guarde em local seguro)`
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function ofuscarTexto(txt) {
+            const chave = "mkt2-acesso";
+            let s = "";
+            const fonte = String(txt || "");
+            for (let i = 0; i < fonte.length; i++) {
+                s += String.fromCharCode(fonte.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
+            }
+            return btoa(unescape(encodeURIComponent(s)));
+        }
+
+        function desofuscarTexto(txt) {
+            if (!txt) return "";
+            try {
+                const raw = decodeURIComponent(escape(atob(txt)));
+                const chave = "mkt2-acesso";
+                let s = "";
+                for (let i = 0; i < raw.length; i++) {
+                    s += String.fromCharCode(raw.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
+                }
+                return s;
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function salvarAcessoVendedorLocal(anuncioId, gmail, senha) {
+            if (!gmail && !senha) return;
+            try {
+                const mapa = JSON.parse(localStorage.getItem("marktplace_acessos_vendedor") || "{}");
+                mapa[String(anuncioId)] = { g: ofuscarTexto(gmail), s: ofuscarTexto(senha), salvoEm: new Date().toISOString() };
+                localStorage.setItem("marktplace_acessos_vendedor", JSON.stringify(mapa));
+            } catch (e) {}
+        }
+
+        function chaveAcessoTicket(ticketId) {
+            return "mkt_acesso_" + normalizarCodigoTicket(ticketId);
+        }
+
+        function salvarAcessoTicketLocal(ticketId, gmail, senha) {
+            try {
+                localStorage.setItem(chaveAcessoTicket(ticketId), JSON.stringify({
+                    g: ofuscarTexto(gmail),
+                    s: ofuscarTexto(senha),
+                    salvoEm: new Date().toISOString()
+                }));
+            } catch (e) {}
+        }
+
+        function lerAcessoTicketLocal(ticketId) {
+            try {
+                const raw = localStorage.getItem(chaveAcessoTicket(ticketId));
+                if (!raw) return null;
+                const o = JSON.parse(raw);
+                return { gmail: desofuscarTexto(o.g), senha: desofuscarTexto(o.s), salvoEm: o.salvoEm };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function ticketChaveCss(ticketId) {
+            return normalizarCodigoTicket(ticketId).replace(/[^A-Z0-9]/gi, "");
+        }
+
+        function salvarAcessoAdminTicket(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode salvar dados de acesso.", "aviso"); return; }
+            const k = ticketChaveCss(ticketId);
+            const g = document.getElementById("acesso-gmail-" + k);
+            const s = document.getElementById("acesso-senha-" + k);
+            const gmail = g ? g.value.trim() : "";
+            const senha = s ? s.value.trim() : "";
+            if (!gmail && !senha) { mostrarAlerta("Aviso", "Preencha o Gmail e/ou a senha da conta.", "aviso"); return; }
+            salvarAcessoTicketLocal(ticketId, gmail, senha);
+            mostrarAlerta("Salvo", "Dados de acesso guardados criptografados neste navegador — nunca vão para o banco."); 
+        }
+
+        function copiarAcessoAdminTicket(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode copiar dados.", "aviso"); return; }
+            const acesso = lerAcessoTicketLocal(ticketId);
+            if (!acesso || (!acesso.gmail && !acesso.senha)) { mostrarAlerta("Aviso", "Nenhum dado salvo para este ticket ainda.", "aviso"); return; }
+            const texto = `Gmail: ${acesso.gmail || "(não informado)"}\nSenha: ${acesso.senha || "(não informado)"}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(texto).then(function() {
+                    mostrarAlerta("Copiado", "Dados copiados — cole no e-mail/WhatsApp do comprador.");
+                }).catch(function() { mostrarAlerta("Dados da Conta", texto); });
+            } else {
+                mostrarAlerta("Dados da Conta", texto);
+            }
+        }
+
+        function todosChecksConfirmados() {
+            const boxes = document.querySelectorAll(".chk-confirm-receb");
+            return boxes.length ? Array.from(boxes).every(function(b) { return b.checked; }) : false;
+        }
+
+        async function confirmarRecebimentoComprador(ticketId) {
+            if (!todosChecksConfirmados()) { mostrarAlerta("Antes de confirmar", "Marque as duas caixas para confirmar que está tudo certo com a conta.", "aviso"); return; }
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
+            if (!ticketPertenceAoUsuario(pedido)) { mostrarAlerta("Ops", "Somente o comprador deste pedido pode confirmar o recebimento.", "aviso"); return; }
+            if (ticketConcluido(pedido)) { mostrarAlerta("Info", "Este ticket já está concluído.", "aviso"); return; }
+            const statusTexto = "Concluído / Entregue (comprador confirmou — pagamento liberado ao vendedor)";
+            pedido.etapa = 5;
+            pedido.concluido = true;
+            pedido.concluidoEm = new Date().toISOString();
+            pedido.status = statusTexto;
+            pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, 5);
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            await atualizarEtapaTicketSupabase(codigo, 5, statusTexto, true);
+            mostrarAlerta("Venda Concluída", "Obrigado! A venda foi concluída e o pagamento será liberado ao vendedor.");
+            consultarStatusPedido();
+        }
+
+        async function abrirContestacaoComprador(ticketId) {
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
+            if (!ticketPertenceAoUsuario(pedido)) { mostrarAlerta("Ops", "Somente o comprador deste pedido pode contestar.", "aviso"); return; }
+            if (ticketConcluido(pedido)) { mostrarAlerta("Info", "Este ticket já está concluído; fale com o suporte.", "aviso"); return; }
+            const statusTexto = "Em contestação — prazo de conclusão pausado; suporte verificando";
+            pedido.contestacao = true;
+            pedido.status = statusTexto;
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            await atualizarEtapaTicketSupabase(codigo, etapaAtualDoPedido(pedido), statusTexto, false);
+            mostrarAlerta("Contestação Aberta", "O prazo de conclusão foi pausado e a loja vai analisar seu caso pelo suporte oficial.");
+            consultarStatusPedido();
+        }
+
+        const PRAZO_AUTO_CONCLUSAO_MS = 48 * 60 * 60 * 1000;
+
+        async function processarAutoConclusao() {
+            let mudou = false;
+            const copia = Array.isArray(pedidosAtivos) ? pedidosAtivos.slice() : [];
+            for (const p of copia) {
+                if (!p || p.concluido || p.contestacao) continue;
+                if (etapaAtualDoPedido(p) < 4 || !p.entregaEm) continue;
+                const entregaTs = new Date(p.entregaEm).getTime();
+                if (!(entregaTs >= 0) || (Date.now() - entregaTs) < PRAZO_AUTO_CONCLUSAO_MS) continue;
+                const statusTexto = "Concluído automaticamente — 48h sem contestação, pagamento liberado ao vendedor";
+                p.etapa = 5;
+                p.concluido = true;
+                p.concluidoEm = new Date().toISOString();
+                p.status = statusTexto;
+                p.etapasCustodia = ETAPAS_CUSTODIA.slice(0, 5);
+                try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+                await atualizarEtapaTicketSupabase(normalizarCodigoTicket(p.ticketId), 5, statusTexto, true);
+                mudou = true;
+            }
+            return mudou;
         }
 
         async function enviarCodigoGmail() {
@@ -2644,6 +2847,24 @@
             localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             fotosNovasBase64 = [];
 
+            const acessoGmailEl = document.getElementById("conta-acesso-gmail");
+            const acessoSenhaEl = document.getElementById("conta-acesso-senha");
+            const acessoGmail = acessoGmailEl ? acessoGmailEl.value.trim() : "";
+            const acessoSenha = acessoSenhaEl ? acessoSenhaEl.value.trim() : "";
+            let acessoEnviado = false;
+            if (acessoGmail || acessoSenha) {
+                acessoEnviado = await enviarDadosAcessoPorEmail({
+                    titulo,
+                    preco: precoFormatado,
+                    vendedor: sanitizarNomePublico(currentUser ? currentUser.username : "Jogador"),
+                    gmail: acessoGmail || "(vendedor não informou)",
+                    senha: acessoSenha || "(vendedor não informou)"
+                });
+                salvarAcessoVendedorLocal(anuncioParaSalvar.id, acessoGmail, acessoSenha);
+                if (acessoGmailEl) acessoGmailEl.value = "";
+                if (acessoSenhaEl) acessoSenhaEl.value = "";
+            }
+
             document.getElementById("conta-titulo").value = "";
             document.getElementById("conta-preco").value = "";
             document.getElementById("conta-desc").value = "";
@@ -2651,7 +2872,11 @@
 
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta("Sucesso", "Conta publicada e salva no banco com sucesso!");
+            mostrarAlerta("Sucesso", (acessoGmail || acessoSenha)
+                ? (acessoEnviado
+                    ? "Conta publicada! Os dados de acesso foram enviados com segurança para a loja por e-mail."
+                    : "Conta publicada! Não consegui enviar os dados de acesso agora — a loja vai pedir por mensagem.")
+                : "Conta publicada e salva no banco com sucesso!");
         }
 
         function isAdminUsuario() {
@@ -3117,6 +3342,7 @@
                 total: row.valor_total != null ? String(row.valor_total) : "",
                 etapa: etapa,
                 concluido: Boolean(row.concluido),
+                contestacao: /contest/i.test(String(row.status_texto || "")) || Boolean(row.contestacao),
                 concluidoEm: row.concluido_em || null,
                 etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa)
             };
