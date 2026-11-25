@@ -303,12 +303,11 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.9);
         }
 
-        /* Rodapé: sempre no fluxo normal da página, nunca fixo/flutuante sobre cards */
+        /* Rodapé: fluxo normal da página, após todo o conteúdo */
         footer.site-footer {
-            position: relative !important;
-            z-index: 0;
+            position: relative;
+            width: 100%;
             margin-top: auto;
-            max-width: 100%;
             overflow-x: hidden;
         }
         main.conteudo-principal {
