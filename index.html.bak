@@ -981,7 +981,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Preço R$</label>
-                        <input id="conta-preco" type="text" placeholder="150,00">
+                        <input id="conta-preco" type="text" inputmode="decimal" placeholder="150,00" oninput="atualizarRecebimentoVendedor()">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Rank</label>
@@ -997,6 +997,7 @@
                         </select>
                     </div>
                 </div>
+                <div id="info-comissao" class="hidden rounded-xl border border-emerald-500/25 bg-[#10231a] p-3"></div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Vínculo</label>
                     <select id="conta-vinculo">
@@ -1005,6 +1006,16 @@
                         <option value="Facebook">Facebook</option>
                         <option value="VK">VK</option>
                     </select>
+                </div>
+                <div class="rounded-xl border border-emerald-500/40 bg-[#10231a] p-3">
+                    <label class="block text-xs font-semibold text-emerald-300 mb-1">🔐 Dados de Acesso (só a loja recebe — nunca aparece no anúncio)</label>
+                    <div class="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5">
+                        <p class="text-[11px] font-bold text-amber-300 mb-1">⚡ Adicione os dados agora e venda mais rápido</p>
+                        <p class="text-[10px] text-gray-300 leading-relaxed">Ao informar o Gmail e a senha da conta ainda na publicação, quando alguém comprar a entrega ao comprador é imediata — sem precisar te chamar depois. A venda é concluída e seu repasse liberado mais rápido. Sem esses dados, o suporte precisa te procurar e o processo demora mais.</p>
+                    </div>
+                    <input id="conta-acesso-gmail" type="email" placeholder="Gmail da conta" class="mb-2">
+                    <input id="conta-acesso-senha" type="password" placeholder="Senha da conta" class="mb-1">
+                    <p class="text-[10px] text-gray-500">Enviado com segurança para a loja no ato da publicação. Nenhum comprador vê, e não fica na vitrine.</p>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--muted)] mb-1">Fotos (Até 7) - Compressão em Cor Natural</label>
@@ -1030,6 +1041,23 @@
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
             <p id="alerta-texto" class="text-xs text-[var(--muted)] mb-5 leading-relaxed"></p>
             <button type="button" onclick="fecharAlerta()" class="btn-primary py-2.5 text-xs">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal Contestação do comprador -->
+    <div id="modal-contestacao" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
+        <div class="bg-[#16130e] border border-red-500/30 w-full max-w-sm rounded-[20px] p-5 relative shadow-2xl max-h-[88dvh] overflow-y-auto">
+            <button type="button" onclick="fecharContestacao()" class="absolute top-3 right-3 min-w-[36px] min-h-[36px] flex items-center justify-center text-red-400 hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
+            <h3 class="text-base font-bold text-red-400 mb-1">Tenho um problema</h3>
+            <p class="text-[11px] text-gray-400 mb-3 leading-relaxed">Escolha o que aconteceu. O prazo da venda fica pausado e a mensagem abaixo é enviada ao suporte com o código do seu ticket. <strong class="text-amber-300">Avise sempre dentro das 24 horas.</strong></p>
+            <div class="space-y-1.5 mb-3 text-[11px] text-gray-200">
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="2fa" checked onchange="atualizarTextoContestacao()" class="mt-0.5"> A conta veio com verificação em duas etapas (2FA)</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="itens" onchange="atualizarTextoContestacao()" class="mt-0.5"> Os itens não são como no anúncio</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="recuperada" onchange="atualizarTextoContestacao()" class="mt-0.5"> A conta foi bloqueada ou recuperada pelo vendedor</label>
+                <label class="flex items-start gap-2 cursor-pointer bg-[#1c1812] border border-[#2f2920] rounded-xl px-3 py-2 hover:border-red-500/40"><input type="radio" name="contestacao-opcao" value="outro" onchange="atualizarTextoContestacao()" class="mt-0.5"> Outro problema</label>
+            </div>
+            <textarea id="contestacao-texto" rows="6" class="w-full bg-[#050505] border border-[#26211a] rounded-xl p-2.5 text-[11px] text-white leading-relaxed focus:outline-none focus:border-[var(--accent)] mb-3" placeholder="Descreva o problema..."></textarea>
+            <button type="button" onclick="confirmarContestacaoComprador()" class="w-full bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 py-2.5 rounded-xl text-xs font-bold cursor-pointer">⚠ Abrir contestação e enviar ao suporte</button>
         </div>
     </div>
 
@@ -1273,6 +1301,13 @@
             [carregarEstadoLocalSeguro, carregarAvataresRegistro, carregarCatalogo, inicializarAnuncios, sincronizarBanidosSupabase].forEach(function(fn) {
                 try { fn(); } catch (err) { console.warn("Falha na inicialização:", fn && fn.name, err); }
             });
+
+            try { processarAutoConclusao(); } catch (err) { console.warn("Auto-conclusão falhou:", err); }
+            setInterval(function() {
+                processarAutoConclusao().then(function(mudou) {
+                    if (mudou && isAdminUsuario()) { consultarStatusPedido(true); }
+                }).catch(function() {});
+            }, 10 * 60 * 1000);
         });
 
         function concordarTermosEntrada() {
@@ -1396,7 +1431,15 @@
                 ? `<p class="text-white font-bold">Status: <span class="text-emerald-400">● ${escapeHtml(pedido.status)}</span></p><p class="text-gray-400">Etapa atual: <span class="text-[var(--accent)] font-bold">[${etapaAtual}/5]</span></p><p class="text-gray-400">Itens: ${escapeHtml(pedido.itens)}</p><p class="text-gray-400">Total: <span class="text-white">${escapeHtml(pedido.total)}</span></p><p class="text-[10px] text-gray-500 mt-1">Ticket: <strong>${escapeHtml(pedido.ticketId)}</strong></p>`
                 : `<p class="text-white font-bold">Status: <span class="text-amber-400">● Não encontrado nesta sessão</span></p><p class="text-gray-400">Código consultado: ${escapeHtml(codigo)}</p><p class="text-[10px] text-amber-400 mt-1">Amostras antigas de tickets (TICK-4819 etc.) de demonstração não são reais.</p>`;
             const botaoSuporte = `<button type="button" onclick="closeRastreio(); abrirChatSuporte()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">💬 Falar com o suporte sobre ${escapeHtml(codigo || "o pedido")}</button>`;
-            return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${botaoSuporte}`;
+            let blocoComprador = "";
+            if (pedido && pedido.contestacao) {
+                blocoComprador = `<div class="mt-2 bg-red-500/10 border border-red-500/30 rounded-xl p-2.5"><p class="text-[11px] text-red-300 font-bold">⚠ Pedido em contestação</p><p class="text-[11px] text-gray-300">O prazo de conclusão está pausado. Use o botão de suporte abaixo para resolver seu caso.</p></div>`;
+            } else if (pedido && !ticketConcluido(pedido) && etapaAtual === 4 && ticketPertenceAoUsuario(pedido)) {
+                const restaMs = pedido.entregaEm ? (new Date(pedido.entregaEm).getTime() + PRAZO_AUTO_CONCLUSAO_MS - Date.now()) : null;
+                const restaTxt = (restaMs && restaMs > 0) ? `⏳ Tempo restante: <span class="text-amber-300 font-bold">${formatarRestanteAuto(restaMs)}</span>` : `<span class="text-red-300 font-bold">⏰ Prazo de 24h expirando — a venda fecha em instantes se ninguém abrir problema.</span>`;
+                blocoComprador = `<div class="mt-3 rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-3.5"><p class="text-[13px] font-extrabold uppercase tracking-wide text-amber-400 text-center">⏰ Aviso importante — você tem 24 horas</p><div class="mt-2 space-y-1.5 text-[12px] text-gray-200 leading-relaxed"><p>• Você já recebeu os dados da conta. Agora você tem <strong class="text-amber-300">24 horas</strong> para confirmar o recebimento abaixo ou avisar sobre um problema.</p><p>• Se depois de 24 horas você não confirmar e nem abrir problema, a venda é <strong class="text-amber-300">concluída automaticamente</strong> e o dinheiro é liberado ao vendedor.</p><p>• A conta chegou com verificação em duas etapas (2FA) ou e-mail de recuperação? <strong class="text-red-300">Avise AGORA pelo botão "Tenho um problema"</strong> — dentro do prazo. A conta precisa ser devolvida limpa (sem 2FA e sem tentativa de recuperação), senão o direito ao reembolso é perdido.</p></div><p class="text-center text-[11px] mt-2">${restaTxt}</p></div><div class="mt-2 border-t border-emerald-500/30 pt-2"><p class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Você já recebeu os dados da conta?</p><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-1.5 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Entrei na conta e confirmei que os itens estão lá (sem 2FA e sem tentativa de recuperação)</label><label class="flex items-start gap-2 text-[11px] text-gray-300 mb-2 cursor-pointer"><input type="checkbox" class="chk-confirm-receb mt-0.5"> Já troquei e-mail/senha e mantive a conta limpa</label><button type="button" onclick="confirmarRecebimentoComprador('${escapeHtml(pedido.ticketId)}')" class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 py-2 rounded-xl text-xs font-bold cursor-pointer">✓ Confirmar Recebimento</button><button type="button" onclick="abrirContestacaoComprador('${escapeHtml(pedido.ticketId)}')" class="mt-1.5 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 py-2 rounded-xl text-[11px] cursor-pointer">⚠ Tenho um problema</button><p class="text-[10px] text-gray-500 mt-1.5">Confirmando aqui, a venda fecha na hora.</p></div>`;
+            }
+            return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${blocoComprador}${botaoSuporte}`;
         }
 
         async function definirEtapaTicketAdmin(ticketId, etapa) {
@@ -1411,6 +1454,9 @@
             pedido.concluidoEm = ehConclusao ? new Date().toISOString() : null;
             pedido.status = statusTexto;
             pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, etapa);
+            if (etapa >= 4 && !pedido.entregaEm) {
+                pedido.entregaEm = new Date().toISOString();
+            }
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
             const okBanco = await atualizarEtapaTicketSupabase(codigo, etapa, statusTexto, ehConclusao);
             if (okBanco) {
@@ -1689,7 +1735,13 @@
                             : (ehEtapa5 ? "bg-emerald-500/10 text-emerald-400" : "bg-[#1c1812] text-gray-300");
                         return `<button type="button" onclick="definirEtapaTicketAdmin('${escapeHtml(pedidoEncontrado.ticketId)}', ${numero})" class="${estilo} py-2 rounded-xl text-[11px] cursor-pointer">${rotulo}</button>`;
                     }).join("");
-                    html += `<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div><button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
+                    html += `<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-white mb-1.5">Controles do Admin (Supabase)</p><div class="grid grid-cols-2 gap-1.5">${botoes}</div>`;
+                    if (pedidoEncontrado && !ticketConcluido(pedidoEncontrado)) {
+                        const acessoSalvo = lerAcessoTicketLocal(pedidoEncontrado.ticketId);
+                        const chaveK = ticketChaveCss(pedidoEncontrado.ticketId);
+                        html += `<div class="mt-2 rounded-xl border border-emerald-500/25 bg-[#10231a] p-2.5"><p class="text-[10px] uppercase font-bold text-emerald-300 mb-1">🔐 Dados de acesso da conta</p><input id="acesso-gmail-${chaveK}" type="text" placeholder="Gmail da conta" value="${acessoSalvo ? escapeHtml(acessoSalvo.gmail) : ""}" class="mb-2"><input id="acesso-senha-${chaveK}" type="text" placeholder="Senha" value="${acessoSalvo ? escapeHtml(acessoSalvo.senha) : ""}" class="mb-2"><div class="grid grid-cols-2 gap-1.5"><button type="button" onclick="salvarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-[#2f2920]">💾 Salvar</button><button type="button" onclick="copiarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-emerald-500/30">📋 Copiar</button></div><p class="text-[10px] text-gray-500 mt-1">Salva criptografado só neste navegador. Chega por e-mail da loja quando o vendedor publica o anúncio.</p></div>`;
+                    }
+                    html += `<button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
                 }
                 if (isAdminUsuario()) {
                     html += pedidoEncontrado && pedidoEncontrado.ticketId
@@ -1715,6 +1767,7 @@
             }
             document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
             setModalVisivel("modal-anuncio", true);
+            atualizarRecebimentoVendedor();
         }
         function closeVerificarAnuncio() { setModalVisivel("modal-verificar-anuncio", false); }
 
@@ -1774,8 +1827,251 @@
             feedback.textContent = "";
             document.getElementById("preview-vendedor-nome").textContent = sanitizarNomePublico(currentUser.username);
             setModalVisivel("modal-anuncio", true);
+            atualizarRecebimentoVendedor();
         }
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
+
+        function calcularComissaoVendedor(preco) {
+            if (preco <= 100) return { taxa: 3, regra: "taxa fixa de R$3" };
+            if (preco <= 250) return { taxa: preco * 0.06, regra: "comissão de 6%" };
+            return { taxa: preco * 0.07, regra: "comissão de 7%" };
+        }
+
+        function atualizarRecebimentoVendedor() {
+            const brute = parseFloat(String(document.getElementById("conta-preco").value || "").replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
+            const box = document.getElementById("info-comissao");
+            if (!brute) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+            const { taxa, regra } = calcularComissaoVendedor(brute);
+            const recebe = Math.max(0, brute - taxa);
+            const fmt = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(recebe) + '</p>' +
+                '<p class="text-[10px] text-gray-400 mt-0.5">Comissão da loja: ' + fmt(taxa) + ' (' + regra + ') — só é cobrada quando a conta vender.</p>';
+            box.classList.remove("hidden");
+        }
+
+        // ===== Fluxo de entrega: credenciais, confirmação do comprador e auto-conclusão =====
+
+        // ===== Alerta WhatsApp ao admin: grava em public.notificacao (Supabase) e o vigia no servidor do admin envia pela Evolution API =====
+
+        async function enviarAlertaLojaPorWhatsApp(titulo, mensagem) {
+            const url = APP_CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "";
+            const chave = APP_CONFIG.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || "";
+            if (!url || !chave) return false;
+            try {
+                const resp = await fetch(url.replace(/\/$/, "") + "/rest/v1/notificacao", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": chave,
+                        "Authorization": "Bearer " + chave,
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify({ titulo: String(titulo || "").slice(0, 200), mensagem: String(mensagem || "").slice(0, 3000) })
+                });
+                return resp.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function ofuscarTexto(txt) {
+            const chave = "mkt2-acesso";
+            let s = "";
+            const fonte = String(txt || "");
+            for (let i = 0; i < fonte.length; i++) {
+                s += String.fromCharCode(fonte.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
+            }
+            return btoa(unescape(encodeURIComponent(s)));
+        }
+
+        function desofuscarTexto(txt) {
+            if (!txt) return "";
+            try {
+                const raw = decodeURIComponent(escape(atob(txt)));
+                const chave = "mkt2-acesso";
+                let s = "";
+                for (let i = 0; i < raw.length; i++) {
+                    s += String.fromCharCode(raw.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
+                }
+                return s;
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function salvarAcessoVendedorLocal(anuncioId, gmail, senha) {
+            if (!gmail && !senha) return;
+            try {
+                const mapa = JSON.parse(localStorage.getItem("marktplace_acessos_vendedor") || "{}");
+                mapa[String(anuncioId)] = { g: ofuscarTexto(gmail), s: ofuscarTexto(senha), salvoEm: new Date().toISOString() };
+                localStorage.setItem("marktplace_acessos_vendedor", JSON.stringify(mapa));
+            } catch (e) {}
+        }
+
+        function chaveAcessoTicket(ticketId) {
+            return "mkt_acesso_" + normalizarCodigoTicket(ticketId);
+        }
+
+        function salvarAcessoTicketLocal(ticketId, gmail, senha) {
+            try {
+                localStorage.setItem(chaveAcessoTicket(ticketId), JSON.stringify({
+                    g: ofuscarTexto(gmail),
+                    s: ofuscarTexto(senha),
+                    salvoEm: new Date().toISOString()
+                }));
+            } catch (e) {}
+        }
+
+        function lerAcessoTicketLocal(ticketId) {
+            try {
+                const raw = localStorage.getItem(chaveAcessoTicket(ticketId));
+                if (!raw) return null;
+                const o = JSON.parse(raw);
+                return { gmail: desofuscarTexto(o.g), senha: desofuscarTexto(o.s), salvoEm: o.salvoEm };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function ticketChaveCss(ticketId) {
+            return normalizarCodigoTicket(ticketId).replace(/[^A-Z0-9]/gi, "");
+        }
+
+        function salvarAcessoAdminTicket(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode salvar dados de acesso.", "aviso"); return; }
+            const k = ticketChaveCss(ticketId);
+            const g = document.getElementById("acesso-gmail-" + k);
+            const s = document.getElementById("acesso-senha-" + k);
+            const gmail = g ? g.value.trim() : "";
+            const senha = s ? s.value.trim() : "";
+            if (!gmail && !senha) { mostrarAlerta("Aviso", "Preencha o Gmail e/ou a senha da conta.", "aviso"); return; }
+            salvarAcessoTicketLocal(ticketId, gmail, senha);
+            mostrarAlerta("Salvo", "Dados de acesso guardados criptografados neste navegador — nunca vão para o banco."); 
+        }
+
+        function copiarAcessoAdminTicket(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode copiar dados.", "aviso"); return; }
+            const acesso = lerAcessoTicketLocal(ticketId);
+            if (!acesso || (!acesso.gmail && !acesso.senha)) { mostrarAlerta("Aviso", "Nenhum dado salvo para este ticket ainda.", "aviso"); return; }
+            const texto = `Gmail: ${acesso.gmail || "(não informado)"}\nSenha: ${acesso.senha || "(não informado)"}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(texto).then(function() {
+                    mostrarAlerta("Copiado", "Dados copiados — cole no e-mail/WhatsApp do comprador.");
+                }).catch(function() { mostrarAlerta("Dados da Conta", texto); });
+            } else {
+                mostrarAlerta("Dados da Conta", texto);
+            }
+        }
+
+        function todosChecksConfirmados() {
+            const boxes = document.querySelectorAll(".chk-confirm-receb");
+            return boxes.length ? Array.from(boxes).every(function(b) { return b.checked; }) : false;
+        }
+
+        async function confirmarRecebimentoComprador(ticketId) {
+            if (!todosChecksConfirmados()) { mostrarAlerta("Antes de confirmar", "Marque as duas caixas para confirmar que está tudo certo com a conta.", "aviso"); return; }
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
+            if (!ticketPertenceAoUsuario(pedido)) { mostrarAlerta("Ops", "Somente o comprador deste pedido pode confirmar o recebimento.", "aviso"); return; }
+            if (ticketConcluido(pedido)) { mostrarAlerta("Info", "Este ticket já está concluído.", "aviso"); return; }
+            const statusTexto = "Concluído / Entregue (comprador confirmou — pagamento liberado ao vendedor)";
+            pedido.etapa = 5;
+            pedido.concluido = true;
+            pedido.concluidoEm = new Date().toISOString();
+            pedido.status = statusTexto;
+            pedido.etapasCustodia = ETAPAS_CUSTODIA.slice(0, 5);
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            await atualizarEtapaTicketSupabase(codigo, 5, statusTexto, true);
+            mostrarAlerta("Venda Concluída", "Obrigado! A venda foi concluída e o pagamento será liberado ao vendedor.");
+            consultarStatusPedido();
+        }
+
+        let ticketContestacaoAtual = null;
+
+        const TEXTOS_CONTESTACAO = {
+            "2fa": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Subi com os dados que recebi e a conta JÁ está com verificação em duas etapas (2FA) ativa — não consigo acessar. Aviso dentro do prazo de 24 horas: sei que a conta precisa ser devolvida limpa (sem 2FA e sem tentativa de recuperação de e-mail/senha), senão perco o direito ao reembolso. Preciso de solução imediata ou reembolso.`,
+            "itens": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas: entrei na conta e os itens NÃO são como no anúncio (estão faltando/diferentes). Peço verificação do anúncio pelo suporte. Se não for resolvido, quero o reembolso.`,
+            "recuperada": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas: a conta foi bloqueada ou recuperada pelo vendedor depois que recebi os dados. Perdi o acesso. Preciso do reembolso ou da devolução do acesso.`,
+            "outro": (codigo) => `Olá, sou o comprador do ticket ${codigo}. Avisei dentro do prazo de 24 horas. Problema: `
+        };
+
+        function abrirContestacaoComprador(ticketId) {
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
+            if (!ticketPertenceAoUsuario(pedido)) { mostrarAlerta("Ops", "Somente o comprador deste pedido pode contestar.", "aviso"); return; }
+            if (ticketConcluido(pedido)) { mostrarAlerta("Info", "Este ticket já está concluído; fale com o suporte.", "aviso"); return; }
+            ticketContestacaoAtual = codigo;
+            const sel = document.querySelector('input[name="contestacao-opcao"][value="2fa"]');
+            if (sel) sel.checked = true;
+            atualizarTextoContestacao();
+            document.getElementById("modal-contestacao").style.display = "flex";
+        }
+
+        function fecharContestacao() {
+            document.getElementById("modal-contestacao").style.display = "none";
+            ticketContestacaoAtual = null;
+        }
+
+        function atualizarTextoContestacao() {
+            const checado = document.querySelector('input[name="contestacao-opcao"]:checked');
+            const opcao = checado ? checado.value : "2fa";
+            const gerador = TEXTOS_CONTESTACAO[opcao] || TEXTOS_CONTESTACAO["2fa"];
+            document.getElementById("contestacao-texto").value = gerador(ticketContestacaoAtual);
+        }
+
+        async function confirmarContestacaoComprador() {
+            const texto = (document.getElementById("contestacao-texto").value || "").trim();
+            if (texto.length < 20) { mostrarAlerta("Antes de enviar", "Complete a descrição do problema antes de enviar.", "aviso"); return; }
+            const codigo = ticketContestacaoAtual || normalizarCodigoTicket(texto);
+            const pedido = (Array.isArray(pedidosAtivos) ? pedidosAtivos : []).find(function(p) { return p && normalizarCodigoTicket(p.ticketId) === codigo; });
+            if (!pedido) { mostrarAlerta("Ops", "Ticket não encontrado — use o código no Rastreamento.", "aviso"); return; }
+            const statusTexto = "Em contestação — prazo de conclusão pausado; suporte verificando";
+            pedido.contestacao = true;
+            pedido.status = statusTexto;
+            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+            await atualizarEtapaTicketSupabase(codigo, etapaAtualDoPedido(pedido), statusTexto, false);
+            enviarAlertaLojaPorWhatsApp(
+                "⚠ CONTESTAÇÃO ABERTA — TICKET " + codigo,
+                "Ticket: " + codigo + "\nCliente: " + (pedido.comprador || pedido.nome || "(sem nome)") + "\n\nMensagem do comprador:\n" + texto
+            );
+            fecharContestacao();
+            closeRastreio();
+            abrirChatSuporte();
+            const input = document.getElementById("chat-input-texto");
+            input.value = texto;
+            enviarMensagemSuporte();
+        }
+
+        const PRAZO_AUTO_CONCLUSAO_MS = 24 * 60 * 60 * 1000;
+
+        function formatarRestanteAuto(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            return h > 0 ? `${h}h ${String(m).padStart(2, "0")}min` : `${m}min`;
+        }
+
+        async function processarAutoConclusao() {
+            let mudou = false;
+            const copia = Array.isArray(pedidosAtivos) ? pedidosAtivos.slice() : [];
+            for (const p of copia) {
+                if (!p || p.concluido || p.contestacao) continue;
+                if (etapaAtualDoPedido(p) < 4 || !p.entregaEm) continue;
+                const entregaTs = new Date(p.entregaEm).getTime();
+                if (!(entregaTs >= 0) || (Date.now() - entregaTs) < PRAZO_AUTO_CONCLUSAO_MS) continue;
+                const statusTexto = "Concluído automaticamente — 24h sem contestação, pagamento liberado ao vendedor";
+                p.etapa = 5;
+                p.concluido = true;
+                p.concluidoEm = new Date().toISOString();
+                p.status = statusTexto;
+                p.etapasCustodia = ETAPAS_CUSTODIA.slice(0, 5);
+                try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
+                await atualizarEtapaTicketSupabase(normalizarCodigoTicket(p.ticketId), 5, statusTexto, true);
+                mudou = true;
+            }
+            return mudou;
+        }
 
         async function enviarCodigoGmail() {
             const email = document.getElementById("reg-email").value.trim();
@@ -2623,6 +2919,23 @@
             localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
             fotosNovasBase64 = [];
 
+            const acessoGmailEl = document.getElementById("conta-acesso-gmail");
+            const acessoSenhaEl = document.getElementById("conta-acesso-senha");
+            const acessoGmail = acessoGmailEl ? acessoGmailEl.value.trim() : "";
+            const acessoSenha = acessoSenhaEl ? acessoSenhaEl.value.trim() : "";
+            if (acessoGmail || acessoSenha) {
+                salvarAcessoVendedorLocal(anuncioParaSalvar.id, acessoGmail, acessoSenha);
+                if (acessoGmailEl) acessoGmailEl.value = "";
+                if (acessoSenhaEl) acessoSenhaEl.value = "";
+            }
+            const temAcessoNaPublicacao = !!(acessoGmail || acessoSenha);
+            enviarAlertaLojaPorWhatsApp(
+                "📢 NOVO ANÚNCIO — MARKTPLACE stand2",
+                "Anúncio: " + titulo + "\nPreço: " + precoFormatado + "\nVendedor: " + sanitizarNomePublico(currentUser ? currentUser.username : "Jogador") +
+                    (temAcessoNaPublicacao ? ("\n\nGmail da conta: " + (acessoGmail || "(vendedor não informou)") + "\nSenha: " + (acessoSenha || "(vendedor não informou)")) : "") +
+                    (temAcessoNaPublicacao ? "\n\n✅ Entrega pronta: dados recebidos na publicação." : "\n\n⚠ Vendedor não informou Gmail/senha na publicação — entrega dependerá dele.")
+            );
+
             document.getElementById("conta-titulo").value = "";
             document.getElementById("conta-preco").value = "";
             document.getElementById("conta-desc").value = "";
@@ -2630,7 +2943,9 @@
 
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta("Sucesso", "Conta publicada e salva no banco com sucesso!");
+            mostrarAlerta(temAcessoNaPublicacao ? "Sucesso" : "Publicado — entrega mais lenta", temAcessoNaPublicacao
+                ? "Conta publicada! Gmail e senha foram enviados à loja — quando alguém comprar, a entrega é imediata e sua venda conclui mais rápido."
+                : "Conta publicada! ⚠️ Você não adicionou Gmail/senha: quando alguém comprar, o suporte terá que te chamar e a entrega demorará mais. Na próxima, preencha 'Dados de Acesso' antes de publicar para vender mais rápido.");
         }
 
         function isAdminUsuario() {
@@ -3019,6 +3334,17 @@
             ].join("\n");
         }
 
+        function mostrarToastWhatsAppAdmin(url) {
+            const antigo = document.getElementById("toast-whatsapp-admin");
+            if (antigo) antigo.remove();
+            const toast = document.createElement("div");
+            toast.id = "toast-whatsapp-admin";
+            toast.style.cssText = "position:fixed;bottom:90px;left:16px;right:16px;margin:0 auto;max-width:420px;z-index:100000;background:#16130e;border:2px solid rgba(245,158,11,.6);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.6);";
+            toast.innerHTML = '<p style="margin:0 0 8px;font-size:12px;font-weight:800;color:#f59e0b;">🔔 Novo acionamento de suporte</p><p style="margin:0 0 10px;font-size:11px;color:#d1d5db;line-height:1.4;">Toque para avisar o admin no WhatsApp — a mensagem já vai pronta.</p><a href="' + url + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;border-radius:12px;background:#f59e0b;color:#000;font-size:12px;font-weight:bold;text-decoration:none;">📲 Abrir WhatsApp</a>';
+            document.body.appendChild(toast);
+            setTimeout(function() { const t = document.getElementById("toast-whatsapp-admin"); if (t) t.remove(); }, 120000);
+        }
+
         function dispararAlertaWhatsAppAdmin(assunto, ticket, mensagem) {
             if (!ADMIN_WHATSAPP) return false;
             if (!registrarDisparoWhatsApp(assunto)) return false;
@@ -3028,6 +3354,7 @@
                 chat.innerHTML += `<div class="bg-[#050505] border border-[#2f2920] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>O suporte intermediário foi acionado. Toque abaixo para avisar o admin no WhatsApp:<a href="${url}" target="_blank" rel="noopener" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">📲 Acionar Suporte no WhatsApp</a></div>`;
                 chat.scrollTop = chat.scrollHeight;
             }
+            mostrarToastWhatsAppAdmin(url);
             return true;
         }
 
@@ -3096,6 +3423,7 @@
                 total: row.valor_total != null ? String(row.valor_total) : "",
                 etapa: etapa,
                 concluido: Boolean(row.concluido),
+                contestacao: /contest/i.test(String(row.status_texto || "")) || Boolean(row.contestacao),
                 concluidoEm: row.concluido_em || null,
                 etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa)
             };

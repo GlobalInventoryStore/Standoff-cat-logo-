@@ -1007,8 +1007,12 @@
                         <option value="VK">VK</option>
                     </select>
                 </div>
-                <div class="rounded-xl border border-emerald-500/25 bg-[#10231a] p-3">
+                <div class="rounded-xl border border-emerald-500/40 bg-[#10231a] p-3">
                     <label class="block text-xs font-semibold text-emerald-300 mb-1">🔐 Dados de Acesso (só a loja recebe — nunca aparece no anúncio)</label>
+                    <div class="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5">
+                        <p class="text-[11px] font-bold text-amber-300 mb-1">⚡ Adicione os dados agora e venda mais rápido</p>
+                        <p class="text-[10px] text-gray-300 leading-relaxed">Ao informar o Gmail e a senha da conta ainda na publicação, quando alguém comprar a entrega ao comprador é imediata — sem precisar te chamar depois. A venda é concluída e seu repasse liberado mais rápido. Sem esses dados, o suporte precisa te procurar e o processo demora mais.</p>
+                    </div>
                     <input id="conta-acesso-gmail" type="email" placeholder="Gmail da conta" class="mb-2">
                     <input id="conta-acesso-senha" type="password" placeholder="Senha da conta" class="mb-1">
                     <p class="text-[10px] text-gray-500">Enviado com segurança para a loja no ato da publicação. Nenhum comprador vê, e não fica na vitrine.</p>
@@ -2924,10 +2928,12 @@
                 if (acessoGmailEl) acessoGmailEl.value = "";
                 if (acessoSenhaEl) acessoSenhaEl.value = "";
             }
+            const temAcessoNaPublicacao = !!(acessoGmail || acessoSenha);
             enviarAlertaLojaPorWhatsApp(
                 "📢 NOVO ANÚNCIO — MARKTPLACE stand2",
                 "Anúncio: " + titulo + "\nPreço: " + precoFormatado + "\nVendedor: " + sanitizarNomePublico(currentUser ? currentUser.username : "Jogador") +
-                    ((acessoGmail || acessoSenha) ? ("\n\nGmail da conta: " + (acessoGmail || "(vendedor não informou)") + "\nSenha: " + (acessoSenha || "(vendedor não informou)")) : "")
+                    (temAcessoNaPublicacao ? ("\n\nGmail da conta: " + (acessoGmail || "(vendedor não informou)") + "\nSenha: " + (acessoSenha || "(vendedor não informou)")) : "") +
+                    (temAcessoNaPublicacao ? "\n\n✅ Entrega pronta: dados recebidos na publicação." : "\n\n⚠ Vendedor não informou Gmail/senha na publicação — entrega dependerá dele.")
             );
 
             document.getElementById("conta-titulo").value = "";
@@ -2937,9 +2943,9 @@
 
             carregarCatalogo();
             closeAnuncioModal();
-            mostrarAlerta("Sucesso", (acessoGmail || acessoSenha)
-                ? "Conta publicada! Os dados de acesso foram enviados com segurança para a loja."
-                : "Conta publicada e salva no banco com sucesso!");
+            mostrarAlerta(temAcessoNaPublicacao ? "Sucesso" : "Publicado — entrega mais lenta", temAcessoNaPublicacao
+                ? "Conta publicada! Gmail e senha foram enviados à loja — quando alguém comprar, a entrega é imediata e sua venda conclui mais rápido."
+                : "Conta publicada! ⚠️ Você não adicionou Gmail/senha: quando alguém comprar, o suporte terá que te chamar e a entrega demorará mais. Na próxima, preencha 'Dados de Acesso' antes de publicar para vender mais rápido.");
         }
 
         function isAdminUsuario() {
