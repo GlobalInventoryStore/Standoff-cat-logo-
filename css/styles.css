@@ -45,6 +45,24 @@
             background: #41382a;
         }
 
+        /* Logo do header: membro estático do flex, nunca flutua sobre cards/botões */
+        .logo-mkt {
+            position: static;
+            z-index: auto;
+            margin: 0;
+            flex: 0 0 auto;
+            min-width: 0;
+            max-width: 60vw;
+        }
+        .logo-mkt > span {
+            display: block;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.05;
+        }
+
         /* Inputs, selects, textareas - sempre fundo escuro com texto claro */
         input, select, textarea {
             background-color: #14110c !important;
