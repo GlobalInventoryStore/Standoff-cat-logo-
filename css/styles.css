@@ -287,16 +287,20 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.9);
         }
 
-        /* Rodapé: fluxo normal da página, após todo o conteúdo */
+        /* Rodapé: fluxo normal da página, mas acima do botão flutuante no fim do scroll */
         footer.site-footer {
             position: relative;
             width: 100%;
             margin-top: auto;
             overflow-x: hidden;
+            z-index: 10;
         }
         main.conteudo-principal {
             position: relative;
             z-index: 1;
+        }
+        .chat-flutuante {
+            z-index: 5;
         }
 
         /* Footer animado */
