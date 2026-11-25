@@ -303,6 +303,19 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.9);
         }
 
+        /* Rodapé: sempre no fluxo normal da página, nunca fixo/flutuante sobre cards */
+        footer.site-footer {
+            position: relative !important;
+            z-index: 0;
+            margin-top: auto;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        main.conteudo-principal {
+            position: relative;
+            z-index: 1;
+        }
+
         /* Footer animado */
         .footer-marquee {
             overflow: hidden;
@@ -320,14 +333,19 @@
         .modal-backdrop {
             position: fixed;
             inset: 0;
-            display: none;
+            display: none !important;
             align-items: center;
             justify-content: center;
-            z-index: 99999;
+            padding: 1rem;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            z-index: 99999 !important;
             backdrop-filter: blur(12px);
             background: rgba(5, 4, 2, 0.88);
         }
-        #modal-boas-vindas { z-index: 999999; }
+        .modal-backdrop.is-open { display: flex !important; }
+        #modal-boas-vindas { z-index: 999999 !important; }
+        body.modal-open { overflow: hidden !important; }
 
         /* Menu hambúrguer: fallback próprio de visibilidade (independe do Tailwind) */
         #mobile-menu { display: none; }
@@ -379,19 +397,74 @@
             if (!aberto && modalId === "modal-rastreio" && typeof window.pararAutoRefreshRastreio === "function") {
                 window.pararAutoRefreshRastreio();
             }
+            const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
             if (aberto) {
+                modal.classList.remove("hidden");
+                modal.classList.add("is-open");
                 modal.style.display = "flex";
+                modal.scrollTop = 0;
+                if (!modal.hasAttribute("tabindex")) modal.setAttribute("tabindex", "-1");
+                try { modal.focus({ preventScroll: true }); } catch (e) { modal.focus(); }
+                if (document.body.style.overflow !== "hidden" && document.body.dataset.modalOverflow === undefined) {
+                    document.body.dataset.modalOverflow = document.body.style.overflow || "";
+                }
                 document.body.style.overflow = "hidden";
                 document.body.style.overscrollBehavior = "contain";
-                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                document.body.classList.add("modal-open");
                 containers.forEach(el => { el.style.overscrollBehavior = "contain"; });
             } else {
+                modal.classList.add("hidden");
+                modal.classList.remove("is-open");
                 modal.style.display = "none";
-                document.body.style.overflow = "";
-                const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
+                if (!document.querySelector(".modal-backdrop.is-open")) {
+                    document.body.style.overflow = document.body.dataset.modalOverflow || "";
+                    delete document.body.dataset.modalOverflow;
+                    document.body.style.overscrollBehavior = "";
+                    document.body.classList.remove("modal-open");
+                }
                 containers.forEach(el => { el.style.overscrollBehavior = ""; });
             }
         };
+
+        // Fechamento padrão: clique no overlay escuro ou tecla Esc.
+        // O modal obrigatório de Termos (primeiro acesso) nunca fecha sozinho.
+        window.fecharModalPorOverlay = function(modal) {
+            if (!modal || modal.id === "modal-boas-vindas") return;
+            const fechadores = {
+                "modal": "closeModal",
+                "modal-termos": "closeTermosModal",
+                "modal-rastreio": "closeRastreioPedido",
+                "modal-config": "closeConfiguracoes",
+                "modal-banidos": "closeBanidos",
+                "modal-carrinho": "closeCarrinho",
+                "modal-verificar-anuncio": "closeVerificarAnuncio",
+                "modal-anuncio": "closeAnuncioModal",
+                "modal-detalhes": "closeDetalhes",
+                "modal-checkout": "closeCheckout",
+                "modal-pagamento-detalhes": "closePagamentoDetalhes",
+                "modal-ticket": "closeTicketModal",
+                "modal-chat-suporte": "closeChatSuporte",
+                "modal-alerta": "fecharAlerta",
+                "modal-contestacao": "fecharContestacao",
+                "modal-como-funcionamos": "closeModalComoFunciona"
+            };
+            const fn = fechadores[modal.id];
+            if (fn && typeof window[fn] === "function") window[fn]();
+            else window.setModalVisivel(modal.id, false);
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.addEventListener("click", function(ev) {
+                if (!ev.target || !ev.target.closest) return;
+                const modal = ev.target.closest(".modal-backdrop.is-open");
+                if (modal && ev.target === modal) window.fecharModalPorOverlay(modal);
+            });
+            document.addEventListener("keydown", function(ev) {
+                if (ev.key !== "Escape") return;
+                const modal = document.querySelector(".modal-backdrop.is-open");
+                if (modal) window.fecharModalPorOverlay(modal);
+            });
+        });
     </script>
 </head>
 <body class="antialiased">
@@ -472,7 +545,7 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <main class="flex-grow max-w-7xl mx-auto w-full px-6 pb-12">
+    <main class="conteudo-principal flex-grow max-w-7xl mx-auto w-full px-6 pb-12">
         <!-- Hero seco / apresentação -->
         <section class="mb-12 pt-4 animate-fade-in-up">
             <div class="text-center">
@@ -496,7 +569,7 @@
     </main>
 
     <!-- Rodapé Animado -->
-    <footer class="border-t border-[#26211a] mt-auto bg-[#050505] relative overflow-hidden">
+    <footer class="site-footer border-t border-[#26211a] mt-auto bg-[#050505] relative overflow-hidden">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="footer-marquee track top-[10%] left-0 animate-[marquee_24s_linear_infinite] text-[var(--muted)] text-[10px] font-semibold tracking-widest uppercase opacity-40"></div>
         </div>
@@ -555,7 +628,7 @@
     </footer>
 
     <!-- Modal Obrigatório de Entrada / Termos -->
-    <div id="modal-boas-vindas" class="modal-backdrop hidden items-center justify-center z-[999999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-boas-vindas" class="modal-backdrop fixed inset-0 z-50 z-[999999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl">
             <div class="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-4">
                 <span class="text-[var(--accent)] font-black text-lg">M</span>
@@ -579,7 +652,7 @@
     </div>
 
     <!-- Modal de Rastreio -->
-    <div id="modal-rastreio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-rastreio" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Rastrear Pedido</h3>
@@ -595,7 +668,7 @@
     </div>
 
     <!-- Modal Configurações (usuário logado) -->
-    <div id="modal-config" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-config" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Configurações</h3>
@@ -642,7 +715,7 @@
     </div>
 
     <!-- Modal de Usuários Banidos (Admin) -->
-    <div id="modal-banidos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-banidos" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Usuários Banidos</h3>
@@ -654,7 +727,7 @@
     </div>
 
     <!-- Modal de Carrinho -->
-    <div id="modal-carrinho" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-carrinho" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Seu Carrinho</div>
             <div class="flex justify-between items-center mb-4">
@@ -676,7 +749,7 @@
     </div>
 
     <!-- Modal de Login / Cadastro -->
-    <div id="modal" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-white">Acesso à Conta</h3>
@@ -758,7 +831,7 @@
     </div>
 
     <!-- Modal Verificação Vendedor -->
-    <div id="modal-verificar-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-verificar-anuncio" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-[var(--accent)]">Verificação de Vendedor</h3>
@@ -783,7 +856,7 @@
     </div>
 
     <!-- Modal Detalhes -->
-    <div id="modal-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-detalhes" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Detalhes da Conta</div>
             <div id="detalhe-img-container" class="mb-4 hidden">
@@ -821,7 +894,7 @@
     </div>
 
     <!-- Modal Checkout -->
-    <div id="modal-checkout" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-checkout" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative">
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 1 de 2 - Pagamento</div>
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Forma de Pagamento</h3>
@@ -878,7 +951,7 @@
     </div>
 
     <!-- Modal Pagamento Detalhes -->
-    <div id="modal-pagamento-detalhes" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-pagamento-detalhes" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="bg-[#14110c] text-white text-xs mb-3 px-2.5 py-1.5 rounded">Etapa 2 de 2 - QR Code & Confirmação</div>
             <div class="flex justify-between items-center mb-3">
@@ -896,7 +969,7 @@
     </div>
 
     <!-- Modal Ticket / Suporte / Bot -->
-    <div id="modal-ticket" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-ticket" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-4 sm:p-6 relative text-center">
             <div class="flex justify-between items-center mb-3">
                 <span id="ticket-id" class="text-xs font-bold bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded">Ticket #TICK-0000</span>
@@ -925,7 +998,7 @@
     </div>
 
     <!-- Modal Chat Bot / Suporte -->
-    <div id="modal-chat-suporte" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-chat-suporte" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-md rounded-[20px] p-5 sm:p-6 relative flex flex-col h-[500px]">
             <div class="flex justify-between items-center pb-3 border-b border-[#26211a]">
                 <div class="flex items-center gap-2.5">
@@ -951,7 +1024,7 @@
     </div>
 
     <!-- Modal Termos e Segurança -->
-    <div id="modal-termos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-termos" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Termos de Serviço e Isenção Legal</h3>
             <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
@@ -969,7 +1042,7 @@
     </div>
 
     <!-- Modal Anúncio -->
-    <div id="modal-anuncio" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-anuncio" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1 text-[var(--accent)]">Anunciar Nova Conta</h3>
             <p class="text-xs text-[var(--muted)] mb-5">Vendedor: <strong id="preview-vendedor-nome" class="text-white"></strong></p>
@@ -1035,7 +1108,7 @@
     </div>
 
     <!-- Modal Alerta -->
-    <div id="modal-alerta" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
+    <div id="modal-alerta" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#26211a] w-full max-w-sm rounded-[20px] p-6 text-center relative shadow-2xl">
             <div id="alerta-icone" class="alerta-icone-ok">✓</div>
             <h3 id="alerta-titulo" class="text-lg font-bold mb-2 text-white">Sucesso!</h3>
@@ -1045,7 +1118,7 @@
     </div>
 
     <!-- Modal Contestação do comprador -->
-    <div id="modal-contestacao" class="modal-backdrop hidden items-center justify-center z-[99999] p-4 animate-fade-in">
+    <div id="modal-contestacao" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-red-500/30 w-full max-w-sm rounded-[20px] p-5 relative shadow-2xl max-h-[88dvh] overflow-y-auto">
             <button type="button" onclick="fecharContestacao()" class="absolute top-3 right-3 min-w-[36px] min-h-[36px] flex items-center justify-center text-red-400 hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
             <h3 class="text-base font-bold text-red-400 mb-1">Tenho um problema</h3>
@@ -1062,7 +1135,7 @@
     </div>
 
     <!-- Modal Como Funcionamos -->
-    <div id="modal-como-funcionamos" class="modal-backdrop hidden items-center justify-center z-[99999] p-3 sm:p-6 animate-fade-in">
+    <div id="modal-como-funcionamos" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
         <div class="bg-[#16130e] border border-[#2b251c] rounded-[20px] p-4 sm:p-6 relative shadow-2xl max-w-full max-h-[88dvh] overflow-y-auto">
             <button type="button" onclick="closeModalComoFunciona()" class="absolute top-4 right-4 min-w-[40px] min-h-[40px] flex items-center justify-center text-[#f59e0b] hover:text-white text-lg font-bold cursor-pointer" aria-label="Fechar">✕</button>
             <h2 class="text-2xl font-bold text-[#f59e0b] mb-6 text-center">Como Atuamos</h2>
@@ -1236,7 +1309,7 @@
             const termosAceitos = localStorage.getItem("marktplace_stand2_termos");
             if (!termosAceitos) {
                 const modalBoasVindas = document.getElementById("modal-boas-vindas");
-                if (modalBoasVindas) modalBoasVindas.style.display = "flex";
+                if (modalBoasVindas) setModalVisivel("modal-boas-vindas", true);
             }
             const storedUser = localStorage.getItem("marktplace_stand2_user");
             if (storedUser) {
@@ -1312,7 +1385,7 @@
 
         function concordarTermosEntrada() {
             localStorage.setItem("marktplace_stand2_termos", "true");
-            document.getElementById("modal-boas-vindas").style.display = "none";
+            setModalVisivel("modal-boas-vindas", false);
         }
 
         function mostrarAlerta(titulo, texto, tipo = "sucesso") {
@@ -1326,11 +1399,11 @@
                 icone.className = "alerta-icone-aviso";
                 icone.textContent = "!";
             }
-            document.getElementById("modal-alerta").style.display = "flex";
+            setModalVisivel("modal-alerta", true);
         }
 
         function fecharAlerta() {
-            document.getElementById("modal-alerta").style.display = "none";
+            setModalVisivel("modal-alerta", false);
         }
 
         function carregarAvataresRegistro() {
@@ -2006,11 +2079,11 @@
             const sel = document.querySelector('input[name="contestacao-opcao"][value="2fa"]');
             if (sel) sel.checked = true;
             atualizarTextoContestacao();
-            document.getElementById("modal-contestacao").style.display = "flex";
+            setModalVisivel("modal-contestacao", true);
         }
 
         function fecharContestacao() {
-            document.getElementById("modal-contestacao").style.display = "none";
+            setModalVisivel("modal-contestacao", false);
             ticketContestacaoAtual = null;
         }
 
@@ -2583,7 +2656,7 @@
                 });
                 totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace(".", ",")}`;
             }
-            document.getElementById("modal-carrinho").style.display = "flex";
+            setModalVisivel("modal-carrinho", true);
         }
 
         function closeCarrinho() { setModalVisivel("modal-carrinho", false); }
@@ -2602,7 +2675,7 @@
             eventosGtag("begin_checkout", { currency: "BRL", value: totalFin });
             closeCarrinho();
             if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
-            document.getElementById("modal-checkout").style.display = "flex";
+            setModalVisivel("modal-checkout", true);
         }
 
         function abrirCheckoutDireto() {
@@ -2613,7 +2686,7 @@
             }
             var precoDireto = parseFloat(String((anuncioSelecionadoAtual || {}).preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
             eventosGtag("begin_checkout", { currency: "BRL", value: precoDireto });
-            document.getElementById("modal-checkout").style.display = "flex";
+            setModalVisivel("modal-checkout", true);
         }
         function closeCheckout() { setModalVisivel("modal-checkout", false); }
 
@@ -3181,7 +3254,7 @@
                     acoesAdmin.classList.add("hidden");
                 }
             }
-            document.getElementById("modal-detalhes").style.display = "flex";
+            setModalVisivel("modal-detalhes", true);
         }
 
         function closeDetalhes() { setModalVisivel("modal-detalhes", false); }
@@ -3211,10 +3284,10 @@
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
-            document.getElementById("modal-pagamento-detalhes").style.display = "flex";
+            setModalVisivel("modal-pagamento-detalhes", true);
         }
 
-        function closePagamentoDetalhes() { document.getElementById("modal-pagamento-detalhes").style.display = "none"; }
+        function closePagamentoDetalhes() { setModalVisivel("modal-pagamento-detalhes", false); }
 
         async function enviarComprovanteParaTicket() {
             closePagamentoDetalhes();
@@ -3272,17 +3345,17 @@
             const chatBox = document.getElementById("chat-mensagens");
             chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-            document.getElementById("modal-ticket").style.display = "flex";
+            setModalVisivel("modal-ticket", true);
             carrinhoItens = [];
             localStorage.removeItem("marktplace_stand2_cart");
             atualizarBadgeCarrinho();
         }
 
-        function closeTicketModal() { document.getElementById("modal-ticket").style.display = "none"; }
+        function closeTicketModal() { setModalVisivel("modal-ticket", false); }
 
         function abrirChatSuporte() {
             closeTicketModal();
-            document.getElementById("modal-chat-suporte").style.display = "flex";
+            setModalVisivel("modal-chat-suporte", true);
             const chatMenu = document.getElementById("chat-mensagens");
             if (chatMenu && !chatMenu.querySelector("[data-menu-bot]")) {
                 chatMenu.innerHTML += construirMenuBot().replace('<div class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 max-w-[90%]"', '<div data-menu-bot class="bg-[#050505] border border-[#26211a] rounded-xl p-2.5 max-w-[90%]"');
@@ -3290,7 +3363,7 @@
             }
         }
 
-        function closeChatSuporte() { document.getElementById("modal-chat-suporte").style.display = "none"; }
+        function closeChatSuporte() { setModalVisivel("modal-chat-suporte", false); }
 
         function classificarAssuntoSuporte(texto) {
             const t = (texto || "").toLowerCase();
