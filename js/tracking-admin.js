@@ -221,10 +221,14 @@
         function estadoPagamentoDoTicket(p) {
             const metodo = escapeHtml(p.metodo || "");
             const valor = escapeHtml(p.total || "");
-            if (!metodo && !valor) {
+            const detalhe = [metodo, valor].filter(Boolean).join(" — ");
+            if (!detalhe) {
                 return '<span class="text-amber-400 font-semibold">Aguardando comprovante (pendente)</span>';
             }
-            return `<span class="text-emerald-400 font-semibold">Pagamento em custódia</span> <span class="text-gray-400">(${[metodo, valor].filter(Boolean).join(" — ")})</span>`;
+            if (etapaAtualDoPedido(p) < 2) {
+                return `<span class="text-amber-400 font-semibold">Aguardando verificação do comprovante</span> <span class="text-gray-400">(${detalhe})</span>`;
+            }
+            return `<span class="text-emerald-400 font-semibold">Pagamento confirmado em custódia</span> <span class="text-gray-400">(${detalhe})</span>`;
         }
 
         function cartaoTicketAdmin(p) {

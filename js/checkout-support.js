@@ -1,25 +1,46 @@
         function gerarQrCodePagamento() {
             closeCheckout();
-            let totalCarrinhoStr = "R$ 0,00";
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
             let somaTotal = 0;
             carrinhoItens.forEach(item => {
-                let p = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+                let p = parseFloat(String(item.preco || "0").replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
                 somaTotal += p;
             });
             if (somaTotal === 0 && anuncioSelecionadoAtual) {
-                somaTotal = parseFloat(anuncioSelecionadoAtual.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+                somaTotal = parseFloat(String(anuncioSelecionadoAtual.preco || "0").replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
             }
-            totalCarrinhoStr = `R$ ${somaTotal.toFixed(2).replace(".", ",")}`;
+            const totalCarrinhoStr = formatarValorPix(somaTotal);
             const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
-            document.getElementById("pedido-codigo").textContent = `Pedido #SO2-${Math.floor(1000 + Math.random() * 9000)}`;
+            const pedidoId = "SO2-" + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById("pedido-codigo").textContent = `Pedido #${pedidoId}`;
             document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
             document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
             const conteudoPag = document.getElementById("pag-conteudo");
+            const acoesPix = document.getElementById("pix-acoes");
+            const btnPaguei = document.getElementById("btn-ja-paguei");
+            const inputComprovante = document.getElementById("comprovante-pix");
+            pixGatewayCopiaECola = "";
+            if (inputComprovante) inputComprovante.value = "";
+            if (acoesPix) acoesPix.classList.add("hidden");
+            if (btnPaguei) btnPaguei.classList.remove("hidden");
             if (metodoEscolhido === "pix") {
-                const pixStr = `00020126580014br.gov.bcb.pix0136so2-${Date.now()}5204000053039865802BR5913SAFE6009SP62070503***6304`;
-                conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola.</p>`;
+                const pixStr = gerarPixCopiaECola(somaTotal, pedidoId);
+                if (!pixStr) {
+                    const motivo = pixEstaConfigurado()
+                        ? "Não foi possível calcular o valor do pedido."
+                        : "Chave PIX ainda não configurada.";
+                    conteudoPag.innerHTML = `<div class="py-2"><p class="text-sm font-bold text-amber-400">${motivo}</p><p class="text-[11px] text-gray-400 mt-2">Não geramos um QR falso. Acione o suporte para concluir a compra com segurança.</p><button type="button" onclick="closePagamentoDetalhes(); abrirChatSuporte()" class="mt-3 bg-[var(--accent)] text-black font-bold py-2 px-4 rounded-xl text-xs cursor-pointer">💬 Falar com o suporte</button></div>`;
+                    if (btnPaguei) btnPaguei.classList.add("hidden");
+                } else {
+                    pixGatewayCopiaECola = pixStr;
+                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola abaixo.</p><p class="text-[9px] text-gray-600 mt-1 break-all">${pixStr}</p>`;
+                    if (acoesPix) {
+                        acoesPix.classList.remove("hidden");
+                        const txtChave = document.getElementById("pix-chave-texto");
+                        if (txtChave) txtChave.textContent = PIX_CONFIG.chave;
+                    }
+                }
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
@@ -39,6 +60,26 @@
             let metodoValor = "pix";
             metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
             const metodoPagamento = metodoValor === "cartao" ? "Cartão de Crédito" : "PIX";
+            const ehPix = metodoValor !== "cartao";
+            if (ehPix && !pixEstaConfigurado()) {
+                mostrarAlerta("PIX", "Chave PIX não configurada. Nenhum pagamento foi gerado — acione o suporte.", "aviso");
+                return;
+            }
+            const statusInicial = ehPix
+                ? "Aguardando verificação do comprovante PIX (custódia)"
+                : "Aprovado • Custódia Segura";
+            let arquivoComprovante = null;
+            if (ehPix) {
+                const campoComprovante = document.getElementById("comprovante-pix");
+                arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
+                if (arquivoComprovante && arquivoComprovante.size > 8 * 1024 * 1024) {
+                    mostrarAlerta("Comprovante", "O arquivo é maior que 8 MB. Escolha um print menor.", "aviso");
+                    return;
+                }
+                const valorComprovante = document.getElementById("pag-conta-valor").textContent;
+                try { await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); } catch (e) {}
+                if (campoComprovante) campoComprovante.value = "";
+            }
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
             const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
             if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
@@ -55,9 +96,10 @@
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
                 comprador: gmailUser,
-                status: "Aprovado • Custódia Segura",
+                status: statusInicial,
                 itens: listaItensFormatada,
                 total: valorTotalPedido,
+                etapa: 1,
                 etapasCustodia: [ETAPAS_CUSTODIA[0]]
             });
             localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
@@ -70,7 +112,7 @@
                 valor_total: valorTotalPedido || "",
                 metodo_pagamento: metodoPagamento,
                 etapa: 1,
-                status_texto: "Pagamento retido pelo site (custódia segura)",
+                status_texto: statusInicial,
                 concluido: false
             });
             const statusKey = "aguardando_conta_vendedor";
@@ -82,7 +124,10 @@
                 compradorWhats: wppUser
             });
             const chatBox = document.getElementById("chat-mensagens");
-            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pagamento e Comprovante Aprovados!</p>${resumoRapido}</div>`;
+            const mensagemConfirmacao = ehPix
+                ? "✓ Comprovante enviado ao admin — aguardando verificação do PIX"
+                : "✓ Pagamento e Comprovante Aprovados!";
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">${mensagemConfirmacao}</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             setModalVisivel("modal-ticket", true);
             carrinhoItens = [];

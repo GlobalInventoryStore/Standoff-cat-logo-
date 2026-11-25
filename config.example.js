@@ -8,6 +8,10 @@ window.CONFIG = {
     EMAILJS_TEMPLATE_ID: "",
     EMAILJS_PUBLIC_KEY: "",
     ADMIN_WHATSAPP: "",
+    // Gateway Fase 1 - chave PIX publica que recebe os pagamentos (CPF, e-mail, telefone ou aleatoria)
+    PIX_CHAVE: "",
+    PIX_NOME: "MARKTPLACE STAND2",
+    PIX_CIDADE: "SAO PAULO",
     CODIGO_ADMIN_FIXO: "",
     ADMIN_SENHA_DIRETA: ""
 };

@@ -15,6 +15,10 @@
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
+    <!-- Gateway de pagamento (Fase 1 - PIX manual): a chave tambem pode vir de config.js -->
+    <meta name="pix-chave" content="">
+    <meta name="pix-nome" content="MARKTPLACE STAND2">
+    <meta name="pix-cidade" content="SAO PAULO">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -29,6 +33,7 @@
     <script defer src="js/catalog-cart.js"></script>
     <script defer src="js/ocr-inventory.js"></script>
     <script defer src="js/admin-panel.js"></script>
+    <script defer src="js/pagamento-pix.js"></script>
     <script defer src="js/checkout-support.js"></script>
     <script defer src="js/lgpd.js"></script>
 </head>
@@ -475,11 +480,12 @@
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
-                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Em breve via Mercado Pago</span></div>
                     </div>
-                    <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
+                    <input type="radio" name="pagamento" value="cartao" disabled class="accent-[var(--accent)] opacity-50" onchange="mudarMetodoPagamento('cartao')">
                 </label>
             </div>
+            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">Pagamentos com cartão chegam na próxima fase. Por enquanto, pague com PIX.</p>
             <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#26211a]">
                 <div class="input-group mb-0">
                     <label>Número do Cartão</label>
@@ -526,7 +532,13 @@
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
             <div id="pag-conteudo" class="bg-[#050505] border border-[#26211a] rounded-xl p-4 mb-4 text-center"></div>
-            <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
+            <div id="pix-acoes" class="hidden bg-[#050505] border border-[#26211a] rounded-xl p-3 mb-4">
+                <p class="text-[11px] text-gray-400 mb-1">Chave PIX: <span id="pix-chave-texto" class="text-white font-mono break-all"></span></p>
+                <button type="button" onclick="copiarPixCopiaECola()" class="w-full bg-[var(--accent)] text-black font-bold py-2 rounded-xl text-xs cursor-pointer mb-2">📋 Copiar código PIX (Copia e Cola)</button>
+                <label class="block text-[10px] text-gray-400 mb-1">Comprovante (no celular, compartilha a imagem; no desktop, anexe o print no WhatsApp):</label>
+                <input type="file" id="comprovante-pix" accept="image/*,application/pdf" class="w-full text-[11px] text-gray-300 file:mr-2 file:py-1.5 file:px-2 file:rounded-lg file:border-0 file:bg-[#26211a] file:text-white file:text-[11px] cursor-pointer">
+            </div>
+            <button type="button" id="btn-ja-paguei" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
                 Já Paguei • Enviar Comprovante e Gerar Ticket
             </button>
             <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2f2920]">Cancelar</button>
