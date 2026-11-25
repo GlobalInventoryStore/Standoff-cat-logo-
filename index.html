@@ -1847,46 +1847,6 @@
 
         // ===== Fluxo de entrega: credenciais, confirmação do comprador e auto-conclusão =====
 
-        async function enviarDadosAcessoPorEmail(dados) {
-            if (!emailjsConfigurado()) return false;
-            try {
-                if (!emailjsInicializado) {
-                    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-                    emailjsInicializado = true;
-                }
-                await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                    to_email: ADMIN_EMAIL_EXTRA,
-                    email: ADMIN_EMAIL_EXTRA,
-                    codigo_verificacao: "DADOS-ACESSO",
-                    codigo: "DADOS-ACESSO",
-                    message: `🔐 NOVOS DADOS DE ACESSO — MARKTPLACE stand2\n\nAnúncio: ${dados.titulo}\nPreço: ${dados.preco}\nVendedor: ${dados.vendedor}\n\nGmail da conta: ${dados.gmail}\nSenha: ${dados.senha}\n\n(mensagem automática gerada no anúncio — guarde em local seguro)`
-                });
-                return true;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        async function enviarAlertaLojaPorEmail(titulo, mensagem) {
-            if (!emailjsConfigurado()) return false;
-            try {
-                if (!emailjsInicializado) {
-                    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-                    emailjsInicializado = true;
-                }
-                await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                    to_email: ADMIN_EMAIL_EXTRA,
-                    email: ADMIN_EMAIL_EXTRA,
-                    codigo_verificacao: "ALERTA",
-                    codigo: "ALERTA",
-                    message: `${titulo} — MARKTPLACE stand2\n\n${mensagem}`
-                });
-                return true;
-            } catch (e) {
-                return false;
-            }
-        }
-
         // ===== Alerta WhatsApp ao admin: grava em public.notificacao (Supabase) e o vigia no servidor do admin envia pela Evolution API =====
 
         async function enviarAlertaLojaPorWhatsApp(titulo, mensagem) {
@@ -2068,7 +2028,6 @@
             pedido.status = statusTexto;
             try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
             await atualizarEtapaTicketSupabase(codigo, etapaAtualDoPedido(pedido), statusTexto, false);
-            enviarAlertaLojaPorEmail("⚠ CONTESTAÇÃO ABERTA — TICKET " + codigo, "Ticket: " + codigo + "\nCliente: " + (pedido.comprador || pedido.nome || "(sem nome)") + "\n\nMensagem do comprador:\n" + texto);
             enviarAlertaLojaPorWhatsApp(
                 "⚠ CONTESTAÇÃO ABERTA — TICKET " + codigo,
                 "Ticket: " + codigo + "\nCliente: " + (pedido.comprador || pedido.nome || "(sem nome)") + "\n\nMensagem do comprador:\n" + texto
@@ -2960,15 +2919,7 @@
             const acessoSenhaEl = document.getElementById("conta-acesso-senha");
             const acessoGmail = acessoGmailEl ? acessoGmailEl.value.trim() : "";
             const acessoSenha = acessoSenhaEl ? acessoSenhaEl.value.trim() : "";
-            let acessoEnviado = false;
             if (acessoGmail || acessoSenha) {
-                acessoEnviado = await enviarDadosAcessoPorEmail({
-                    titulo,
-                    preco: precoFormatado,
-                    vendedor: sanitizarNomePublico(currentUser ? currentUser.username : "Jogador"),
-                    gmail: acessoGmail || "(vendedor não informou)",
-                    senha: acessoSenha || "(vendedor não informou)"
-                });
                 salvarAcessoVendedorLocal(anuncioParaSalvar.id, acessoGmail, acessoSenha);
                 if (acessoGmailEl) acessoGmailEl.value = "";
                 if (acessoSenhaEl) acessoSenhaEl.value = "";
@@ -2987,9 +2938,7 @@
             carregarCatalogo();
             closeAnuncioModal();
             mostrarAlerta("Sucesso", (acessoGmail || acessoSenha)
-                ? (acessoEnviado
-                    ? "Conta publicada! Os dados de acesso foram enviados com segurança para a loja por e-mail."
-                    : "Conta publicada! Não consegui enviar os dados de acesso agora — a loja vai pedir por mensagem.")
+                ? "Conta publicada! Os dados de acesso foram enviados com segurança para a loja."
                 : "Conta publicada e salva no banco com sucesso!");
         }
 
