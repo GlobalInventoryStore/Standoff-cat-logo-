@@ -1,0 +1,194 @@
+        async function inicializarAnuncios() {
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient.from("contas").select("*").order("id", { ascending: false });
+                    if (error) {
+                    } else if (Array.isArray(data)) {
+                        anunciosEmMemoria = data.map(normalizarAnuncio);
+                        localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+                        carregarCatalogo();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("❌ Exceção ao consultar Supabase:", e);
+                }
+            }
+            const salvos = localStorage.getItem("marktplace_stand2_anuncios");
+            if (salvos) {
+                try {
+                    const parsed = JSON.parse(salvos);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        anunciosEmMemoria = parsed.map(normalizarAnuncio);
+                        carregarCatalogo();
+                        return;
+                    }
+                } catch (e) {}
+            }
+            anunciosEmMemoria = [normalizarAnuncio({
+                id: "default_1",
+                titulo: "Conta com M9 Bayonet & AKR",
+                preco: "R$ 150,00",
+                rank: "Master",
+                vinculo: "Google ID",
+                descricao: "• M9 Bayonet | Treasure Hunter (Pattern: 412)\n• Gloves | Carbon (Pattern: 12)\n• AKR | Sport • AWM | Scratch",
+                vendedor: "Sistema",
+                likes: 12,
+                curtidoPormim: false,
+                fotos: []
+            })];
+            carregarCatalogo();
+        }
+
+        function formatarPrecoMoeda(valorStr) {
+            let limpo = valorStr.replace(/[^\d,.]/g, "").trim();
+            if (!limpo) return "R$ 0,00";
+            limpo = limpo.replace(".", ",");
+            if (!limpo.includes(",")) {
+                limpo = limpo + ",00";
+            } else {
+                let partes = limpo.split(",");
+                if (partes[1].length === 1) {
+                    limpo = partes[0] + "," + partes[1] + "0";
+                }
+            }
+            return `R$ ${limpo}`;
+        }
+
+        function carregarCatalogo() {
+            const grid = document.getElementById("catalogo-cards");
+            if (!grid) return;
+            grid.innerHTML = "";
+            const adminVendo = isAdminUsuario();
+            anunciosEmMemoria.forEach((anuncio, index) => {
+                const item = normalizarAnuncio(anuncio);
+                const vendedorCardBanido = usuarioEstaBanido(sanitizarNomePublico(item.vendedor), "");
+                if (vendedorCardBanido && !adminVendo) return;
+                const card = document.createElement("div");
+                card.className = "bg-[#16130e] border border-[#26211a] rounded-[20px] p-5 flex flex-col justify-between hover:border-[#41382a] transition shadow-xl relative card-marketplace animate-fade-in-up fade-stagger";
+                card.style.animationDelay = `${0.08 + index * 0.06}s`;
+                const ehDono = currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(item.vendedor);
+                const capaHtml = (item.fotos && item.fotos.length > 0) ? `<div class="w-full h-40 bg-black rounded-xl overflow-hidden mb-4 border border-[#26211a] relative"><img src="${item.fotos[0]}" alt="Capa da conta" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/75 text-white text-[10px] px-2 py-0.5 rounded">${item.fotos.length} foto(s)</span></div>` : "";
+                let barraSuperior = "";
+                if (ehDono) {
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#26211a]"><span class="text-[10px] text-gray-400 font-semibold uppercase">Seu Anúncio</span><button type="button" onclick="removerAnuncio('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Remover</button></div>`;
+                } else if (adminVendo) {
+                    barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#26211a]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
+                }
+                const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#1c1812] border border-[#2f2920] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        async function curtirAnuncio(id) {
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+            const likesAtual = Number(anuncio.likes || 0);
+            const proximoCurtido = !Boolean(anuncio.curtidoPormim);
+            const proximoLikes = proximoCurtido ? likesAtual + 1 : Math.max(0, likesAtual - 1);
+            anuncio.curtidoPormim = proximoCurtido;
+            anuncio.likes = proximoLikes;
+            if (proximoCurtido) eventosGtag('anuncio_curtido', { item_id: String(id) });
+            localStorage.setItem("marktplace_stand2_anuncios", JSON.stringify(anunciosEmMemoria));
+            carregarCatalogo();
+            if (window.supabaseClient && ehIdNumerico(anuncio.id)) {
+                try {
+                    const { error } = await window.supabaseClient.from("contas").update({
+                        curtidoPormim: proximoCurtido,
+                        likes: proximoLikes
+                    }).eq("id", Number(anuncio.id));
+                    if (error) {}
+                } catch (e) {}
+            }
+        }
+
+        function adicionarAoCarrinho(id) {
+            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+            if (!anuncio) return;
+            if (carrinhoItens.some(item => String(item.id) === String(id))) {
+                mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
+                return;
+            }
+            carrinhoItens.push(anuncio);
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
+            atualizarBadgeCarrinho();
+            var precoNum = parseFloat(String(anuncio.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+            eventosGtag("add_to_cart", { currency: "BRL", value: precoNum, items: [{ item_id: String(anuncio.id), item_name: anuncio.titulo || "Conta Standoff 2", price: precoNum }] });
+            mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
+        }
+
+        function adicionarAoCarrinhoAtual() {
+            if (!anuncioSelecionadoAtual) return;
+            closeDetalhes();
+            adicionarAoCarrinho(anuncioSelecionadoAtual.id);
+        }
+
+        function atualizarBadgeCarrinho() {
+            const badge = document.getElementById("cart-badge");
+            if (badge) badge.textContent = carrinhoItens.length;
+        }
+
+        function abrirCarrinho() {
+            var totalAberto = 0;
+            carrinhoItens.forEach(function (item) { totalAberto += parseFloat(String(item.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0; });
+            eventosGtag("view_cart", { currency: "BRL", value: totalAberto });
+            const container = document.getElementById("carrinho-itens");
+            const totalEl = document.getElementById("carrinho-total");
+            container.innerHTML = "";
+            if (carrinhoItens.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Seu carrinho está vazio.</p>';
+                totalEl.textContent = "R$ 0,00";
+            } else {
+                let totalSoma = 0;
+                carrinhoItens.forEach((item, index) => {
+                    let numPreco = parseFloat(item.preco.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+                    totalSoma += numPreco;
+                    const div = document.createElement("div");
+                    div.className = "flex justify-between items-center bg-[#050505] p-3 rounded-xl border border-[#26211a]";
+                    div.innerHTML = `<div><p class="text-xs font-bold text-white">${escapeHtml(item.titulo)}</p><span class="text-xs text-emerald-400 font-semibold">${escapeHtml(item.preco)}</span></div><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 px-2 py-1 rounded cursor-pointer">Remover</button>`;
+                    container.appendChild(div);
+                });
+                totalEl.textContent = `R$ ${totalSoma.toFixed(2).replace(".", ",")}`;
+            }
+            setModalVisivel("modal-carrinho", true);
+        }
+
+        function closeCarrinho() { setModalVisivel("modal-carrinho", false); }
+
+        function removerDoCarrinho(index) {
+            carrinhoItens.splice(index, 1);
+            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
+            atualizarBadgeCarrinho();
+            abrirCarrinho();
+        }
+
+        function finalizarCompraCarrinho() {
+            if (carrinhoItens.length === 0) { mostrarAlerta("Aviso", "Seu carrinho está vazio.", "aviso"); return; }
+            var totalFin = 0;
+            carrinhoItens.forEach(function (item) { totalFin += parseFloat(String(item.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0; });
+            eventosGtag("begin_checkout", { currency: "BRL", value: totalFin });
+            closeCarrinho();
+            if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
+            setModalVisivel("modal-checkout", true);
+        }
+
+        function abrirCheckoutDireto() {
+            if (!currentUser) { closeDetalhes(); mostrarAlerta("Login Necessário", "Entre para comprar.", "aviso"); openModal(); return; }
+            closeDetalhes();
+            if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
+                carrinhoItens = [anuncioSelecionadoAtual];
+            }
+            var precoDireto = parseFloat(String((anuncioSelecionadoAtual || {}).preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+            eventosGtag("begin_checkout", { currency: "BRL", value: precoDireto });
+            setModalVisivel("modal-checkout", true);
+        }
+        function closeCheckout() { setModalVisivel("modal-checkout", false); }
+
+        function mudarMetodoPagamento(metodo) {
+            const caixaCartao = document.getElementById("container-campos-cartao");
+            if (metodo === "cartao") {
+                caixaCartao.classList.remove("hidden");
+            } else {
+                caixaCartao.classList.add("hidden");
+            }
+        }
