@@ -344,6 +344,13 @@
             background: rgba(5, 4, 2, 0.88);
         }
         .modal-backdrop.is-open { display: flex !important; }
+        /* Card interno: rolagem própria quando o conteúdo ultrapassa a viewport */
+        .modal-card {
+            max-height: calc(100dvh - 2rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
         #modal-boas-vindas { z-index: 999999 !important; }
         body.modal-open { overflow: hidden !important; }
 
@@ -391,6 +398,29 @@
             if (btn) btn.setAttribute("aria-expanded", "false");
         };
 
+        // Foco antes da abertura, para devolvê-lo ao fechar (acessibilidade).
+        const focoAnteriorPorModal = new WeakMap();
+
+        // Prepara o card rolável do modal e devolve o elemento que deve receber o foco.
+        window.prepararFocoModal = function(modal) {
+            const card = modal.firstElementChild;
+            if (!card) return modal;
+            card.classList.add("modal-card");
+            if (!card.hasAttribute("tabindex")) card.setAttribute("tabindex", "-1");
+
+            // Se o próprio card tiver conteúdo excedente, ele é o alvo do foco.
+            let alvo = (card.scrollHeight > card.clientHeight + 2 && card.clientHeight > 0) ? card : null;
+            if (!alvo) {
+                const areas = card.querySelectorAll("[data-modal-scroll], #chat-mensagens, [class*='overflow-y-auto']");
+                for (const area of areas) {
+                    if (area.clientHeight > 0 && area.scrollHeight > area.clientHeight + 2) { alvo = area; break; }
+                }
+            }
+            if (!alvo) alvo = card;
+            if (!alvo.hasAttribute("tabindex")) alvo.setAttribute("tabindex", "-1");
+            return alvo;
+        };
+
         window.setModalVisivel = function(modalId, aberto) {
             const modal = document.getElementById(modalId);
             if (!modal) return;
@@ -399,12 +429,15 @@
             }
             const containers = document.querySelectorAll(".carrinho-itens, [class*='overflow-y-auto'], [class*='space-y-3']");
             if (aberto) {
+                const jaAberto = modal.classList.contains("is-open");
+                if (!jaAberto) focoAnteriorPorModal.set(modal, document.activeElement);
                 modal.classList.remove("hidden");
                 modal.classList.add("is-open");
                 modal.style.display = "flex";
                 modal.scrollTop = 0;
-                if (!modal.hasAttribute("tabindex")) modal.setAttribute("tabindex", "-1");
-                try { modal.focus({ preventScroll: true }); } catch (e) { modal.focus(); }
+                const alvo = window.prepararFocoModal(modal);
+                if (!jaAberto && alvo.scrollTop) alvo.scrollTop = 0;
+                try { alvo.focus({ preventScroll: true }); } catch (e) { alvo.focus(); }
                 if (document.body.style.overflow !== "hidden" && document.body.dataset.modalOverflow === undefined) {
                     document.body.dataset.modalOverflow = document.body.style.overflow || "";
                 }
@@ -416,6 +449,13 @@
                 modal.classList.add("hidden");
                 modal.classList.remove("is-open");
                 modal.style.display = "none";
+                const ativo = document.activeElement;
+                if (ativo && modal.contains(ativo) && typeof ativo.blur === "function") ativo.blur();
+                const anterior = focoAnteriorPorModal.get(modal);
+                focoAnteriorPorModal.delete(modal);
+                if (anterior && anterior.isConnected && typeof anterior.focus === "function") {
+                    try { anterior.focus({ preventScroll: true }); } catch (e) { anterior.focus(); }
+                }
                 if (!document.querySelector(".modal-backdrop.is-open")) {
                     document.body.style.overflow = document.body.dataset.modalOverflow || "";
                     delete document.body.dataset.modalOverflow;
