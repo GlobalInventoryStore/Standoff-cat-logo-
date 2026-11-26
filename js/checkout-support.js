@@ -51,8 +51,8 @@
                     // Exibir QR code gerado pelo Mercado Pago
                     conteudoPag.innerHTML = `
                         <div class="bg-[#050505] border border-[#2f2920] rounded-xl p-4 mb-4">
-                            <p class="text-[11px] text-gray-400 mb-2">Pix Gerado pelo Mercado Pago</p>
-                            <img src="${resultado.qr_code_url || resultado.sandbox_info?.qr_code_url || ''}" alt="QR Code MP" class="mx-auto w-20 h-20 rounded mb-2"><br>
+                            <p class="text-[11px] text-gray-400 mb-2">Pagamento gerado pelo Mercado Pago</p>
+                            ${resultado.qr_code_base64 ? `<img src="data:image/png;base64,${resultado.qr_code_base64}" alt="QR Code MP" class="mx-auto w-20 h-20 rounded mb-2"><br>` : ""}
                             <a href="${resultado.init_point}" target="_blank" rel="noopener" class="text-[var(--accent)] font-bold text-sm block center">Acessar Checkout MP</a>
                         </div>
                         <p class="text-[10px] text-gray-500">O pagamento será processado pelo Mercado Pago. Após aprovação, o ticket será criado automaticamente.</p>

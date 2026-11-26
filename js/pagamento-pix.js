@@ -143,15 +143,14 @@
             return { status: "fila", imagem: imagemB64 };
         }
 
-        // Função para criar pagamento via Mercado Pago Edge Function
+        // Função para criar pagamento via Mercado Pago Edge Function (token fica só no servidor)
         async function criarPagamentoMP(ticketId, valor, itens) {
-            if (!MP_CONFIG.accessToken) {
-                mostrarAlerta("MP", "Chave de acesso Mercado Pago não configurada.", "erro");
+            const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "").replace("https://", "").replace("http://", "").replace(/\/$/, "");
+            if (!supabaseUrl) {
+                mostrarAlerta("MP", "Supabase não configurado — não é possível gerar o checkout.", "erro");
                 return null;
             }
-
-            const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || "").replace("https://", "").replace("http://", "");
-            const functionUrl = supabaseUrl ? `https://${supabaseUrl}/functions/criar-pagamento` : "https://globalinventorystore.github.io/Standoff-cat-logo-/supabase/functions/criar-pagamento";
+            const functionUrl = `https://${supabaseUrl}/functions/v1/criar-pagamento`;
 
             const itensData = itens || [{ id: "item", title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor) }];
 
