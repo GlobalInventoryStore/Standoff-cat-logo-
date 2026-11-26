@@ -59,11 +59,11 @@
                     `;
                 } else {
                     // Fallback para PIX se MP falhar
-                    const pixStrFallBack = gerarPixCopiaECola(totalCarrinhoStr, ticketId);
+                    const pixStrFallBack = gerarPixCopiaECola(somaTotal, ticketId);
                     conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStrFallBack)}" alt="QR Code PIX Fallback" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">QR Code PIX (fallback). Use Copia e Cola se necessário.</p>`;
                 }
             } else {
-                conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
+                conteudoPag.innerHTML = `<div class="py-4 text-gray-300 font-bold text-sm">⏳ Pagamento "${metodoEscolhido}" em processamento</div><p class="text-[11px] text-gray-400">O ticket só será criado e liberado após a confirmação real do pagamento pelo admin. Nenhum valor é liberado por este botão.</p>`;
             }
             setModalVisivel("modal-pagamento-detalhes", true);
         }
@@ -91,17 +91,21 @@
                 : "Em processamento — aguardando confirmação de pagamento";
             let arquivoComprovante = null;
             let comprovanteImagemB64 = null;
-            if (ehPix) {
-                const campoComprovante = document.getElementById("comprovante-pix");
-                arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
-                if (arquivoComprovante && arquivoComprovante.size > 8 * 1024 * 1024) {
-                    mostrarAlerta("Comprovante", "O arquivo é maior que 8 MB. Escolha um print menor.", "aviso");
-                    return;
+                if (ehPix) {
+                    const campoComprovante = document.getElementById("comprovante-pix");
+                    arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
+                    if (!arquivoComprovante) {
+                        mostrarAlerta("Comprovante obrigatório", "Anexe o print do comprovante PIX antes de enviar. Sem o print o admin não confirma o pagamento e o ticket não é criado.", "aviso");
+                        return;
+                    }
+                    if (arquivoComprovante.size > 8 * 1024 * 1024) {
+                        mostrarAlerta("Comprovante", "O arquivo é maior que 8 MB. Escolha um print menor.", "aviso");
+                        return;
+                    }
+                    const valorComprovante = document.getElementById("pag-conta-valor").textContent;
+                    try { const r = await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); comprovanteImagemB64 = (r && r.imagem) || null; } catch (e) { comprovanteImagemB64 = null; }
+                    if (campoComprovante) campoComprovante.value = "";
                 }
-                const valorComprovante = document.getElementById("pag-conta-valor").textContent;
-                try { const r = await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); comprovanteImagemB64 = (r && r.imagem) || null; } catch (e) { comprovanteImagemB64 = null; }
-                if (campoComprovante) campoComprovante.value = "";
-            }
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
             const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
             if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
