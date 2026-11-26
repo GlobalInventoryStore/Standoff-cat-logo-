@@ -484,12 +484,19 @@
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
-                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Em breve via Mercado Pago</span></div>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito à vista</p><span class="text-[10px] text-[var(--muted)]">Mercado Pago — taxa de 4,5% incluída</span></div>
                     </div>
-                    <input type="radio" name="pagamento" value="cartao" disabled class="accent-[var(--accent)] opacity-50" onchange="mudarMetodoPagamento('cartao')">
+                    <input type="radio" name="pagamento" value="cartao_avista" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao_avista')">
+                </label>
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-purple-400 font-bold text-lg">🗓️</span>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito parcelado</p><span class="text-[10px] text-[var(--muted)]">Até 12× no Mercado Pago — taxa de 8% incluída</span></div>
+                    </div>
+                    <input type="radio" name="pagamento" value="cartao_parcelado" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao_parcelado')">
                 </label>
             </div>
-            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">Pagamentos com cartão chegam na próxima fase. Por enquanto, pague com PIX.</p>
+            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">O PIX não tem taxa para você (aprovado na hora pelo Mercado Pago).</p>
             <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#26211a]">
                 <div class="input-group mb-0">
                     <label>Número do Cartão</label>

@@ -57,9 +57,10 @@
                         }
                     }
                 }
-            } else if (metodoEscolhido === "cartao") {
-                // Mercado Pago checkout (cartão) — taxa do cartão embutida para o comprador (~5%)
-                const somaTotalComTaxa = Math.ceil(somaTotal * 1.05 * 100) / 100;
+            } else if (metodoEscolhido === "cartao_avista" || metodoEscolhido === "cartao_parcelado") {
+                // Mercado Pago checkout (cartão) — taxa embutida: à vista +4,5%, parcelado +8%
+                const fatorTaxa = metodoEscolhido === "cartao_parcelado" ? 1.08 : 1.045;
+                const somaTotalComTaxa = Math.ceil(somaTotal * fatorTaxa * 100) / 100;
                 document.getElementById("pag-conta-valor").textContent = formatarValorPix(somaTotalComTaxa);
                 const ticketId = "TICK-" + Math.floor(10000 + Math.random() * 90000);
                 const itens = carrinhoItens.map(i => ({ id: i.id || "item", titulo: i.titulo, preco: i.preco, quantidade: 1 }));
@@ -98,8 +99,8 @@
             const metodoRadios = document.querySelectorAll('input[name="pagamento"]');
             let metodoValor = "pix";
             metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
-            const metodoPagamento = metodoValor === "cartao" ? "Cartão de Crédito" : "PIX";
-            const ehPix = metodoValor !== "cartao";
+            const metodoPagamento = metodoValor === "cartao_parcelado" ? "Cartão de Crédito (parcelado, taxa embutida)" : metodoValor === "cartao_avista" ? "Cartão de Crédito (à vista, taxa embutida)" : "PIX";
+            const ehPix = !(metodoValor === "cartao_avista" || metodoValor === "cartao_parcelado");
             if (ehPix && window.__pixViaMP) { ticketIdGerado = String(window.__pixViaMP); }
             const viaMP = ehPix && window.__pixViaMP === ticketIdGerado;
             if (ehPix && !pixEstaConfigurado() && !viaMP) {
