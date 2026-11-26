@@ -1,71 +1,43 @@
-import { createClient } from "@supabase/supabase-js";
-import type { ServeFunction } from "@supabase/functions-types";
-
-export const handler: ServeFunction = async (req) => {
+Deno.serve(async (req) => {
   try {
-    const payload = req.body();
-    const signature = req.header("x-signature");
-
-    if (!signature) {
-      return new Response(
-        JSON.stringify({ error: "Assinatura x-signature ausente" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    const secret = Deno.env.get("MP_WEBHOOK_SECRET");
+    const url = new URL(req.url);
+    const dataId = url.searchParams.get("data.id") || url.searchParams.get("id");
+    const signature = req.headers.get("x-signature") || "";
+    if (secret && dataId && signature) {
+      const parts = Object.fromEntries(signature.split(",").map(p => p.split("=").map(s => s.trim())));
+      const ts = parts["ts"], v1 = parts["v1"];
+      if (ts && v1) {
+        const manifest = "id:" + dataId + ";request-id:" + (req.headers.get("x-request-id") || "") + ";ts:" + ts + ";";
+        const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
+        const hex = [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, "0")).join("");
+        if (hex !== v1) return new Response("assinatura invalida", { status: 401 });
+      }
     }
-
-    // Webhook secret should be from env vars in production
-    const WEBHOOK_SECRET = "whsec_seu_secreto_aqui";
-
-    // Verify webhook signature
-    const crypto = require("crypto");
-    const hmac = crypto.createHmac("sha256", WEBHOOK_SECRET).update(payload).digest("hex");
-
-    if (hmac !== signature) {
-      return new Response(
-        JSON.stringify({ error: "Assinatura inválida" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    let paymentId = dataId;
+    const body = await req.json().catch(() => ({}));
+    if (body && body.data && body.data.id) paymentId = String(body.data.id);
+    if (paymentId) {
+      const token = Deno.env.get("MP_ACCESS_TOKEN");
+      const pr = await fetch("https://api.mercadopago.com/v1/payments/" + paymentId, { headers: { Authorization: "Bearer " + token } });
+      if (pr.ok) {
+        const pay = await pr.json();
+        if (pay.status === "approved" && pay.external_reference) {
+          const baseUrl = "https://dumvvprvafzmzqdrenyn.supabase.co";
+          const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+          if (srk) {
+            await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(pay.external_reference), {
+              method: "PATCH",
+              headers: { apikey: srk, Authorization: "Bearer " + srk, "Content-Type": "application/json", Prefer: "return=minimal" },
+              body: JSON.stringify({ etapa: 2, status_texto: "Pagamento aprovado - Custodia Segura" })
+            });
+          }
+        }
+      }
     }
-
-    const event = JSON.parse(payload);
-
-    // Only process payment.updated events
-    if (event.type !== "payment.updated") {
-      return new Response(
-        JSON.stringify({ status: "ignorado", motivo: "evento não é payment.updated" }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const payment = event.data;
-    const paymentId = payment.id;
-    const status = payment.status;
-
-    // Only process approved payments
-    if (status !== "approved") {
-      return new Response(
-        JSON.stringify({ status: "ignorado", motivo: `status ${status} não é approved` }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Here would update the ticket status in Supabase
-    // For now, return success
-    return new Response(
-      JSON.stringify({
-        status: "atualizado",
-        payment_id: paymentId,
-        ticket_etapa: 2,
-        mensagem: "Pagamento aprovado - ticket avançou para etapa 2"
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-
-  } catch (error: any) {
-    console.error("Erro no webhook Mercado Pago:", error.message);
-    return new Response(
-      JSON.stringify({ error: error.message || "Erro interno" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ received: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  } catch (e) {
+    return new Response(JSON.stringify({ received: true, erro: String(e) }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
-};
+});
