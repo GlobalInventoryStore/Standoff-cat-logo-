@@ -135,8 +135,16 @@
                 metodo_pagamento: metodoPagamento,
                 etapa: 1,
                 status_texto: statusInicial,
-                concluido: false
+                concluido: false,
+                anuncio_ids: carrinhoItens.map(i => i.id).filter(Boolean).join(",")
             });
+            const idsVendidos = carrinhoItens.map(i => i.id).filter(Boolean);
+            if (idsVendidos.length) {
+                try { await window.supabaseClient.from("anuncios").update({ vendido: true }).in("id", idsVendidos); } catch (e) {}
+                carrinhoItens = [];
+                try { localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens)); } catch (e) {}
+                atualizarBadgeCarrinho();
+            }
             const okVenda = await gravarFilaNotificacaoSuporte(
                 "VENDA — MARKTPLACE stand2",
                 "VENDA\nTicket: " + ticketIdGerado + "\nMétodo de pagamento: " + metodoPagamento + "\nValor: " + (valorTotalPedido || document.getElementById("pag-conta-valor").textContent) +
@@ -320,7 +328,8 @@
                 concluido: Boolean(row.concluido),
                 contestacao: /contest/i.test(String(row.status_texto || "")) || Boolean(row.contestacao),
                 concluidoEm: row.concluido_em || null,
-                etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa)
+                etapasCustodia: ETAPAS_CUSTODIA.slice(0, etapa),
+                anuncioIds: String(row.anuncio_ids || "")
             };
         }
 

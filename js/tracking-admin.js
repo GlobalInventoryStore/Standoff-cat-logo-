@@ -77,6 +77,20 @@
             return `${info}<div class="mt-2 border-t border-[#26211a] pt-2"><p class="text-[10px] uppercase font-bold text-[var(--accent)] mb-1">Etapas de custódia</p>${etapasHtml}</div>${blocoComprador}${botaoSuporte}`;
         }
 
+        async function retomarAnuncioTicket(ticketId) {
+            if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode retomar anúncios.", "aviso"); return; }
+            const codigo = normalizarCodigoTicket(ticketId);
+            const pedido = pedidosAtivos.find(p => normalizarCodigoTicket(p.ticketId) === codigo);
+            const ids = String((pedido && pedido.anuncioIds) || "").split(",").map(s => s.trim()).filter(Boolean);
+            if (!pedido || !ids.length) { mostrarAlerta("Admin", "Este ticket não tem anúncios vinculados para retomar.", "aviso"); return; }
+            try {
+                const { error } = await window.supabaseClient.from("anuncios").update({ vendido: false }).in("id", ids);
+                if (error) { mostrarAlerta("Admin", "Falha ao retomar o anúncio no Supabase.", "erro"); return; }
+                mostrarAlerta("Admin", `Anúncio(s) retomado(s): ${ids.length} — de volta ao catálogo para nova venda.`);
+                if (typeof carregarCatalogo === "function") carregarCatalogo();
+            } catch (e) { mostrarAlerta("Admin", "Erro inesperado ao retomar o anúncio.", "erro"); }
+        }
+
         async function definirEtapaTicketAdmin(ticketId, etapa) {
             if (!isAdminUsuario()) { mostrarAlerta("Admin", "Apenas a conta admin pode alterar a etapa.", "aviso"); return; }
             const codigo = normalizarCodigoTicket(ticketId);
@@ -380,7 +394,7 @@
                         const chaveK = ticketChaveCss(pedidoEncontrado.ticketId);
                         html += `<div class="mt-2 rounded-xl border border-emerald-500/25 bg-[#10231a] p-2.5"><p class="text-[10px] uppercase font-bold text-emerald-300 mb-1">🔐 Dados de acesso da conta</p><input id="acesso-gmail-${chaveK}" type="text" placeholder="Gmail da conta" value="${acessoSalvo ? escapeHtml(acessoSalvo.gmail) : ""}" class="mb-2"><input id="acesso-senha-${chaveK}" type="text" placeholder="Senha" value="${acessoSalvo ? escapeHtml(acessoSalvo.senha) : ""}" class="mb-2"><div class="grid grid-cols-2 gap-1.5"><button type="button" onclick="salvarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-[#2f2920]">💾 Salvar</button><button type="button" onclick="copiarAcessoAdminTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-emerald-500/30">📋 Copiar</button></div><p class="text-[10px] text-gray-500 mt-1">Salva criptografado só neste navegador. Chega por e-mail da loja quando o vendedor publica o anúncio.</p></div>`;
                     }
-                    html += `<button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button></div>`;
+                    html += `<button type="button" onclick="voltarListaTicketsAdmin()" class="mt-2 w-full bg-[#1c1812] hover:bg-[#26211a] text-[var(--accent)] py-2 rounded-xl text-xs font-bold cursor-pointer border border-[#2f2920]">← Voltar para lista em aberto</button>` + (String(pedidoEncontrado.anuncioIds || "").trim() ? `<button type="button" onclick="retomarAnuncioTicket('${escapeHtml(pedidoEncontrado.ticketId)}')" class="mt-1.5 w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2 rounded-xl text-[11px] font-bold cursor-pointer border border-amber-500/30">↩ Retomar anúncio (reembolso / problema)</button>` : "") + `</div>`;
                 }
                 if (isAdminUsuario()) {
                     html += pedidoEncontrado && pedidoEncontrado.ticketId

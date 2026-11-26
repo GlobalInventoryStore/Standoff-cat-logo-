@@ -99,6 +99,7 @@
                 vendedor: row.vendedor || "Sistema",
                 likes: Number(row.likes ?? 0),
                 curtidoPormim: curtidoFlag,
+                vendido: Boolean(row.vendido ?? false),
                 fotos: fotosNormalizadas
             };
         }

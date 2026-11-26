@@ -58,7 +58,8 @@
             const grid = document.getElementById("catalogo-cards");
             if (!grid) return;
             grid.innerHTML = "";
-            let anunciosFiltrados = [...anunciosEmMemoria];
+            let anunciosFiltrados = anunciosEmMemoria.filter(a => !a.vendido);
+            if (!anunciosFiltrados.length && anunciosEmMemoria.length) { /* todos vendidos: catálogo vazio mesmo */ }
 
             // Aplicar filtro de busca
             if (filtro && filtro.tipo) {
