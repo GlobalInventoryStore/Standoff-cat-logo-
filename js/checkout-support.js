@@ -25,28 +25,46 @@
             if (acoesPix) acoesPix.classList.add("hidden");
             if (btnPaguei) btnPaguei.classList.remove("hidden");
             if (metodoEscolhido === "pix") {
-                const pixStr = gerarPixCopiaECola(somaTotal, pedidoId);
-                if (!pixStr) {
-                    const motivo = pixEstaConfigurado()
-                        ? "Não foi possível calcular o valor do pedido."
-                        : "Chave PIX ainda não configurada.";
-                    conteudoPag.innerHTML = `<div class="py-2"><p class="text-sm font-bold text-amber-400">${motivo}</p><p class="text-[11px] text-gray-400 mt-2">Não geramos um QR falso. Acione o suporte para concluir a compra com segurança.</p><button type="button" onclick="closePagamentoDetalhes(); abrirChatSuporte()" class="mt-3 bg-[var(--accent)] text-black font-bold py-2 px-4 rounded-xl text-xs cursor-pointer">💬 Falar com o suporte</button></div>`;
-                    if (btnPaguei) btnPaguei.classList.add("hidden");
+                // PIX via Mercado Pago: aprovação automática. Fallback = QR manual com comprovante.
+                const ticketIdPix = "TICK-" + Math.floor(10000 + Math.random() * 90000);
+                window.__pixViaMP = "";
+                let resMP = null;
+                try { if (typeof criarPagamentoMP === "function") resMP = await criarPagamentoMP(ticketIdPix, somaTotal); } catch (e) {}
+                if (resMP && resMP.init_point) {
+                    window.__pixViaMP = ticketIdPix;
+                    conteudoPag.innerHTML = `
+                        <div class="bg-[#050505] border border-[#2f2920] rounded-xl p-4 mb-4">
+                            <p class="text-[11px] text-green-400 font-bold mb-2">PIX seguro pelo Mercado Pago</p>
+                            ${resMP.qr_code_base64 ? `<img src="data:image/png;base64,${resMP.qr_code_base64}" alt="QR Code PIX MP" class="mx-auto w-24 h-24 rounded mb-2"><br>` : ""}
+                            <a href="${resMP.init_point}" target="_blank" rel="noopener" class="block text-center bg-[var(--accent)] text-black font-bold py-2 rounded-xl text-xs no-underline mb-1">Pagar com PIX (Mercado Pago)</a>
+                            <p class="text-[10px] text-gray-500">Pagamento confirmado automaticamente. Após pagar, toque em "Já paguei" para gerar o seu ticket.</p>
+                        </div>`;
                 } else {
-                    pixGatewayCopiaECola = pixStr;
-                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola abaixo.</p><p class="text-[9px] text-gray-600 mt-1 break-all">${pixStr}</p>`;
-                    if (acoesPix) {
-                        acoesPix.classList.remove("hidden");
-                        const txtChave = document.getElementById("pix-chave-texto");
-                        if (txtChave) txtChave.textContent = PIX_CONFIG.chave;
+                    const pixStr = gerarPixCopiaECola(somaTotal, pedidoId);
+                    if (!pixStr) {
+                        const motivo = pixEstaConfigurado()
+                            ? "Não foi possível calcular o valor do pedido."
+                            : "Chave PIX ainda não configurada.";
+                        conteudoPag.innerHTML = `<div class="py-2"><p class="text-sm font-bold text-amber-400">${motivo}</p><p class="text-[11px] text-gray-400 mt-2">Não geramos um QR falso. Acione o suporte para concluir a compra com segurança.</p><button type="button" onclick="closePagamentoDetalhes(); abrirChatSuporte()" class="mt-3 bg-[var(--accent)] text-black font-bold py-2 px-4 rounded-xl text-xs cursor-pointer">💬 Falar com o suporte</button></div>`;
+                        if (btnPaguei) btnPaguei.classList.add("hidden");
+                    } else {
+                        pixGatewayCopiaECola = pixStr;
+                        conteudoPag.innerHTML = `<div class="text-[10px] text-amber-400 mb-2">⚠ Mercado Pago indisponível agora — usando PIX direto da loja (confirmação manual pelo admin).</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola abaixo.</p><p class="text-[9px] text-gray-600 mt-1 break-all">${pixStr}</p>`;
+                        if (acoesPix) {
+                            acoesPix.classList.remove("hidden");
+                            const txtChave = document.getElementById("pix-chave-texto");
+                            if (txtChave) txtChave.textContent = PIX_CONFIG.chave;
+                        }
                     }
                 }
             } else if (metodoEscolhido === "cartao") {
-                // Mercado Pago checkout (Fase 2)
+                // Mercado Pago checkout (cartão) — taxa do cartão embutida para o comprador (~5%)
+                const somaTotalComTaxa = Math.ceil(somaTotal * 1.05 * 100) / 100;
+                document.getElementById("pag-conta-valor").textContent = formatarValorPix(somaTotalComTaxa);
                 const ticketId = "TICK-" + Math.floor(10000 + Math.random() * 90000);
                 const itens = carrinhoItens.map(i => ({ id: i.id || "item", titulo: i.titulo, preco: i.preco, quantidade: 1 }));
 
-                const resultado = await criarPagamentoMP(ticketId, somaTotal, itens);
+                const resultado = await criarPagamentoMP(ticketId, somaTotalComTaxa, itens);
                 if (resultado && resultado.init_point) {
                     // Exibir QR code gerado pelo Mercado Pago
                     conteudoPag.innerHTML = `
@@ -72,7 +90,7 @@
 
         async function enviarComprovanteParaTicket() {
             closePagamentoDetalhes();
-            const ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
+            let ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
             const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
             var totalCompraTexto = (document.getElementById("pag-conta-valor") || {}).textContent || "0";
             var totalCompraNum = parseFloat(String(totalCompraTexto).replace("R$", "").replace(".", "").replace(",", ".")) || 0;
@@ -82,16 +100,18 @@
             metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
             const metodoPagamento = metodoValor === "cartao" ? "Cartão de Crédito" : "PIX";
             const ehPix = metodoValor !== "cartao";
-            if (ehPix && !pixEstaConfigurado()) {
+            if (ehPix && window.__pixViaMP) { ticketIdGerado = String(window.__pixViaMP); }
+            const viaMP = ehPix && window.__pixViaMP === ticketIdGerado;
+            if (ehPix && !pixEstaConfigurado() && !viaMP) {
                 mostrarAlerta("PIX", "Chave PIX não configurada. Nenhum pagamento foi gerado — acione o suporte.", "aviso");
                 return;
             }
             const statusInicial = ehPix
-                ? "Aguardando verificação do comprovante PIX (custódia)"
+                ? (viaMP ? "PIX via Mercado Pago — aguardando confirmação automática" : "Aguardando verificação do comprovante PIX (custódia)")
                 : "Em processamento — aguardando confirmação de pagamento";
             let arquivoComprovante = null;
             let comprovanteImagemB64 = null;
-                if (ehPix) {
+                if (ehPix && !viaMP) {
                     const campoComprovante = document.getElementById("comprovante-pix");
                     arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
                     if (!arquivoComprovante) {
@@ -156,7 +176,7 @@
                 "VENDA\nTicket: " + ticketIdGerado + "\nMétodo de pagamento: " + metodoPagamento + "\nValor: " + (valorTotalPedido || document.getElementById("pag-conta-valor").textContent) +
                     "\nComprador: " + (currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante") + " (" + (gmailUser || "(sem Gmail)") + (wppUser ? ", WhatsApp " + wppUser : "") + ")" +
                     "\nItens: " + (listaItensFormatada || "(não informado)") +
-                    "\nComprovante: " + (ehPix ? (comprovanteImagemB64 ? "anexado à mensagem de imagem acima" : (arquivoComprovante ? "escolhido pelo cliente (não pôde ser convertido)" : "não anexado")) : "cartão — verificado pelo Mercado Pago") +
+                    "\nComprovante: " + (viaMP ? "PIX pago via Mercado Pago — aprovado automaticamente pelo webhook" : (ehPix ? (comprovanteImagemB64 ? "anexado à mensagem de imagem acima" : (arquivoComprovante ? "escolhido pelo cliente (não pôde ser convertido)" : "não anexado")) : "cartão — verificado pelo Mercado Pago")) +
                     (ehPix && typeof verificacaoComprovante !== "undefined" ? "\nVerificação automática do comprovante: " + (verificacaoComprovante.resumo || "não realizada") : "") +
                     "\nHora da compra: " + new Date().toLocaleString("pt-BR")
             );
