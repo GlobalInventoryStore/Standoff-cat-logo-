@@ -87,15 +87,8 @@
                             <button type="button" onclick="logout()" class="text-xs text-gray-400 hover:text-white bg-[#1a1a1a] px-2 py-1 rounded-lg transition cursor-pointer">Sair</button>
                         </div>
                         <div id="loginButtonContainer">
-                            <button type="button" onclick="loginFacebook()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5" style="background: linear-gradient(145deg, #121217, #1a1a24); border: 1px solid var(--accent); color: var(--accent);">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px;"><path d="M22.54 4.44a1.1 1.1 0 0 0-1.42 0L12 14.6 2.68 5.12a1.1 1.1 0 0 0-1.42.04 1.1 1.1 0 0 0-.06 1.43L2.16 18a1.1 1.1 0 0 0 .12 1.45h1.75a5.002 5.002 0 0 1 4.7 3.9 5.002 5.002 0 0 1-1.9 2.1 5.002 5.002 0 0 1-4.6-1.1 5.002 5.002 0 0 1-3.5-4.03 5.002 5.002 0 0 1-1.65-4.04A4.965 4.965 0 0 0 2 12.05a4.965 4.965 0 0 0 .46 8.07 1.1 1.1 0 0 0 .74 1.32h2.12a5.018 5.018 0 0 1 3.74 2.86 5.018 5.018 0 0 1-1.33 5.83 5.018 5.018 0 0 1-4.57 1.1 5.018 5.018 0 0 1-4.57-1.1 5.018 5.018 0 0 1-1.33-5.83A5.004 5.004 0 0 0 2 11.95c0-4.97 3.97-8.97 8.97-8.97 1.09 0 2.04.14 2.97.41a1.1 1.1 0 0 1 .88.29 1.1 1.1 0 0 1 .42.76 1.1 1.1 0 0 0 .21 1.35 1.1 1.1 0 0 0 .48 1.32h2.13a1.1 1.1 0 0 1 .7 1.09 1.1 1.1 0 0 0 .4.66 1.1 1.1 0 0 0 .16 1.16h.05a1.1 1.1 0 0 0 .07 1.32 1.1 1.1 0 0 0 .43 1.33 1.1 1.1 0 0 0 .71.35 1.1 1.1 0 0 1 1.04.15 5.002 5.002 0 0 1 6.04 0 5.002 5.002 0 0 1 4.78 4.45 5.002 5.002 0 0 1-1.83 5.11 5.002 5.002 0 0 1-4.64 1.1 5.002 5.002 0 0 1-4.43-4.38 5.002 5.002 0 0 1-1.07-5.03A11.046 11.046 0 0 0 12 2.25a11.046 11.046 0 0 0-5.04 1.78 1.1 1.1 0 0 0-.31.44 1.1 1.1 0 0 0-.74.16 1.1 1.1 0 0 0-.25.5 1.1 1.1 0 0 0-.16.83zM5.86 10.75a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM18.44 14.32a1.5 1.5 0 1 1-1.5-1.5 1.5 1.5 0 0 1 1.5 1.5z"></path></svg>
-                                Login Facebook
-                            </button>
-                        </div>
-                        <div id="fbAuthSection" class="hidden py-2">
-                            <button type="button" onclick="facebookLogin()" class="btn-secondary py-1 text-xs flex items-center justify-center gap-1.5 hidden">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 2px;"><path d="M22.54 4.44a1.1 1.1 0 0 0-1.42 0L12 14.6 2.68 5.12a1.1 1.1 0 0 0-1.42.04 1.1 1.1 0 0 0-.06 1.43L2.16 18a1.1 1.1 0 0 0 .12 1.45h1.75a5.002 5.002 0 0 1 4.7 3.9 5.002 5.002 0 0 1-1.9 2.1 5.002 5.002 0 0 1-4.6-1.1 5.002 5.002 0 0 1-3.5-4.03 5.002 5.002 0 0 1-1.65-4.04A4.965 4.965 0 0 0 2 12.05a4.965 4.965 0 0 0 .46 8.07 1.1 1.1 0 0 0 .74 1.32h2.12a5.018 5.018 0 0 1 3.74 2.86 5.018 5.018 0 0 1-1.33 5.83 5.018 5.018 0 0 1-4.57 1.1 5.018 5.018 0 0 1-4.57-1.1 5.018 5.018 0 0 1-1.33-5.83A5.004 5.004 0 0 0 2 11.95c0-4.97 3.97-8.97 8.97-8.97 1.09 0 2.04.14 2.97.41a1.1 1.1 0 0 1 .88.29 1.1 1.1 0 0 1 .42.76 1.1 1.1 0 0 0 .21 1.35 1.1 1.1 0 0 0 .48 1.32h2.13a1.1 1.1 0 0 1 .7 1.09 1.1 1.1 0 0 0 .4.66 1.1 1.1 0 0 0 .16 1.16h.05a1.1 1.1 0 0 0 .07 1.32 1.1 1.1 0 0 0 .43 1.33 1.1 1.1 0 0 0 .71.35 1.1 1.1 0 0 1 1.04.15 5.002 5.002 0 0 1 6.04 0 5.002 5.002 0 0 1 4.78 4.45 5.002 5.002 0 0 1-1.83 5.11 5.002 5.002 0 0 1-4.64 1.1 5.002 5.002 0 0 1-4.43-4.38 5.002 5.002 0 0 1-1.07-5.03A11.046 11.046 0 0 0 12 2.25a11.046 11.046 0 0 0-5.04 1.78 1.1 1.1 0 0 0-.31.44 1.1 1.1 0 0 0-.74.16 1.1 1.1 0 0 0-.25.5 1.1 1.1 0 0 0-.16.83zM5.86 10.75a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM18.44 14.32a1.5 1.5 0 1 1-1.5-1.5 1.5 1.5 0 0 1 1.5 1.5z"></path></svg>
-                                Continuar com Facebook
+                            <button type="button" onclick="openModal()" class="btn-primary py-2 text-xs flex items-center justify-center gap-1.5">
+                                Entrar / Cadastrar
                             </button>
                         </div>
                     </div>
@@ -355,6 +348,15 @@
                     <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
                     <button type="button" onclick="mostrarRecuperacaoSenha()" class="mt-2 w-full text-[11px] text-[var(--accent)] hover:underline cursor-pointer">Esqueceu a senha?</button>
+                    <div class="border-t border-[var(--border)] my-4 hidden" id="fb-divider">
+                        <span class="text-[10px] text-gray-400 opacity-60">ou</span>
+                    </div>
+                    <div class="input-group mb-3">
+                        <button type="button" onclick="facebookLogin()" class="w-full btn-secondary py-2 text-xs text-[var(--accent)] hover:text-white bg-[#1a1a1a] border border-[var(--accent)] rounded-lg flex items-center justify-center gap-2 cursor-pointer">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 2px;"><path d="M22.54 4.44a1.1 1.1 0 0 0-1.42 0L12 14.6 2.68 5.12a1.1 1.1 0 0 0-1.42.04 1.1 1.1 0 0 0-.06 1.43L2.16 18a1.1 1.1 0 0 0 .12 1.45h1.75a5.002 5.002 0 0 1 4.7 3.9 5.002 5.002 0 0 1-1.9 2.1 5.002 5.002 0 0 1-4.6-1.1 5.002 5.002 0 0 1-3.5-4.03 5.002 5.002 0 0 1-1.65-4.04A4.965 4.965 0 0 0 2 12.05a4.965 4.965 0 0 0 .46 8.07 1.1 1.1 0 0 0 .74 1.32h2.12a5.018 5.018 0 0 1 3.74 2.86 5.018 5.018 0 0 1-1.33 5.83 5.018 5.018 0 0 1-4.57 1.1 5.018 5.018 0 0 1-4.57-1.1 5.018 5.018 0 0 1-1.33-5.83A5.004 5.004 0 0 0 2 11.95c0-4.97 3.97-8.97 8.97-8.97 1.09 0 2.04.14 2.97.41a1.1 1.1 0 0 1 .88.29 1.1 1.1 0 0 1 .42.76 1.1 1.1 0 0 0 .21 1.35 1.1 1.1 0 0 0 .48 1.32h2.13a1.1 1.1 0 0 1 .7 1.09 1.1 1.1 0 0 0 .4.66 1.1 1.1 0 0 0 .16 1.16h.05a1.1 1.1 0 0 0 .07 1.32 1.1 1.1 0 0 0 .43 1.33 1.1 1.1 0 0 0 .71.35 1.1 1.1 0 0 1 1.04.15 5.002 5.002 0 0 1 6.04 0 5.002 5.002 0 0 1 4.78 4.45 5.002 5.002 0 0 1-1.83 5.11 5.002 5.002 0 0 1-4.64 1.1 5.002 5.002 0 0 1-4.43-4.38 5.002 5.002 0 0 1-1.07-5.03A11.046 11.046 0 0 0 12 2.25a11.046 11.046 0 0 0-5.04 1.78 1.1 1.1 0 0 0-.31.44 1.1 1.1 0 0 0-.74.16 1.1 1.1 0 0 0-.25.5 1.1 1.1 0 0 0-.16.83zM5.86 10.75a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM18.44 14.32a1.5 1.5 0 1 1-1.5-1.5 1.5 1.5 0 0 1 1.5 1.5z"></path></svg>
+                            Continuar com Facebook
+                        </button>
+                    </div>
                     <div id="rec-senha-area" class="hidden mt-3 border-t border-[#26211a] pt-3 space-y-2">
                         <p class="text-[11px] font-semibold text-[var(--accent)]">Recuperar acesso</p>
                         <input type="text" id="rec-identifier" placeholder="seuemail@gmail.com ou Nome">
@@ -788,14 +790,10 @@
     </div>
     
 
-    <!-- Facebook/Instagram Login Handler -->
+    <!-- Facebook Login Handler -->
     <script>
-        function loginFacebook() {
-            window.open('https://www.facebook.com/dialog/oauth?client_id=1817299576153734&config_id=1476210984713166&display=popup&override_default_response_type=true&redirect_uri=https%3A%2F%2Fnexustrade.party%2F&response_type=code&state=%3CSTATE%3E&prompt=login', '_blank', 'width=600,height=600');
-        }
-
         function facebookLogin() {
-            loginFacebook();
+            window.open('https://www.facebook.com/dialog/oauth?client_id=1817299576153734&config_id=1476210984713166&display=popup&override_default_response_type=true&redirect_uri=https%3A%2F%2Fnexustrade.party%2F&response_type=code&state=%3CSTATE%3E&prompt=login', '_blank', 'width=600,height=600');
         }
     </script>
 
