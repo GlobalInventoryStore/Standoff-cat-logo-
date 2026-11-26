@@ -202,7 +202,7 @@
                     .or(`and(concluido.eq.false),and(concluido.eq.true,concluido_em.gte.${limite})`)
                     .order("created_at", { ascending: true });
                 if (error || !Array.isArray(data)) return null;
-                return data.map(converterRegistroSupabase).filter(ticketNaJanelaAberta);
+                return data.map(converterRegistroSupabase).filter(p => !p.preReserva).filter(ticketNaJanelaAberta);
             } catch (e) {
                 return null;
             }
@@ -213,7 +213,7 @@
             try {
                 const { data, error } = await window.supabaseClient.from("tickets").select("*").eq("concluido", true).order("concluido_em", { ascending: false, nullsFirst: false }).limit(50);
                 if (error || !Array.isArray(data)) return null;
-                return data.map(converterRegistroSupabase);
+                return data.map(converterRegistroSupabase).filter(p => !/^cancelado — pagamento não confirmado/i.test(String(p.status || "")));
             } catch (e) {
                 return null;
             }

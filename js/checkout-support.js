@@ -107,9 +107,9 @@
                 mostrarAlerta("PIX", "Chave PIX não configurada. Nenhum pagamento foi gerado — acione o suporte.", "aviso");
                 return;
             }
-            const statusInicial = ehPix
-                ? (viaMP ? "PIX via Mercado Pago — aguardando confirmação automática" : "Aguardando verificação do comprovante PIX (custódia)")
-                : "Em processamento — aguardando confirmação de pagamento";
+        const statusInicial = viaMP || !ehPix
+                ? "Reserva aguardando pagamento via Mercado Pago — some em 15 min se não pagar"
+                : "Aguardando verificação do comprovante PIX (custódia)";
             let arquivoComprovante = null;
             let comprovanteImagemB64 = null;
                 if (ehPix && !viaMP) {
@@ -209,6 +209,26 @@
             chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">${mensagemConfirmacao}</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             setModalVisivel("modal-ticket", true);
+            if (viaMP || !ehPix) {
+                // Reserva via Mercado Pago: espera a aprovacao do webhook para virar ticket visivel no rastreio.
+                (async () => {
+                    for (let i = 0; i < 180; i++) {
+                        await new Promise(r => setTimeout(r, 10000));
+                        try {
+                            const row = await buscarTicketSupabase(ticketIdGerado);
+                            if (!row) continue;
+                            if (/cancelado/i.test(String(row.status_texto || ""))) return;
+                            if (/aprovado/i.test(String(row.status_texto || ""))) {
+                                try { await window.supabaseClient.from("tickets").update({ itens: listaItensFormatada || "Compra via Mercado Pago", comprador_whatsapp: wppUser || "" }).eq("codigo", ticketIdGerado); } catch (e) {}
+                                const idx = pedidosAtivos.findIndex(p => normalizarCodigoTicket(p.ticketId) === normalizarCodigoTicket(ticketIdGerado));
+                                if (idx >= 0) { pedidosAtivos[idx].status = row.status_texto; pedidosAtivos[idx].etapa = 2; pedidosAtivos[idx].etapasCustodia = (typeof ETAPAS_CUSTODIA !== "undefined") ? ETAPAS_CUSTODIA.slice(0, 2) : pedidosAtivos[idx].etapasCustodia; try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {} }
+                                mostrarAlerta("Pagamento aprovado", "O Mercado Pago confirmou o pagamento. Acompanhe pelo menu Rastrear Pedido.", "sucesso");
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+                })();
+            }
             carrinhoItens = [];
             localStorage.removeItem("marktplace_stand2_cart");
             atualizarBadgeCarrinho();
@@ -353,6 +373,7 @@
                 itens: row.itens || "",
                 total: row.valor_total != null ? String(row.valor_total) : "",
                 etapa: etapa,
+                preReserva: /^reserva aguardando pagamento/i.test(String(row.status_texto || "")),
                 concluido: Boolean(row.concluido),
                 contestacao: /contest/i.test(String(row.status_texto || "")) || Boolean(row.contestacao),
                 concluidoEm: row.concluido_em || null,
@@ -387,7 +408,7 @@
             try {
                 const { data, error } = await window.supabaseClient.from("tickets").select("*").eq("comprador_email", String(email).toLowerCase()).eq("concluido", false);
                 if (error || !Array.isArray(data)) return null;
-                return data.map(converterRegistroSupabase);
+                return data.map(converterRegistroSupabase).filter(p => !p.preReserva);
             } catch (e) {
                 return null;
             }
@@ -424,9 +445,9 @@
                 ? await ticketsAtivosSupabase(currentUser.email)
                 : null;
             if (Array.isArray(remotos)) {
-                lista = remotos;
+                lista = remotos.filter(p => !p.preReserva);
             } else {
-                lista = ticketsAtivosDoUsuario();
+                lista = ticketsAtivosDoUsuario().filter(p => !p.preReserva);
             }
             if (!lista.length) {
                 return "Nenhum ticket ativo encontrado para você nesta sessão. Se você já comprou antes, digite aqui o código do seu ticket (ex: TICK-4819) para consultá-lo, use o menu 'Rastrear Pedido', ou acione o Suporte oficial pelo WhatsApp. Tickets concluídos aparecem apenas consultando o código exato.";
