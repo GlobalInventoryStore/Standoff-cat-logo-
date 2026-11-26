@@ -54,12 +54,33 @@
             return `R$ ${limpo}`;
         }
 
-        function carregarCatalogo() {
+        function carregarCatalogo(filtro = null) {
             const grid = document.getElementById("catalogo-cards");
             if (!grid) return;
             grid.innerHTML = "";
+            let anunciosFiltrados = [...anunciosEmMemoria];
+
+            // Aplicar filtro de busca
+            if (filtro && filtro.tipo) {
+                if (filtro.tipo === "busca") {
+                    const termo = filtro.termo.toLowerCase();
+                    anunciosFiltrados = anunciosEmMemoria.filter(a =>
+                        (a.titulo && a.titulo.toLowerCase().includes(termo)) ||
+                        (a.vinculo && a.vinculo.toLowerCase().includes(termo))
+                    );
+                }
+                if (filtro.tipo === "preco") {
+                    const direcao = filtro.direcao || "menor";
+                    anunciosFiltrados.sort((a, b) => {
+                        const pa = Number(a.preco || 0);
+                        const pb = Number(b.preco || 0);
+                        return direcao === "menor" ? pa - pb : pb - pa;
+                    });
+                }
+            }
+
             const adminVendo = isAdminUsuario();
-            anunciosEmMemoria.forEach((anuncio, index) => {
+            anunciosFiltrados.forEach((anuncio, index) => {
                 const item = normalizarAnuncio(anuncio);
                 const vendedorCardBanido = usuarioEstaBanido(sanitizarNomePublico(item.vendedor), "");
                 if (vendedorCardBanido && !adminVendo) return;
@@ -75,7 +96,11 @@
                     barraSuperior = `<div class="flex justify-between items-center mb-3 pb-2 border-b border-[#26211a]"><span class="text-[10px] font-semibold uppercase ${vendedorCardBanido ? "text-red-400" : "text-[var(--accent)]"}">${vendedorCardBanido ? "Vendedor Banido" : "Ação Admin"}</span><span class="flex gap-1.5"><button type="button" onclick="excluirAnuncioAdmin('${escapeHtml(item.id)}')" class="bg-red-500/15 text-red-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">Excluir</button><button type="button" onclick="alternarBanimentoVendedor('${vendedorCardBanido ? "desbanir" : "banir"}','${escapeHtml(item.id)}')" class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold cursor-pointer">${vendedorCardBanido ? "Desbanir" : "Banir"}</button></span></div>`;
                 }
                 const corJoinha = item.curtidoPormim ? "text-[#ffffff] font-bold drop-shadow-[0_0_6px_rgba(255,255,255,0.9)]" : "text-[#777777]";
-                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#1c1812] border border-[#2f2920] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button></div>`;
+                // Botão "Adicionar ao Carrinho" fica oculto se o anúncio for do próprio usuário logado
+                const btnCarrinho = ehDono
+                    ? `<button type="button" onclick="mostrarAvisoDonoConta()" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">⛔ Própria conta</button>`
+                    : `<button type="button" onclick="adicionarAoCarrinho('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer">🛒 Adicionar ao Carrinho</button>`;
+                card.innerHTML = `<div>${barraSuperior}${capaHtml}<div class="flex justify-between items-center mb-3 gap-2"><span class="bg-[#1c1812] border border-[#2f2920] text-amber-400 text-xs font-bold px-2.5 py-1 rounded uppercase">${escapeHtml(item.rank)}</span><div class="flex items-center gap-2"><button type="button" onclick="curtirAnuncio('${escapeHtml(item.id)}')" class="bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span class="like-btn ${corJoinha}" id="like-${escapeHtml(item.id)}">👍</span> <span class="text-gray-300 font-semibold">${item.likes || 0}</span></button><span class="text-lg font-bold text-emerald-400">${escapeHtml(item.preco)}</span></div></div><h3 class="font-bold text-lg mb-1 text-white">${escapeHtml(item.titulo)}</h3><p class="text-xs text-[var(--muted)] mb-1">Vínculo: ${escapeHtml(item.vinculo)}</p><p class="text-xs text-gray-400 mb-3">Vendedor: ${escapeHtml(sanitizarNomePublico(item.vendedor))}</p></div><div class="space-y-2 mt-4"><button type="button" onclick="abrirDetalhes('${escapeHtml(item.id)}')" class="w-full bg-[#1c1812] hover:bg-[#26211a] border border-[#2f2920] text-white py-2 rounded-xl text-xs font-bold transition cursor-pointer">Ver Detalhes</button><button type="button" onclick="compartilharLinkAnuncio('${escapeHtml(item.id)}')" class="w-full bg-[var(--accent)] text-black py-2 rounded-xl text-xs font-bold transition cursor-pointer mt-1">📋 Compartilhar</button>${btnCarrinho}</div>`;
                 grid.appendChild(card);
             });
         }
@@ -102,23 +127,34 @@
             }
         }
 
-        function adicionarAoCarrinho(id) {
-            const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
-            if (!anuncio) return;
-            if (carrinhoItens.some(item => String(item.id) === String(id))) {
-                mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
-                return;
-            }
-            carrinhoItens.push(anuncio);
-            localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
-            atualizarBadgeCarrinho();
-            var precoNum = parseFloat(String(anuncio.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
-            eventosGtag("add_to_cart", { currency: "BRL", value: precoNum, items: [{ item_id: String(anuncio.id), item_name: anuncio.titulo || "Conta Standoff 2", price: precoNum }] });
-            mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
-        }
+        function mostrarAvisoDonoConta() {
+    mostrarAlerta("Conta", "Esta é a sua própria conta. Você não pode comprar seu próprio anúncio.", "aviso");
+}
+
+function adicionarAoCarrinho(id) {
+    const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(id));
+    if (!anuncio) return;
+    // Bloquear adicionar própria conta ao carrinho
+    if (currentUser && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(anuncio.vendedor)) {
+        mostrarAlerta("Conta", "Não é possível adicionar sua própria conta ao carrinho.", "erro");
+        return;
+    }
+    if (carrinhoItens.some(item => String(item.id) === String(id))) {
+        mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
+        return;
+    }
+    carrinhoItens.push(anuncio);
+    localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
+    atualizarBadgeCarrinho();
+    var precoNum = parseFloat(String(anuncio.preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
+    eventosGtag("add_to_cart", { currency: "BRL", value: precoNum, items: [{ item_id: String(anuncio.id), item_name: anuncio.titulo || "Conta Standoff 2", price: precoNum }] });
+    mostrarAlerta("Sucesso", "Conta adicionada ao carrinho!");
+}
 
         function adicionarAoCarrinhoAtual() {
             if (!anuncioSelecionadoAtual) return;
+            // Bloquear se for própria conta
+            if (ehDonoConta) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
             closeDetalhes();
             adicionarAoCarrinho(anuncioSelecionadoAtual.id);
         }
@@ -174,6 +210,8 @@
 
         function abrirCheckoutDireto() {
             if (!currentUser) { closeDetalhes(); mostrarAlerta("Login Necessário", "Entre para comprar.", "aviso"); openModal(); return; }
+            // Bloquear se for própria conta
+            if (ehDonoConta) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
             closeDetalhes();
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
                 carrinhoItens = [anuncioSelecionadoAtual];
@@ -192,3 +230,110 @@
                 caixaCartao.classList.add("hidden");
             }
         }
+
+        async function carregarMeusAnuncios() {
+            // Verificar se usuário está logado
+            if (!currentUser) {
+                openModal();
+                return;
+            }
+
+            // Mostrar esconder seção
+            const secao = document.getElementById("meus-anuncios");
+            const mensagem = document.getElementById("mensagem-sem-anuncios");
+            const lista = document.getElementById("lista-anuncios-vendidos");
+
+            if (secao) secao.classList.remove("hidden");
+            if (mensagem) mensagem.style.display = "none";
+            if (lista) lista.innerHTML = "";
+
+            try {
+                const { data } = await window.supabaseClient.from("contas").select("*").ilike("vendedor", `%${currentUser.email}%`).order("created_at", { ascending: false });
+                if (data && data.length > 0) {
+                    mensagem.style.display = "none";
+                    data.forEach(anuncio => {
+                        const div = document.createElement("div");
+                        div.className = "bg-[#16130e] border border-[#2f2920] rounded-xl p-4 mb-4";
+                        div.innerHTML = `
+                            <h3 class="font-bold text-white">${escapeHtml(anuncio.titulo)}</h3>
+                            <p class="text-[var(--muted)] mb-2">Preço: ${anuncio.preco}</p>
+                            <p class="text-[var(--muted)] text-xs">Status: ${anuncio.status || "Disponível"}</p>
+                            <button class="mt-2 w-full bg-[var(--accent)] text-black py-2 rounded-xl text-sm hover:bg-emerald-600 transition">Gerenciar</button>
+                        `;
+                        lista.appendChild(div);
+                    });
+                } else {
+                    mensagem.style.display = "block";
+                    mensagem.innerHTML = "Nenhum anúncio encontrado. <a href='#' onclick='openModalAnuncio(); return false;' class='text-[var(--accent)] hover:underline'>Publicar sua primeira conta</a>.";
+                }
+            } catch (e) {
+                console.error("Erro ao carregar meus anúncios:", e);
+                if (mensagem) {
+                    mensagem.style.display = "block";
+                    mensagem.innerHTML = "Erro ao carregar anúncios. Tente novamente mais tarde.";
+                }
+            }
+        }
+
+        // Função para gerar e compartilhar link direto do anúncio
+        function compartilharLinkAnuncio(id) {
+            const link = window.location.origin + window.location.pathname + `?conta=${id}`;
+            navigator.clipboard.writeText(link).then(() => {
+                mostrarAlerta("Link", "Link copiado para a área de transferência!", "sucesso");
+            }).catch(() => {
+                // Fallback para navegadores antigos
+                const textarea = document.createElement("textarea");
+                textarea.value = link;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try { document.execCommand("copy"); } catch (e) {}
+                document.body.removeChild(textarea);
+                mostrarAlerta("Link", "Link copiado para a área de transferência!", "sucesso");
+            });
+
+            // Feedback visual
+            const originalText = event.target.textContent;
+            event.target.textContent = "Link copiado!";
+            setTimeout(() => { event.target.textContent = originalText; }, 2000);
+        }
+
+        // Inicializar filtros ao carregar página
+        carregarMeusAnuncios();
+
+// Inicializar filtros ao carregar página
+        document.addEventListener("DOMContentLoaded", () => {
+            const btnAplicarFiltro = document.getElementById("btnAplicarFiltro");
+            const filtroBusca = document.getElementById("filtroBusca");
+            const filtroPreco = document.getElementById("filtroPreco");
+
+            if (btnAplicarFiltro) {
+                btnAplicarFiltro.addEventListener("click", () => {
+                    carregarCatalogo({
+                        tipo: filtroPreco.value ? "preco" : "busca",
+                        termo: filtroBusca.value,
+                        direcao: filtroPreco.value === "menor" ? "menor" : "maior"
+                    });
+                });
+            }
+
+            // Aplicar filtro ao pressionar Enter no buscador
+            if (filtroBusca) {
+                filtroBusca.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") {
+                        carregarCatalogo({ tipo: "busca", termo: filtroBusca.value });
+                    }
+                });
+            }
+
+            // Verificar parâmetro ?conta=ID na URL e abrir detalhes
+            const urlParams = new URLSearchParams(window.location.search);
+            const contaId = urlParams.get("conta");
+            if (contaId) {
+                // Buscar o anúncio e abrir detalhes
+                const anuncio = anunciosEmMemoria.find(a => String(a.id) === String(contaId));
+                if (anuncio) {
+                    anuncioSelecionadoAtual = anuncio;
+                    abrirDetalhes(contaId);
+                }
+            }
+        });

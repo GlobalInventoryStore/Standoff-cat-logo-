@@ -1,8 +1,7 @@
         // ============================================================
         // MARKTPLACE stand2 — Gateway de pagamento
-        // Fase 1: PIX manual. Gera BR Code (EMV) real no navegador e
-        // encaminha o comprovante ao admin pelo WhatsApp.
-        // Nenhum segredo fica neste arquivo: a chave é pública por natureza.
+        // Fase 1: PIX manual (mantido para compatidade).
+        // Fase 2: Mercado Pago via Supabase Edge Functions.
         // ============================================================
 
         const PIX_CONFIG = (function () {
@@ -19,6 +18,13 @@
         })();
 
         let pixGatewayCopiaECola = "";
+
+        // Mercado Pago config - chaves vindo de window.CONFIG
+        const MP_CONFIG = {
+            publicKey: String(window.CONFIG && window.CONFIG.MP_PUBLIC_KEY || ""),
+            accessToken: String(window.CONFIG && window.CONFIG.MP_ACCESS_TOKEN || ""),
+            webhookSecret: String(window.CONFIG && window.CONFIG.MP_WEBHOOK_SECRET || "")
+        };
 
         function pixEstaConfigurado() { return PIX_CONFIG.chave.length > 0; }
 
@@ -126,6 +132,74 @@
             }
             window.open("https://wa.me/" + whats + "?text=" + encodeURIComponent(texto), "_blank", "noopener");
             return "link";
+        }
+
+        // Função para criar pagamento via Mercado Pago Edge Function
+        async function criarPagamentoMP(ticketId, valor, itens) {
+            if (!MP_CONFIG.accessToken) {
+                mostrarAlerta("MP", "Chave de acesso Mercado Pago não configurada.", "erro");
+                return null;
+            }
+
+            const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || "").replace("https://", "").replace("http://", "");
+            const functionUrl = supabaseUrl ? `https://${supabaseUrl}/functions/criar-pagamento` : "https://globalinventorystore.github.io/Standoff-cat-logo-/supabase/functions/criar-pagamento";
+
+            const itensData = itens || [{ id: "item", title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor) }];
+
+            const body = {
+                ticketId: ticketId,
+                valor: valor,
+                itens: itensData
+            };
+
+            try {
+                const response = await fetch(functionUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    mostrarAlerta("MP", data.error, "erro");
+                    return null;
+                }
+
+                return data;
+            } catch (error) {
+                console.error("Erro ao chamar Edge Function criar-pagamento:", error);
+                mostrarAlerta("MP", "Erro ao conectar com Mercado Pago.", "erro");
+                return null;
+            }
+        }
+
+        // Função para processar webhook do Mercado Pago
+        async function processarWebhookMP(body, signature) {
+            if (!MP_CONFIG.webhookSecret) {
+                console.log("Webhook MP não configurado, ignorando assinatura");
+                return;
+            }
+
+            const crypto = require("crypto");
+            const hmac = crypto.createHmac("sha256", MP_CONFIG.webhookSecret).update(body).digest("hex");
+
+            if (hmac !== signature) {
+                console.log("Assinatura webhook MP inválida");
+                return;
+            }
+
+            // Enviar para o frontend processar
+            const webhookBody = btoa(body);
+            const event = JSON.parse(body);
+
+            if (event.type === "payment.updated" && event.data.status === "approved") {
+                // Marcar ticket como pago na etapa 2
+                // Isso seria feito via chamada ao supabase
+                console.log("Pagamento MP aprovado - ticket", event.data.id, "etapa 2");
+            }
         }
 
         // Comissão do marketplace por faixa de valor (definida pelo dono).

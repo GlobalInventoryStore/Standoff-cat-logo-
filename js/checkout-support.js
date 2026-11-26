@@ -1,4 +1,4 @@
-        function gerarQrCodePagamento() {
+        async function gerarQrCodePagamento() {
             closeCheckout();
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
@@ -41,6 +41,27 @@
                         if (txtChave) txtChave.textContent = PIX_CONFIG.chave;
                     }
                 }
+            } else if (metodoEscolhido === "cartao") {
+                // Mercado Pago checkout (Fase 2)
+                const ticketId = "TICK-" + Math.floor(10000 + Math.random() * 90000);
+                const itens = carrinhoItens.map(i => ({ id: i.id || "item", titulo: i.titulo, preco: i.preco, quantidade: 1 }));
+
+                const resultado = await criarPagamentoMP(ticketId, somaTotal, itens);
+                if (resultado && resultado.init_point) {
+                    // Exibir QR code gerado pelo Mercado Pago
+                    conteudoPag.innerHTML = `
+                        <div class="bg-[#050505] border border-[#2f2920] rounded-xl p-4 mb-4">
+                            <p class="text-[11px] text-gray-400 mb-2">Pix Gerado pelo Mercado Pago</p>
+                            <img src="${resultado.qr_code_url || resultado.sandbox_info?.qr_code_url || ''}" alt="QR Code MP" class="mx-auto w-20 h-20 rounded mb-2"><br>
+                            <a href="${resultado.init_point}" target="_blank" rel="noopener" class="text-[var(--accent)] font-bold text-sm block center">Acessar Checkout MP</a>
+                        </div>
+                        <p class="text-[10px] text-gray-500">O pagamento será processado pelo Mercado Pago. Após aprovação, o ticket será criado automaticamente.</p>
+                    `;
+                } else {
+                    // Fallback para PIX se MP falhar
+                    const pixStrFallBack = gerarPixCopiaECola(totalCarrinhoStr, ticketId);
+                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStrFallBack)}" alt="QR Code PIX Fallback" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">QR Code PIX (fallback). Use Copia e Cola se necessário.</p>`;
+                }
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-emerald-400 font-bold text-sm">💳 Cartão de Crédito Autorizado com Sucesso!</div><p class="text-[11px] text-gray-400">Clique abaixo para gerar o seu ticket e liberar os dados de acesso.</p>`;
             }
@@ -67,7 +88,7 @@
             }
             const statusInicial = ehPix
                 ? "Aguardando verificação do comprovante PIX (custódia)"
-                : "Aprovado • Custódia Segura";
+                : "Em processamento — aguardando confirmação de pagamento";
             let arquivoComprovante = null;
             if (ehPix) {
                 const campoComprovante = document.getElementById("comprovante-pix");
