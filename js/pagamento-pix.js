@@ -268,12 +268,12 @@
             }
         }
 
-        // Comissão do marketplace por faixa de valor (definida pelo dono).
+        // Comissão do marketplace por faixa de valor (definida pelo dono, ajuste 3,50/6%/7%).
         function calcularComissaoVenda(valor) {
             const v = Number(valor || 0);
             if (!isFinite(v) || v <= 0) return 0;
-            if (v <= 100) return 3;
-            if (v <= 250) return Math.max(5, v * 0.06);
+            if (v <= 100) return 3.5;
+            if (v <= 250) return v * 0.06;
             return v * 0.07;
         }
 

@@ -76,7 +76,7 @@
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
 
         function calcularComissaoVendedor(preco) {
-            if (preco <= 100) return { taxa: 3, regra: "taxa fixa de R$3" };
+            if (preco <= 100) return { taxa: 3.5, regra: "taxa fixa de R$3,50" };
             if (preco <= 250) return { taxa: preco * 0.06, regra: "comissão de 6%" };
             return { taxa: preco * 0.07, regra: "comissão de 7%" };
         }
