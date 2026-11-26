@@ -357,12 +357,13 @@
             const avatar = document.getElementById("selected-avatar").value || AVATARES[0];
             const ehAdminNoCadastro = ehEmailAdmin(email);
             const emailNormalizado = email.toLowerCase();
-            users.push({ email: emailNormalizado, whatsapp, username, password, avatar, isAdmin: ehAdminNoCadastro });
+            const senhaHash = await hashSenha(password);
+            users.push({ email: emailNormalizado, whatsapp, username, password: senhaHash, avatar, isAdmin: ehAdminNoCadastro });
             localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
 
-            await cadastrarUsuarioSupabase({ email: emailNormalizado, nome: username, senha: password, avatar: avatar, whatsapp: whatsapp || "", ultimo_ajuste_nome: null });
+            await cadastrarUsuarioSupabase({ email: emailNormalizado, nome: username, senha: senhaHash, avatar: avatar, whatsapp: whatsapp || "", ultimo_ajuste_nome: null });
 
-            currentUser = { username, email: emailNormalizado, whatsapp, password, avatar, isAdmin: ehAdminNoCadastro };
+            currentUser = { username, email: emailNormalizado, whatsapp, password: senhaHash, avatar, isAdmin: ehAdminNoCadastro };
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             aplicarEstadoUsuario();
             closeModal();
@@ -376,7 +377,10 @@
             const feedback = document.getElementById("login-feedback");
             let users = JSON.parse(localStorage.getItem("marktplace_stand2_db_users") || "[]");
             const idLower = identifier.toLowerCase();
-            let foundUser = users.find(u => ((u.email || "").toLowerCase() === idLower || (u.username || "").toLowerCase() === idLower) && u.password === password);
+            let foundUser = null;
+            for (const u of users) {
+                if (((u.email || "").toLowerCase() === idLower || (u.username || "").toLowerCase() === idLower) && (await conferirSenha(password, u.password))) { foundUser = u; break; }
+            }
 
             if (!foundUser && ADMIN_SENHA_DIRETA && identifier.toLowerCase() === ADMIN_EMAIL && password === ADMIN_SENHA_DIRETA) {
                 foundUser = { email: ADMIN_EMAIL, whatsapp: "", username: "Admin", password: ADMIN_SENHA_DIRETA, avatar: AVATARES[0], isAdmin: true };
@@ -387,8 +391,9 @@
             if (!foundUser && window.supabaseClient) {
                 feedback.textContent = "Verificando sua conta no Supabase...";
                 const row = await buscarUsuarioSupabase(identifier);
-                if (row && row.senha === password) {
-                    foundUser = { email: row.email, whatsapp: row.whatsapp || "", username: row.nome, password: row.senha, avatar: row.avatar || AVATARES[0], isAdmin: ehEmailAdmin(row.email) };
+                if (row && row.senha && (await conferirSenha(password, row.senha))) {
+                    await migrarSenhaLegada(row.email, password, row.senha);
+                    foundUser = { email: row.email, whatsapp: row.whatsapp || "", username: row.nome, password: await hashSenha(password), avatar: row.avatar || AVATARES[0], isAdmin: ehEmailAdmin(row.email) };
                     users.push(foundUser);
                     localStorage.setItem("marktplace_stand2_db_users", JSON.stringify(users));
                 }
@@ -444,6 +449,32 @@
         }
         function normalizarIdentificador(texto) {
             return String(texto || "").trim().toLowerCase();
+        }
+
+        // ===== Senhas: persistem como hash (prefixo h$); senhas antigas em texto puro são conferidas e migradas no login =====
+        async function hashSenha(texto) {
+            const bruto = "mkt2$1|" + String(texto || "");
+            try {
+                if (window.crypto && window.crypto.subtle && window.isSecureContext) {
+                    const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(bruto));
+                    return "h$" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+                }
+            } catch (e) {}
+            return bruto;
+        }
+
+        async function conferirSenha(tentativa, armazenada) {
+            if (!armazenada) return false;
+            const h = await hashSenha(tentativa);
+            if (h === String(armazenada)) return true;
+            if (!String(armazenada).startsWith("h$")) return String(tentativa || "") === String(armazenada);
+            return false;
+        }
+
+        async function migrarSenhaLegada(email, tentativa, armazenada) {
+            try {
+                if (armazenada && !String(armazenada).startsWith("h$")) await atualizarUsuarioSupabase(email, { senha: await hashSenha(tentativa) });
+            } catch (e) {}
         }
 
         async function cadastrarUsuarioSupabase(registro) {
@@ -529,8 +560,8 @@
             if (!recSenhaCodigo || Date.now() > recSenhaExpiraEm) { feedback.textContent = "Código expirado. Gere um novo."; return; }
             if (codigo !== recSenhaCodigo) { feedback.textContent = "Código incorreto."; return; }
             if (nova.length < 6 || nova !== conf) { feedback.textContent = "Nova senha inválida ou não confere."; return; }
-            const okBanco = await atualizarUsuarioSupabase(recSenhaEmailConta, { senha: nova });
-            sincronizarUsuarioLocal({ email: recSenhaEmailConta, password: nova });
+            const okBanco = await atualizarUsuarioSupabase(recSenhaEmailConta, { senha: await hashSenha(nova) });
+            sincronizarUsuarioLocal({ email: recSenhaEmailConta, password: await hashSenha(nova) });
             if (okBanco) {
                 feedback.style.color = "#10b981";
                 feedback.textContent = "Senha redefinida com sucesso! Faça login com a nova senha.";
@@ -666,9 +697,9 @@
             feedbackConfig("Validando senha antiga no Supabase...", "#9ca3af");
             const row = await buscarUsuarioSupabase(currentUser.email);
             const senhaAtual = row ? row.senha : currentUser.password;
-            if (antiga !== senhaAtual) { feedbackConfig("Senha antiga incorreta.", "#f87171"); return; }
-            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { senha: nova });
-            currentUser.password = nova;
+            if (!(await conferirSenha(antiga, senhaAtual))) { feedbackConfig("Senha antiga incorreta.", "#f87171"); return; }
+            const okBanco = await atualizarUsuarioSupabase(currentUser.email, { senha: await hashSenha(nova) });
+            currentUser.password = await hashSenha(nova);
             localStorage.setItem("marktplace_stand2_user", JSON.stringify(currentUser));
             sincronizarUsuarioLocal({ email: currentUser.email, password: nova });
             ["config-senha-antiga", "config-senha-nova", "config-senha-nova-confirm"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });

@@ -212,27 +212,22 @@
             ].join("\n");
         }
 
-        function mostrarToastWhatsAppAdmin(url) {
-            const antigo = document.getElementById("toast-whatsapp-admin");
-            if (antigo) antigo.remove();
-            const toast = document.createElement("div");
-            toast.id = "toast-whatsapp-admin";
-            toast.style.cssText = "position:fixed;bottom:90px;left:16px;right:16px;margin:0 auto;max-width:420px;z-index:100000;background:#16130e;border:2px solid rgba(245,158,11,.6);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.6);";
-            toast.innerHTML = '<p style="margin:0 0 8px;font-size:12px;font-weight:800;color:#f59e0b;">🔔 Novo acionamento de suporte</p><p style="margin:0 0 10px;font-size:11px;color:#d1d5db;line-height:1.4;">Toque para avisar o admin no WhatsApp — a mensagem já vai pronta.</p><a href="' + url + '" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;border-radius:12px;background:#f59e0b;color:#000;font-size:12px;font-weight:bold;text-decoration:none;">📲 Abrir WhatsApp</a>';
-            document.body.appendChild(toast);
-            setTimeout(function() { const t = document.getElementById("toast-whatsapp-admin"); if (t) t.remove(); }, 120000);
+        async function gravarFilaNotificacaoSuporte(titulo, mensagem) {
+            if (!window.supabaseClient) return false;
+            try {
+                const { error } = await window.supabaseClient.from("notificacao").insert([{ titulo: String(titulo || "").slice(0, 200), mensagem: String(mensagem || "").slice(0, 3000) }]);
+                return !error;
+            } catch (e) { return false; }
         }
 
         function dispararAlertaWhatsAppAdmin(assunto, ticket, mensagem) {
-            if (!ADMIN_WHATSAPP) return false;
             if (!registrarDisparoWhatsApp(assunto)) return false;
-            const url = "https://wa.me/" + ADMIN_WHATSAPP + "?text=" + encodeURIComponent(montarMensagemAlertaWhatsApp(assunto, ticket, mensagem));
+            gravarFilaNotificacaoSuporte("SUPORTE ACIONADO — MARKTPLACE stand2", montarMensagemAlertaWhatsApp(assunto, ticket, mensagem));
             const chat = document.getElementById("chat-mensagens");
             if (chat) {
-                chat.innerHTML += `<div class="bg-[#050505] border border-[#2f2920] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>O suporte intermediário foi acionado. Toque abaixo para avisar o admin no WhatsApp:<a href="${url}" target="_blank" rel="noopener" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">📲 Acionar Suporte no WhatsApp</a></div>`;
+                chat.innerHTML += `<div class="bg-[#050505] border border-[#2f2920] rounded-xl p-2.5 text-gray-300 max-w-[90%]"><p class="font-bold text-[var(--accent)]">Bot Oficial</p>Seu acionamento foi registrado. O admin foi avisado e o suporte responde por aqui ou no próprio ticket.<a href="#" onclick="abrirRastreio(); return false;" class="block text-center mt-2 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-black no-underline">Abrir Rastreamento</a></div>`;
                 chat.scrollTop = chat.scrollHeight;
             }
-            mostrarToastWhatsAppAdmin(url);
             return true;
         }
 

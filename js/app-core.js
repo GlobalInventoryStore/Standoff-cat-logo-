@@ -26,7 +26,7 @@
         let emailjsInicializado = false;
 
         // ===== Alerta WhatsApp do admin (chat de suporte) =====
-        const ADMIN_WHATSAPP = APP_CONFIG.ADMIN_WHATSAPP || "5564984156811";
+        const ADMIN_WHATSAPP = "";
         const WHATSAPP_ALERTA_COOLDOWN_MS = 60000;
         const CHAVE_STORAGE_WPP_COOLDOWN = "marktplace_stand2_wpp_alertas";
 

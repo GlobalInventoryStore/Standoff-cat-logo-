@@ -117,8 +117,7 @@
         // No celular, compartilha a imagem do comprovante junto com o texto.
         // No desktop, abre o WhatsApp com o texto pronto para anexar o print.
         async function compartilharComprovantePix(arquivo, ticketId, valorTexto) {
-            const whats = String((window.CONFIG && window.CONFIG.ADMIN_WHATSAPP) || "5564984156811");
-            const texto = "[MARKTPLACE stand2] Comprovante PIX\nTicket: " + ticketId + "\nValor: " + valorTexto + "\n\nSegue o comprovante para verificacao e liberacao dos dados da conta.";
+            const texto = "[MARKTPLACE stand2] Comprovante PIX\nTicket: " + ticketId + "\nValor: " + valorTexto + "\nSegue o comprovante para verificacao e liberacao dos dados da conta.";
             if (arquivo && navigator.share && navigator.canShare) {
                 try {
                     const dados = { files: [arquivo], text: texto };
@@ -127,11 +126,16 @@
                         return "compartilhado";
                     }
                 } catch (e) {
-                    // Usuário cancelou ou navegador sem suporte: cai no link abaixo.
+                    // Usuário cancelou ou navegador sem suporte: cai no aviso abaixo.
                 }
             }
-            window.open("https://wa.me/" + whats + "?text=" + encodeURIComponent(texto), "_blank", "noopener");
-            return "link";
+            if (typeof enviarAlertaLojaPorWhatsApp === "function") {
+                await enviarAlertaLojaPorWhatsApp("COMPROVANTE PIX ENVIADO — MARKTPLACE stand2", texto + "\n(Cliente anexou o comprovante pelo site; suporte deve conferir no ticket.)");
+                mostrarAlerta("PIX", "Comprovante registrado. O suporte recebeu o alerta e fará a conferência.", "sucesso");
+                return "fila";
+            }
+            mostrarAlerta("PIX", "Comprovante recebido. O suporte fará a conferência pelo ticket.", "sucesso");
+            return "fila";
         }
 
         // Função para criar pagamento via Mercado Pago Edge Function
