@@ -72,8 +72,9 @@
                 if (filtro.tipo === "preco") {
                     const direcao = filtro.direcao || "menor";
                     anunciosFiltrados.sort((a, b) => {
-                        const pa = Number(a.preco || 0);
-                        const pb = Number(b.preco || 0);
+                        const parse = (p) => parseFloat(String(p || "").replace(/[^\d,.]/g, "").replace(".", "").replace(",", ".")) || 0;
+                        const pa = parse(a.preco);
+                        const pb = parse(b.preco);
                         return direcao === "menor" ? pa - pb : pb - pa;
                     });
                 }
@@ -127,6 +128,9 @@
             }
         }
 
+        function detalheEhSuaConta() {
+            return Boolean(currentUser && anuncioSelecionadoAtual && sanitizarNomePublico(currentUser.username) === sanitizarNomePublico(anuncioSelecionadoAtual.vendedor));
+        }
         function mostrarAvisoDonoConta() {
     mostrarAlerta("Conta", "Esta é a sua própria conta. Você não pode comprar seu próprio anúncio.", "aviso");
 }
@@ -154,7 +158,7 @@ function adicionarAoCarrinho(id) {
         function adicionarAoCarrinhoAtual() {
             if (!anuncioSelecionadoAtual) return;
             // Bloquear se for própria conta
-            if (ehDonoConta) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
+            if (detalheEhSuaConta()) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
             closeDetalhes();
             adicionarAoCarrinho(anuncioSelecionadoAtual.id);
         }
@@ -211,7 +215,7 @@ function adicionarAoCarrinho(id) {
         function abrirCheckoutDireto() {
             if (!currentUser) { closeDetalhes(); mostrarAlerta("Login Necessário", "Entre para comprar.", "aviso"); openModal(); return; }
             // Bloquear se for própria conta
-            if (ehDonoConta) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
+            if (detalheEhSuaConta()) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
             closeDetalhes();
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
                 carrinhoItens = [anuncioSelecionadoAtual];
@@ -264,7 +268,7 @@ function adicionarAoCarrinho(id) {
                     });
                 } else {
                     mensagem.style.display = "block";
-                    mensagem.innerHTML = "Nenhum anúncio encontrado. <a href='#' onclick='openModalAnuncio(); return false;' class='text-[var(--accent)] hover:underline'>Publicar sua primeira conta</a>.";
+                    mensagem.innerHTML = "Nenhum anúncio encontrado. <a href='#' onclick='verificarAutenticacaoAnuncio(); return false;' class='text-[var(--accent)] hover:underline'>Publicar sua primeira conta</a>.";
                 }
             } catch (e) {
                 console.error("Erro ao carregar meus anúncios:", e);
