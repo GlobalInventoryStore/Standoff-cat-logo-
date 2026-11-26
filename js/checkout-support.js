@@ -103,6 +103,8 @@
                         return;
                     }
                     const valorComprovante = document.getElementById("pag-conta-valor").textContent;
+                    let verificacaoComprovante = { resumo: "não realizada" };
+                    try { if (typeof verificarComprovantePorOCR === "function") verificacaoComprovante = await verificarComprovantePorOCR(arquivoComprovante, valorComprovante); } catch (e) {}
                     try { const r = await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); comprovanteImagemB64 = (r && r.imagem) || null; } catch (e) { comprovanteImagemB64 = null; }
                     if (campoComprovante) campoComprovante.value = "";
                 }
@@ -155,6 +157,7 @@
                     "\nComprador: " + (currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante") + " (" + (gmailUser || "(sem Gmail)") + (wppUser ? ", WhatsApp " + wppUser : "") + ")" +
                     "\nItens: " + (listaItensFormatada || "(não informado)") +
                     "\nComprovante: " + (ehPix ? (comprovanteImagemB64 ? "anexado à mensagem de imagem acima" : (arquivoComprovante ? "escolhido pelo cliente (não pôde ser convertido)" : "não anexado")) : "cartão — verificado pelo Mercado Pago") +
+                    (ehPix && typeof verificacaoComprovante !== "undefined" ? "\nVerificação automática do comprovante: " + (verificacaoComprovante.resumo || "não realizada") : "") +
                     "\nHora da compra: " + new Date().toLocaleString("pt-BR")
             );
             if (okVenda && comprovanteImagemB64) {

@@ -143,6 +143,64 @@
             return { status: "fila", imagem: imagemB64 };
         }
 
+        // Verificação automática do comprovante por OCR (sinal extra; a confirmação final é do admin).
+        // Verifica: (1) parece comprovante (palavras-chave), (2) data do comprovante (até 3 dias atrás, não futura), (3) valor compatível.
+        async function verificarComprovantePorOCR(file, valorTexto) {
+            const r = { pareceComprovante: null, dataTexto: null, dataValida: null, valor_OK: null, resumo: "OCR indisponível — conferência manual" };
+            if (!file || !(window.Tesseract && typeof window.Tesseract.recognize === "function")) return r;
+            try {
+                const img = await new Promise((res, rej) => {
+                    const i = new Image();
+                    i.onload = () => res(i); i.onerror = rej;
+                    const fr = new FileReader();
+                    fr.onload = (e) => { i.src = e.target.result; };
+                    fr.onerror = rej;
+                    fr.readAsDataURL(file);
+                });
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                canvas.getContext("2d").drawImage(img, 0, 0);
+                const resOCR = await window.Tesseract.recognize(canvas, "eng");
+                const texto = String((resOCR && resOCR.data && resOCR.data.text) || "");
+                const t = texto.toLowerCase();
+                const palavras = ["comprovante", "transfer", "pix", "pagamento", "efetuado", "realizado", "identificador", "e2e", "autentic", "institui", "banco"];
+                const achadas = palavras.filter((p) => t.includes(p));
+                r.pareceComprovante = achadas.length >= 2;
+                // Data: pega a mais recente entre as datas válidas
+                const datas = texto.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
+                let melhor = null;
+                for (const d of datas) {
+                    const p = d.split("/").map(Number);
+                    const dt = new Date(p[2], p[1] - 1, p[0]);
+                    if (!isNaN(dt.getTime()) && (!melhor || dt > melhor)) melhor = dt;
+                }
+                if (melhor) {
+                    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+                    const diffDias = Math.round((hoje - melhor) / 86400000);
+                    r.dataTexto = melhor.toLocaleDateString("pt-BR") + (diffDias === 0 ? " (hoje)" : diffDias > 0 ? ` (${diffDias} dia(s) atrás)` : ` (${Math.abs(diffDias)} dia(s) no futuro)`);
+                    r.dataValida = diffDias >= -1 && diffDias <= 3;
+                }
+                // Valor: compara o valor do pedido com o que aparecer no texto (sem R$, sem pontos)
+                if (valorTexto) {
+                    const alvo = String(valorTexto).replace(/[^\d,]/g, "").replace(",", ".");
+                    if (alvo && Number(alvo) > 0) {
+                        const alvoCent = Math.round(Number(alvo) * 100);
+                        const nums = texto.replace(/\./g, "").match(/\d[\d.,]{0,20}/g) || [];
+                        r.valor_OK = nums.some((n) => Math.round(parseFloat(String(n).replace(",", ".")) * 100) === alvoCent);
+                    }
+                }
+                const partes = [];
+                partes.push(r.pareceComprovante === null ? "não foi possível ler o texto" : (r.pareceComprovante ? "parece comprovante (palavras: " + achadas.slice(0, 4).join(", ") + ")" : "NÃO PARECE comprovante (nenhuma palavra típica)"));
+                partes.push(r.dataTexto ? "data: " + r.dataTexto + (r.dataValida === false ? " — SUSPEITA/ANTIGA" : "") : "data não encontrada no print");
+                if (r.valor_OK !== null) partes.push(r.valor_OK ? "valor confere com o pedido" : "VALOR NÃO CONFERE com o pedido");
+                r.resumo = partes.join("; ");
+            } catch (e) {
+                r.resumo = "Falha no OCR — conferência manual";
+            }
+            return r;
+        }
+
         // Função para criar pagamento via Mercado Pago Edge Function (token fica só no servidor)
         async function criarPagamentoMP(ticketId, valor, itens) {
             const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "").replace("https://", "").replace("http://", "").replace(/\/$/, "");
