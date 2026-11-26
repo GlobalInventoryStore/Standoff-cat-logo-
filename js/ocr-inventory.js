@@ -302,10 +302,11 @@
             }
             const temAcessoNaPublicacao = !!(acessoGmail || acessoSenha);
             enviarAlertaLojaPorWhatsApp(
-                "📢 NOVO ANÚNCIO — MARKTPLACE stand2",
-                "Anúncio: " + titulo + "\nPreço: " + precoFormatado + "\nVendedor: " + sanitizarNomePublico(currentUser ? currentUser.username : "Jogador") +
+                "ANUNCIADA — MARKTPLACE stand2",
+                "ANUNCIADA\nVendedor: " + sanitizarNomePublico(currentUser ? currentUser.username : "Jogador") + "\nAnúncio: " + titulo + "\nPreço: " + precoFormatado +
                     (temAcessoNaPublicacao ? ("\n\nGmail da conta: " + (acessoGmail || "(vendedor não informou)") + "\nSenha: " + (acessoSenha || "(vendedor não informou)")) : "") +
-                    (temAcessoNaPublicacao ? "\n\n✅ Entrega pronta: dados recebidos na publicação." : "\n\n⚠ Vendedor não informou Gmail/senha na publicação — entrega dependerá dele.")
+                    (temAcessoNaPublicacao ? "\n\n✅ Entrega pronta: dados recebidos na publicação." : "\n\n⚠ Vendedor não informou Gmail/senha na publicação — entrega dependerá dele.") +
+                    "\n\nHora: " + new Date().toLocaleString("pt-BR")
             );
 
             document.getElementById("conta-titulo").value = "";

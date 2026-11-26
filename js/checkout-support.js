@@ -90,6 +90,7 @@
                 ? "Aguardando verificação do comprovante PIX (custódia)"
                 : "Em processamento — aguardando confirmação de pagamento";
             let arquivoComprovante = null;
+            let comprovanteImagemB64 = null;
             if (ehPix) {
                 const campoComprovante = document.getElementById("comprovante-pix");
                 arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
@@ -98,7 +99,7 @@
                     return;
                 }
                 const valorComprovante = document.getElementById("pag-conta-valor").textContent;
-                try { await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); } catch (e) {}
+                try { const r = await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); comprovanteImagemB64 = (r && r.imagem) || null; } catch (e) { comprovanteImagemB64 = null; }
                 if (campoComprovante) campoComprovante.value = "";
             }
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
@@ -136,6 +137,27 @@
                 status_texto: statusInicial,
                 concluido: false
             });
+            const okVenda = await gravarFilaNotificacaoSuporte(
+                "VENDA — MARKTPLACE stand2",
+                "VENDA\nTicket: " + ticketIdGerado + "\nMétodo de pagamento: " + metodoPagamento + "\nValor: " + (valorTotalPedido || document.getElementById("pag-conta-valor").textContent) +
+                    "\nComprador: " + (currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante") + " (" + (gmailUser || "(sem Gmail)") + (wppUser ? ", WhatsApp " + wppUser : "") + ")" +
+                    "\nItens: " + (listaItensFormatada || "(não informado)") +
+                    "\nComprovante: " + (ehPix ? (comprovanteImagemB64 ? "anexado à mensagem de imagem acima" : (arquivoComprovante ? "escolhido pelo cliente (não pôde ser convertido)" : "não anexado")) : "cartão — verificado pelo Mercado Pago") +
+                    "\nHora da compra: " + new Date().toLocaleString("pt-BR")
+            );
+            if (okVenda && comprovanteImagemB64) {
+                try {
+                    const url = (window.CONFIG && window.CONFIG.SUPABASE_URL) || document.querySelector('meta[name="supabase-url"]')?.content || "";
+                    const chave = (window.CONFIG && window.CONFIG.SUPABASE_PUBLISHABLE_KEY) || document.querySelector('meta[name="supabase-key"]')?.content || "";
+                    if (url && chave) {
+                        await fetch(url.replace(/\/$/, "") + "/rest/v1/notificacao", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", "apikey": chave, "Authorization": "Bearer " + chave, "Prefer": "return=minimal" },
+                            body: JSON.stringify({ titulo: "COMPROVANTE DA VENDA — TICKET " + ticketIdGerado, mensagem: "Comprovante anexado pelo comprador do ticket " + ticketIdGerado + ".", imagem: comprovanteImagemB64 })
+                        });
+                    }
+                } catch (e) {}
+            }
             const statusKey = "aguardando_conta_vendedor";
             const resumoRapido = montarResumoRapidoTicket({
                 ticketId: ticketIdGerado,

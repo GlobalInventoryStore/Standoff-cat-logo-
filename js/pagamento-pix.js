@@ -116,26 +116,31 @@
 
         // No celular, compartilha a imagem do comprovante junto com o texto.
         // No desktop, abre o WhatsApp com o texto pronto para anexar o print.
+        // Compartilha o comprovante e devolve { imagem } em base64 para anexar no alerta de VENDA.
         async function compartilharComprovantePix(arquivo, ticketId, valorTexto) {
             const texto = "[MARKTPLACE stand2] Comprovante PIX\nTicket: " + ticketId + "\nValor: " + valorTexto + "\nSegue o comprovante para verificacao e liberacao dos dados da conta.";
+            let imagemB64 = null;
+            if (arquivo && /^image\//.test(arquivo.type || "") && arquivo.size <= 4 * 1024 * 1024) {
+                try { imagemB64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.onerror = rej; fr.readAsDataURL(arquivo); }); } catch (e) { imagemB64 = null; }
+            }
             if (arquivo && navigator.share && navigator.canShare) {
                 try {
                     const dados = { files: [arquivo], text: texto };
                     if (navigator.canShare(dados)) {
                         await navigator.share(dados);
-                        return "compartilhado";
+                        return { status: "compartilhado", imagem: imagemB64 };
                     }
                 } catch (e) {
                     // Usuário cancelou ou navegador sem suporte: cai no aviso abaixo.
                 }
             }
             if (typeof enviarAlertaLojaPorWhatsApp === "function") {
-                await enviarAlertaLojaPorWhatsApp("COMPROVANTE PIX ENVIADO — MARKTPLACE stand2", texto + "\n(Cliente anexou o comprovante pelo site; suporte deve conferir no ticket.)");
+                await enviarAlertaLojaPorWhatsApp("COMPROVANTE PIX ENVIADO — MARKTPLACE stand2", texto);
                 mostrarAlerta("PIX", "Comprovante registrado. O suporte recebeu o alerta e fará a conferência.", "sucesso");
-                return "fila";
+                return { status: "fila", imagem: imagemB64 };
             }
             mostrarAlerta("PIX", "Comprovante recebido. O suporte fará a conferência pelo ticket.", "sucesso");
-            return "fila";
+            return { status: "fila", imagem: imagemB64 };
         }
 
         // Função para criar pagamento via Mercado Pago Edge Function
