@@ -217,6 +217,11 @@
             } else {
                 imgContainer.classList.add("hidden");
             }
+            const ehDonoDetalhes = detalheEhSuaConta();
+            const btnCarrinhoDetalhes = document.getElementById("btn-carrinho-detalhes");
+            const btnComprarDetalhes = document.getElementById("btn-comprar-detalhes");
+            if (btnCarrinhoDetalhes) btnCarrinhoDetalhes.classList.toggle("hidden", ehDonoDetalhes);
+            if (btnComprarDetalhes) btnComprarDetalhes.classList.toggle("hidden", ehDonoDetalhes);
             const acoesAdmin = document.getElementById("detalhes-acoes-admin");
             if (acoesAdmin) {
                 if (isAdminUsuario()) {

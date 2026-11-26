@@ -462,10 +462,10 @@
             </div>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
             <div class="space-y-3">
-                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2f2920]">
+                <button type="button" id="btn-carrinho-detalhes" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2f2920]">
                     🛒 Adicionar ao Carrinho
                 </button>
-                <button type="button" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
+                <button type="button" id="btn-comprar-detalhes" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
                     Comprar Agora
                 </button>
                 <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#1c1812] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
