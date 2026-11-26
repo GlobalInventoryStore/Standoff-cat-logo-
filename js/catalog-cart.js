@@ -298,9 +298,6 @@ function adicionarAoCarrinho(id) {
         }
 
         // Inicializar filtros ao carregar página
-        carregarMeusAnuncios();
-
-// Inicializar filtros ao carregar página
         document.addEventListener("DOMContentLoaded", () => {
             const btnAplicarFiltro = document.getElementById("btnAplicarFiltro");
             const filtroBusca = document.getElementById("filtroBusca");
