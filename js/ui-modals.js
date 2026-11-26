@@ -157,7 +157,23 @@
             }, 10 * 60 * 1000);
         });
 
+        function aceitarCookiesEntrada() {
+            aceitarCookiesLgpd();
+            const btn = document.getElementById("btn-aceitar-cookies-entrada");
+            if (btn) { btn.textContent = "✓ Cookies aceitos"; btn.disabled = true; btn.style.opacity = "0.6"; btn.style.cursor = "default"; }
+            const entrar = document.getElementById("btn-entrar-termos");
+            if (entrar) { entrar.disabled = false; entrar.style.opacity = "1"; }
+        }
+
         function concordarTermosEntrada() {
+            try {
+                if (localStorage.getItem("marktplace_lgpd_ok") !== "1") {
+                    mostrarAlerta("Cookies obrigatórios", "Role as instruções até o fim e toque em “Aceitar Cookies e Continuar” para entrar.", "aviso");
+                    const bloco = document.getElementById("bloco-cookies-entrada");
+                    if (bloco) bloco.scrollIntoView({ behavior: "smooth", block: "center" });
+                    return;
+                }
+            } catch (e) {}
             localStorage.setItem("marktplace_stand2_termos", "true");
             setModalVisivel("modal-boas-vindas", false);
         }

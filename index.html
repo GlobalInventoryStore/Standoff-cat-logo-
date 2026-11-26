@@ -214,8 +214,12 @@
                 <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
                 <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
                 <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
+                <div id="bloco-cookies-entrada" class="rounded-xl border border-[#f59e0b]/40 bg-[#14110c] p-3.5">
+                    <p class="text-[11px] text-gray-300 leading-relaxed mb-2.5">🍪 <strong class="text-white">Cookies (obrigatório):</strong> este site usa <strong class="text-white">cookies de análise</strong> (Google Analytics) para medir visitas e melhorar a experiência, conforme a LGPD. Para entrar, você precisa rolar até aqui e aceitar.</p>
+                    <button type="button" id="btn-aceitar-cookies-entrada" onclick="aceitarCookiesEntrada()" class="w-full py-2.5 rounded-xl font-bold text-xs cursor-pointer transition" style="background:var(--accent,#f59e0b);color:#0b0907;">Aceitar Cookies e Continuar</button>
+                </div>
             </div>
-            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary py-3 text-sm">
+            <button type="button" id="btn-entrar-termos" onclick="concordarTermosEntrada()" class="btn-primary py-3 text-sm">
                 Concordo com os Termos e Entrar
             </button>
         </div>
