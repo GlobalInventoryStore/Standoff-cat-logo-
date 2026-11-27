@@ -84,7 +84,7 @@
             const ids = String((pedido && pedido.anuncioIds) || "").split(",").map(s => s.trim()).filter(Boolean);
             if (!pedido || !ids.length) { mostrarAlerta("Admin", "Este ticket não tem anúncios vinculados para retomar.", "aviso"); return; }
             try {
-                const { error } = await window.supabaseClient.from("anuncios").update({ vendido: false }).in("id", ids);
+                const { error } = await window.supabaseClient.from("contas").update({ vendido: false }).in("id", ids);
                 if (error) { mostrarAlerta("Admin", "Falha ao retomar o anúncio no Supabase.", "erro"); return; }
                 mostrarAlerta("Admin", `Anúncio(s) retomado(s): ${ids.length} — de volta ao catálogo para nova venda.`);
                 if (typeof carregarCatalogo === "function") carregarCatalogo();

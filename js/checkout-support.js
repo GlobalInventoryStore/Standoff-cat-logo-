@@ -167,7 +167,7 @@
             });
             const idsVendidos = carrinhoItens.map(i => i.id).filter(Boolean);
             if (idsVendidos.length) {
-                try { await window.supabaseClient.from("anuncios").update({ vendido: true }).in("id", idsVendidos); } catch (e) {}
+                try { await window.supabaseClient.from("contas").update({ vendido: true }).in("id", idsVendidos); } catch (e) {}
                 carrinhoItens = [];
                 try { localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens)); } catch (e) {}
                 atualizarBadgeCarrinho();
