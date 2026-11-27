@@ -210,20 +210,30 @@
             }
             const functionUrl = `https://${supabaseUrl}/functions/v1/criar-pagamento`;
 
-            const itensData = itens || [{ id: "item", title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor) }];
+            const itensData = (itens && itens.length ? itens : [{ id: "item", title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor) }])
+                .map(i => ({
+                    title: i.title || i.titulo || "MARKTPLACE stand2",
+                    quantity: Number(i.quantity || i.quantidade || 1),
+                    unit_price: Number(i.unit_price || parseFloat(String(i.preco || "").replace("R$", "").replace(/\./g, "").replace(",", ".")) || valor)
+                }));
 
             const body = {
                 ticketId: ticketId,
                 valor: valor,
-                itens: itensData
+                items: itensData
             };
+
+            const anonKey = String(window.CONFIG && window.CONFIG.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || "");
+            const headersMP = { "Content-Type": "application/json" };
+            if (anonKey) {
+                headersMP["apikey"] = anonKey;
+                headersMP["Authorization"] = "Bearer " + anonKey;
+            }
 
             try {
                 const response = await fetch(functionUrl, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: headersMP,
                     body: JSON.stringify(body)
                 });
 

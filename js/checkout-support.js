@@ -66,20 +66,16 @@
                 const itens = carrinhoItens.map(i => ({ id: i.id || "item", titulo: i.titulo, preco: i.preco, quantidade: 1 }));
 
                 const resultado = await criarPagamentoMP(ticketId, somaTotalComTaxa, itens);
+                const btnJaPaguei = document.getElementById("btn-ja-paguei");
+                if (btnJaPaguei) btnJaPaguei.classList.add("hidden");
                 if (resultado && resultado.init_point) {
-                    // Exibir QR code gerado pelo Mercado Pago
-                    conteudoPag.innerHTML = `
-                        <div class="bg-[#050505] border border-[#2f2920] rounded-xl p-4 mb-4">
-                            <p class="text-[11px] text-gray-400 mb-2">Pagamento gerado pelo Mercado Pago</p>
-                            ${resultado.qr_code_base64 ? `<img src="data:image/png;base64,${resultado.qr_code_base64}" alt="QR Code MP" class="mx-auto w-20 h-20 rounded mb-2"><br>` : ""}
-                            <a href="${resultado.init_point}" target="_blank" rel="noopener" class="text-[var(--accent)] font-bold text-sm block center">Acessar Checkout MP</a>
-                        </div>
-                        <p class="text-[10px] text-gray-500">O pagamento será processado pelo Mercado Pago. Após aprovação, o ticket será criado automaticamente.</p>
-                    `;
+                    // Redireciona direto para o checkout do Mercado Pago (tela de cartão)
+                    conteudoPag.innerHTML = `<div class="py-4 text-gray-300 font-bold text-sm">🔒 Abrindo o checkout seguro do Mercado Pago...</div><p class="text-[11px] text-gray-400">Se nada acontecer, <a href="${resultado.init_point}" target="_blank" rel="noopener" class="text-[var(--accent)] font-bold underline">toque aqui para abrir</a>.</p>`;
+                    setTimeout(() => { window.location.href = resultado.init_point; }, 800);
                 } else {
                     // Fallback para PIX se MP falhar
                     const pixStrFallBack = gerarPixCopiaECola(somaTotal, ticketId);
-                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStrFallBack)}" alt="QR Code PIX Fallback" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">QR Code PIX (fallback). Use Copia e Cola se necessário.</p>`;
+                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStrFallBack)}" alt="QR Code PIX Fallback" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Checkout do Mercado Pago indisponível agora — pague via PIX (fallback). Use Copia e Cola se necessário.</p>`;
                 }
             } else {
                 conteudoPag.innerHTML = `<div class="py-4 text-gray-300 font-bold text-sm">⏳ Pagamento "${metodoEscolhido}" em processamento</div><p class="text-[11px] text-gray-400">O ticket só será criado e liberado após a confirmação real do pagamento pelo admin. Nenhum valor é liberado por este botão.</p>`;

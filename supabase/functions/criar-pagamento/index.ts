@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const itens = Array.isArray(items) && items.length && items[0].unit_price
       ? items
       : [{ title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor), currency_id: "BRL" }];
-    const siteUrl = "https://globalinventorystore.github.io/Standoff-cat-logo-/";
+    const siteUrl = "https://nexustrade.party/";
     const pref = {
       items: itens,
       external_reference: String(ticketId),
