@@ -76,20 +76,18 @@
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
 
         function calcularComissaoVendedor(preco) {
-            if (preco <= 100) return { taxa: 3.5, regra: "taxa fixa de R$3,50" };
-            if (preco <= 250) return { taxa: preco * 0.06, regra: "comissão de 6%" };
-            return { taxa: preco * 0.07, regra: "comissão de 7%" };
+            // A comissão da plataforma agora é paga pelo COMPRADOR no checkout.
+            // O vendedor recebe o valor cheio; só as taxas do Mercado Pago (cartão) são descontadas pelo MP.
+            return { taxa: 0, regra: "sem comissão para o vendedor" };
         }
 
         function atualizarRecebimentoVendedor() {
             const brute = parseFloat(String(document.getElementById("conta-preco").value || "").replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
             const box = document.getElementById("info-comissao");
             if (!brute) { box.classList.add("hidden"); box.innerHTML = ""; return; }
-            const { taxa, regra } = calcularComissaoVendedor(brute);
-            const recebe = Math.max(0, brute - taxa);
             const fmt = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(recebe) + '</p>' +
-                '<p class="text-[10px] text-gray-400 mt-0.5">Comissão da loja: ' + fmt(taxa) + ' (' + regra + ') — só é cobrada quando a conta vender.</p>';
+            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(brute) + ' (valor cheio)</p>' +
+                '<p class="text-[10px] text-gray-400 mt-0.5">A comissão da plataforma é paga pelo comprador no checkout. Se a venda for no cartão, o Mercado Pago desconta a taxa dele no repasse.</p>';
             box.classList.remove("hidden");
         }
 

@@ -160,3 +160,20 @@
                 }
             }
         }
+
+        // Fonte única de verdade do carrinho: o localStorage. Qualquer mutação passa por aqui
+        // ou recarrega antes de mutar, e a badge/botões são atualizados juntos.
+        function recarregarCarrinhoDoStorage() {
+            try {
+                const stored = JSON.parse(localStorage.getItem("marktplace_stand2_cart") || "[]");
+                carrinhoItens = Array.isArray(stored) ? stored : [];
+            } catch (e) { carrinhoItens = []; }
+            return carrinhoItens;
+        }
+        function salvarCarrinhoNoStorage() {
+            try { localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens)); } catch (e) {}
+            atualizarBadgeCarrinho();
+        }
+        // Re-sincroniza a badge quando a aba volta ao foco ou volta da tela de pagamento do MP
+        window.addEventListener("pageshow", function () { recarregarCarrinhoDoStorage(); if (typeof atualizarBadgeCarrinho === "function") atualizarBadgeCarrinho(); });
+        window.addEventListener("focus", function () { recarregarCarrinhoDoStorage(); if (typeof atualizarBadgeCarrinho === "function") atualizarBadgeCarrinho(); });

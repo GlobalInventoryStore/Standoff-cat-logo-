@@ -144,7 +144,10 @@ function adicionarAoCarrinho(id) {
         mostrarAlerta("Conta", "Não é possível adicionar sua própria conta ao carrinho.", "erro");
         return;
     }
+    // Fonte única de verdade: recarrega do localStorage antes de mutar (evita estado velho em memória)
+    recarregarCarrinhoDoStorage();
     if (carrinhoItens.some(item => String(item.id) === String(id))) {
+        atualizarBadgeCarrinho();
         mostrarAlerta("Carrinho", "Este item já está no seu carrinho!", "aviso");
         return;
     }
@@ -197,6 +200,7 @@ function adicionarAoCarrinho(id) {
         function closeCarrinho() { setModalVisivel("modal-carrinho", false); }
 
         function removerDoCarrinho(index) {
+            recarregarCarrinhoDoStorage();
             carrinhoItens.splice(index, 1);
             localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens));
             atualizarBadgeCarrinho();
@@ -218,8 +222,11 @@ function adicionarAoCarrinho(id) {
             // Bloquear se for própria conta
             if (detalheEhSuaConta()) { mostrarAlerta("Conta", "Não é possível comprar sua própria conta.", "erro"); return; }
             closeDetalhes();
+            recarregarCarrinhoDoStorage();
             if (anuncioSelecionadoAtual && !carrinhoItens.some(i => String(i.id) === String(anuncioSelecionadoAtual.id))) {
-                carrinhoItens = [anuncioSelecionadoAtual];
+                carrinhoItens.push(anuncioSelecionadoAtual);
+                try { localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens)); } catch (e) {}
+                atualizarBadgeCarrinho();
             }
             var precoDireto = parseFloat(String((anuncioSelecionadoAtual || {}).preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
             eventosGtag("begin_checkout", { currency: "BRL", value: precoDireto });

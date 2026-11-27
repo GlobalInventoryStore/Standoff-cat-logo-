@@ -1,5 +1,28 @@
+        // Comissão da plataforma (paga pelo comprador, sobre o valor base) — faixas definidas pelo dono:
+        // R$ 10 a R$ 100: R$ 3,00 fixo | R$ 101 a R$ 250: 4% | acima de R$ 250: 8%
+        function calcularComissaoComprador(valor) {
+            const v = Number(valor || 0);
+            if (!isFinite(v) || v <= 0) return 0;
+            if (v <= 100) return 3.0;
+            if (v <= 250) return v * 0.04;
+            return v * 0.08;
+        }
+        // Taxa de processamento do Mercado Pago (custo do vendedor repassado sem margem, estimativa):
+        // PIX 0% (absorvida pela loja) | débito e crédito 1x 4,5% | crédito 2–6x 8% | crédito 7–12x 12%
+        function calcularTaxaMercadoPago(metodo, valorBaseComComissao, faixa) {
+            const base = Number(valorBaseComComissao || 0);
+            if (metodo === "pix") return 0;
+            if (metodo === "debito") return base * 0.045;
+            if (metodo === "credito") {
+                const f = faixa === "7-12" ? 0.12 : (faixa === "2-6" ? 0.08 : 0.045);
+                return base * f;
+            }
+            return 0;
+        }
+
         async function gerarQrCodePagamento() {
             closeCheckout();
+            recarregarCarrinhoDoStorage();
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
             if (!nomesContas && anuncioSelecionadoAtual) nomesContas = anuncioSelecionadoAtual.titulo;
             let somaTotal = 0;
@@ -10,140 +33,73 @@
             if (somaTotal === 0 && anuncioSelecionadoAtual) {
                 somaTotal = parseFloat(String(anuncioSelecionadoAtual.preco || "0").replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
             }
-            const totalCarrinhoStr = formatarValorPix(somaTotal);
+            if (somaTotal <= 0) { mostrarAlerta("Aviso", "Não foi possível calcular o valor do pedido.", "aviso"); return; }
             const metodoEscolhido = document.querySelector('input[name="pagamento"]:checked').value;
+            const faixaParcelas = metodoEscolhido === "credito" ? ((document.getElementById("select-parcelas") || {}).value || "1") : "";
+            // Comissão do comprador + taxa MP: total exato, calculado e bloqueado antes da preferência
+            const comissao = calcularComissaoComprador(somaTotal);
+            const baseComComissao = Math.round((somaTotal + comissao) * 100) / 100;
+            const taxaMP = calcularTaxaMercadoPago(metodoEscolhido, baseComComissao, faixaParcelas);
+            const totalFinal = Math.round((baseComComissao + taxaMP) * 100) / 100;
+            const metodoPagamento = metodoEscolhido === "credito"
+                ? ("Cartão de Crédito (" + (faixaParcelas === "7-12" ? "7–12×" : faixaParcelas === "2-6" ? "2–6×" : "1×") + ")")
+                : metodoEscolhido === "debito" ? "Cartão de Débito" : "PIX";
             const pedidoId = "SO2-" + Math.floor(1000 + Math.random() * 9000);
+            const ticketIdMP = "TICK-" + Math.floor(10000 + Math.random() * 90000);
             document.getElementById("pedido-codigo").textContent = `Pedido #${pedidoId}`;
             document.getElementById("pag-conta-nome").textContent = nomesContas || "Conta Standoff 2";
-            document.getElementById("pag-conta-valor").textContent = totalCarrinhoStr;
+            document.getElementById("pag-conta-valor").textContent = formatarValorPix(totalFinal);
             const conteudoPag = document.getElementById("pag-conteudo");
-            const acoesPix = document.getElementById("pix-acoes");
-            const btnPaguei = document.getElementById("btn-ja-paguei");
-            const inputComprovante = document.getElementById("comprovante-pix");
-            pixGatewayCopiaECola = "";
-            if (inputComprovante) inputComprovante.value = "";
-            if (acoesPix) acoesPix.classList.add("hidden");
-            if (btnPaguei) btnPaguei.classList.remove("hidden");
-            if (metodoEscolhido === "pix") {
-                // PIX via Mercado Pago: aprovação automática. Fallback = QR manual com comprovante.
-                const ticketIdPix = "TICK-" + Math.floor(10000 + Math.random() * 90000);
-                window.__pixViaMP = "";
-                let resMP = null;
-                try { if (typeof criarPagamentoMP === "function") resMP = await criarPagamentoMP(ticketIdPix, somaTotal); } catch (e) {}
-                if (resMP && resMP.init_point) {
-                    window.__pixViaMP = ticketIdPix;
-                    conteudoPag.innerHTML = `
-                        <div class="bg-[#050505] border border-[#2f2920] rounded-xl p-4 mb-4">
-                            <p class="text-[11px] text-green-400 font-bold mb-2">PIX seguro pelo Mercado Pago</p>
-                            ${resMP.qr_code_base64 ? `<img src="data:image/png;base64,${resMP.qr_code_base64}" alt="QR Code PIX MP" class="mx-auto w-24 h-24 rounded mb-2"><br>` : ""}
-                            <a href="${resMP.init_point}" target="_blank" rel="noopener" class="block text-center bg-[var(--accent)] text-black font-bold py-2 rounded-xl text-xs no-underline mb-1">Pagar com PIX (Mercado Pago)</a>
-                            <p class="text-[10px] text-gray-500">Pagamento confirmado automaticamente. Após pagar, toque em "Já paguei" para gerar o seu ticket.</p>
-                        </div>`;
-                } else {
-                    const pixStr = gerarPixCopiaECola(somaTotal, pedidoId);
-                    if (!pixStr) {
-                        const motivo = pixEstaConfigurado()
-                            ? "Não foi possível calcular o valor do pedido."
-                            : "Chave PIX ainda não configurada.";
-                        conteudoPag.innerHTML = `<div class="py-2"><p class="text-sm font-bold text-amber-400">${motivo}</p><p class="text-[11px] text-gray-400 mt-2">Não geramos um QR falso. Acione o suporte para concluir a compra com segurança.</p><button type="button" onclick="closePagamentoDetalhes(); abrirChatSuporte()" class="mt-3 bg-[var(--accent)] text-black font-bold py-2 px-4 rounded-xl text-xs cursor-pointer">💬 Falar com o suporte</button></div>`;
-                        if (btnPaguei) btnPaguei.classList.add("hidden");
-                    } else {
-                        pixGatewayCopiaECola = pixStr;
-                        conteudoPag.innerHTML = `<div class="text-[10px] text-amber-400 mb-2">⚠ Mercado Pago indisponível agora — usando PIX direto da loja (confirmação manual pelo admin).</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStr)}" alt="QR Code PIX" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Escaneie o QR Code ou use o PIX Copia e Cola abaixo.</p><p class="text-[9px] text-gray-600 mt-1 break-all">${pixStr}</p>`;
-                        if (acoesPix) {
-                            acoesPix.classList.remove("hidden");
-                            const txtChave = document.getElementById("pix-chave-texto");
-                            if (txtChave) txtChave.textContent = PIX_CONFIG.chave;
-                        }
-                    }
-                }
-            } else if (metodoEscolhido === "debito" || metodoEscolhido === "credito") {
-                // Mercado Pago checkout — PIX e débito sem taxa; crédito: 1x +4,5% · 2–6x +8% · 7–12x +12%
-                let fatorTaxa = 1;
-                if (metodoEscolhido === "credito") {
-                    const faixa = (document.getElementById("select-parcelas") || {}).value || "1";
-                    fatorTaxa = faixa === "7-12" ? 1.12 : (faixa === "2-6" ? 1.08 : 1.045);
-                }
-                const somaTotalComTaxa = Math.ceil(somaTotal * fatorTaxa * 100) / 100;
-                document.getElementById("pag-conta-valor").textContent = formatarValorPix(somaTotalComTaxa);
-                const ticketId = "TICK-" + Math.floor(10000 + Math.random() * 90000);
-                const itens = carrinhoItens.map(i => ({ id: i.id || "item", titulo: i.titulo, preco: i.preco, quantidade: 1 }));
-
-                const resultado = await criarPagamentoMP(ticketId, somaTotalComTaxa, itens);
-                const btnJaPaguei = document.getElementById("btn-ja-paguei");
-                if (btnJaPaguei) btnJaPaguei.classList.add("hidden");
-                if (resultado && resultado.init_point) {
-                    // Redireciona direto para o checkout do Mercado Pago (tela de cartão)
-                    conteudoPag.innerHTML = `<div class="py-4 text-gray-300 font-bold text-sm">🔒 Abrindo o checkout seguro do Mercado Pago...</div><p class="text-[11px] text-gray-400">Se nada acontecer, <a href="${resultado.init_point}" target="_blank" rel="noopener" class="text-[var(--accent)] font-bold underline">toque aqui para abrir</a>.</p>`;
-                    setTimeout(() => { window.location.href = resultado.init_point; }, 800);
-                } else {
-                    // Fallback para PIX se MP falhar
-                    const pixStrFallBack = gerarPixCopiaECola(somaTotal, ticketId);
-                    conteudoPag.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixStrFallBack)}" alt="QR Code PIX Fallback" class="mx-auto bg-white p-1 rounded mb-2"><p class="text-[11px] text-gray-400">Checkout do Mercado Pago indisponível agora — pague via PIX (fallback). Use Copia e Cola se necessário.</p>`;
-                }
-            } else {
-                conteudoPag.innerHTML = `<div class="py-4 text-gray-300 font-bold text-sm">⏳ Pagamento "${metodoEscolhido}" em processamento</div><p class="text-[11px] text-gray-400">O ticket só será criado e liberado após a confirmação real do pagamento pelo admin. Nenhum valor é liberado por este botão.</p>`;
-            }
+            const fmt = (v) => "R$ " + Number(v).toFixed(2).replace(".", ",");
+            // Resumo transparente antes de pagar
+            let resumoHtml = `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 mb-3 text-[11px] text-gray-300 space-y-1">` +
+                `<div class="flex justify-between"><span>Subtotal</span><span>${fmt(somaTotal)}</span></div>` +
+                `<div class="flex justify-between"><span>Comissão da plataforma</span><span>${fmt(comissao)}</span></div>` +
+                (taxaMP > 0 ? `<div class="flex justify-between"><span>Taxa Mercado Pago (${metodoPagamento})</span><span>${fmt(taxaMP)}</span></div>` : "") +
+                `<div class="flex justify-between font-bold text-white border-t border-[#26211a] pt-1"><span>Total</span><span class="text-emerald-400">${fmt(totalFinal)}</span></div></div>`;
+            // Fluxo único: tudo pelo Mercado Pago, valor e método travados na preferência
+            conteudoPag.innerHTML = resumoHtml + `<div class="py-3 text-gray-300 font-bold text-sm">🔒 Gerando checkout seguro do Mercado Pago...</div>`;
             setModalVisivel("modal-pagamento-detalhes", true);
+            const itensMP = carrinhoItens.length
+                ? carrinhoItens.map(i => ({ title: i.titulo || "Conta Standoff 2", quantity: 1, unit_price: Math.round((totalFinal / carrinhoItens.length) * 100) / 100 }))
+                : [{ title: nomesContas || "MARKTPLACE stand2", quantity: 1, unit_price: totalFinal }];
+            // corrige arredondamento: coloca a diferença no primeiro item
+            const somaItens = itensMP.reduce((s, i) => s + i.unit_price, 0);
+            itensMP[0].unit_price = Math.round((itensMP[0].unit_price + (totalFinal - somaItens)) * 100) / 100;
+            const resultado = await criarPagamentoMP(ticketIdMP, totalFinal, itensMP, metodoEscolhido, faixaParcelas);
+            if (resultado && resultado.init_point) {
+                // Ticket-reserva criado já com o valor e método travados; webhook do MP libera na aprovação
+                await criarTicketViaMP(ticketIdMP, metodoPagamento, formatarValorPix(totalFinal));
+                window.location.href = resultado.init_point;
+            } else {
+                // Mercado Pago indisponível: nada de QR manual — orienta o suporte
+                conteudoPag.innerHTML = resumoHtml + `<div class="py-2"><p class="text-sm font-bold text-amber-400">Checkout do Mercado Pago indisponível agora.</p><p class="text-[11px] text-gray-400 mt-2">Nenhum pagamento foi gerado e você não pagou nada. Tente de novo em instantes ou fale com o suporte.</p><button type="button" onclick="closePagamentoDetalhes(); abrirChatSuporte()" class="mt-3 bg-[var(--accent)] text-black font-bold py-2 px-4 rounded-xl text-xs cursor-pointer">💬 Falar com o suporte</button></div>`;
+            }
         }
 
         function closePagamentoDetalhes() { setModalVisivel("modal-pagamento-detalhes", false); }
 
-        async function enviarComprovanteParaTicket() {
+        // Cria o ticket-reserva assim que a preferência do Mercado Pago é gerada.
+        // O ticket fica invisível no rastreio (pre-reserva) até o webhook do MP confirmar o pagamento (etapa 2).
+        async function criarTicketViaMP(ticketIdGerado, metodoPagamento, valorTotalTexto) {
             closePagamentoDetalhes();
-            let ticketIdGerado = "TICK-" + Math.floor(10000 + Math.random() * 90000);
             const pedidoIdGerado = "SO2-" + Math.floor(1000 + Math.random() * 9000);
-            var totalCompraTexto = (document.getElementById("pag-conta-valor") || {}).textContent || "0";
+            var totalCompraTexto = valorTotalTexto || (document.getElementById("pag-conta-valor") || {}).textContent || "0";
             var totalCompraNum = parseFloat(String(totalCompraTexto).replace("R$", "").replace(".", "").replace(",", ".")) || 0;
             eventosGtag("purchase", { currency: "BRL", value: totalCompraNum, transaction_id: pedidoIdGerado });
-            const metodoRadios = document.querySelectorAll('input[name="pagamento"]');
-            let metodoValor = "pix";
-            metodoRadios.forEach(r => { if (r.checked) metodoValor = r.value; });
-            const faixaParcelas = metodoValor === "credito" ? ((document.getElementById("select-parcelas") || {}).value || "1") : "";
-            const metodoPagamento = metodoValor === "credito"
-                ? ("Cartão de Crédito (" + (faixaParcelas === "7-12" ? "7–12×" : faixaParcelas === "2-6" ? "2–6×" : "1×") + ", taxa embutida)")
-                : metodoValor === "debito" ? "Cartão de Débito (sem taxa)" : "PIX";
-            const ehPix = metodoValor === "pix";
-            if (ehPix && window.__pixViaMP) { ticketIdGerado = String(window.__pixViaMP); }
-            const viaMP = ehPix && window.__pixViaMP === ticketIdGerado;
-            if (ehPix && !pixEstaConfigurado() && !viaMP) {
-                mostrarAlerta("PIX", "Chave PIX não configurada. Nenhum pagamento foi gerado — acione o suporte.", "aviso");
-                return;
-            }
-        const statusInicial = viaMP || !ehPix
-                ? "Reserva aguardando pagamento via Mercado Pago — some em 15 min se não pagar"
-                : "Aguardando verificação do comprovante PIX (custódia)";
-            let arquivoComprovante = null;
-            let comprovanteImagemB64 = null;
-                if (ehPix && !viaMP) {
-                    const campoComprovante = document.getElementById("comprovante-pix");
-                    arquivoComprovante = (campoComprovante && campoComprovante.files && campoComprovante.files[0]) || null;
-                    if (!arquivoComprovante) {
-                        mostrarAlerta("Comprovante obrigatório", "Anexe o print do comprovante PIX antes de enviar. Sem o print o admin não confirma o pagamento e o ticket não é criado.", "aviso");
-                        return;
-                    }
-                    if (arquivoComprovante.size > 8 * 1024 * 1024) {
-                        mostrarAlerta("Comprovante", "O arquivo é maior que 8 MB. Escolha um print menor.", "aviso");
-                        return;
-                    }
-                    const valorComprovante = document.getElementById("pag-conta-valor").textContent;
-                    let verificacaoComprovante = { resumo: "não realizada" };
-                    try { if (typeof verificarComprovantePorOCR === "function") verificacaoComprovante = await verificarComprovantePorOCR(arquivoComprovante, valorComprovante); } catch (e) {}
-                    try { const r = await compartilharComprovantePix(arquivoComprovante, ticketIdGerado, valorComprovante); comprovanteImagemB64 = (r && r.imagem) || null; } catch (e) { comprovanteImagemB64 = null; }
-                    if (campoComprovante) campoComprovante.value = "";
-                }
+            let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
+            let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
             document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
             const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
             if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
-            let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
-            let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
             document.getElementById("ticket-info-gmail").textContent = gmailUser;
             document.getElementById("ticket-info-wpp").textContent = wppUser;
             let nomesItens = carrinhoItens.map(i => i.titulo) || [];
             const listaItensFormatada = Array.isArray(nomesItens)
                 ? nomesItens.filter(Boolean).join(", ")
                 : String(nomesItens || "").trim();
-            let valorTotalPedido = document.getElementById("pag-conta-valor").textContent;
+            let valorTotalPedido = totalCompraTexto;
+            const statusInicial = "Reserva aguardando pagamento via Mercado Pago";
             pedidosAtivos.unshift({
                 ticketId: ticketIdGerado,
                 pedidoId: pedidoIdGerado,
@@ -171,32 +127,15 @@
             const idsVendidos = carrinhoItens.map(i => i.id).filter(Boolean);
             if (idsVendidos.length) {
                 try { await window.supabaseClient.from("contas").update({ vendido: true }).in("id", idsVendidos); } catch (e) {}
-                carrinhoItens = [];
-                try { localStorage.setItem("marktplace_stand2_cart", JSON.stringify(carrinhoItens)); } catch (e) {}
-                atualizarBadgeCarrinho();
             }
             const okVenda = await gravarFilaNotificacaoSuporte(
                 "VENDA — MARKTPLACE stand2",
-                "VENDA\nTicket: " + ticketIdGerado + "\nMétodo de pagamento: " + metodoPagamento + "\nValor: " + (valorTotalPedido || document.getElementById("pag-conta-valor").textContent) +
+                "VENDA\nTicket: " + ticketIdGerado + "\nMétodo de pagamento: " + metodoPagamento + "\nValor: " + (valorTotalPedido || "") +
                     "\nComprador: " + (currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante") + " (" + (gmailUser || "(sem Gmail)") + (wppUser ? ", WhatsApp " + wppUser : "") + ")" +
                     "\nItens: " + (listaItensFormatada || "(não informado)") +
-                    "\nComprovante: " + (viaMP ? "PIX pago via Mercado Pago — aprovado automaticamente pelo webhook" : (ehPix ? (comprovanteImagemB64 ? "anexado à mensagem de imagem acima" : (arquivoComprovante ? "escolhido pelo cliente (não pôde ser convertido)" : "não anexado")) : "cartão — verificado pelo Mercado Pago")) +
-                    (ehPix && typeof verificacaoComprovante !== "undefined" ? "\nVerificação automática do comprovante: " + (verificacaoComprovante.resumo || "não realizada") : "") +
+                    "\nStatus: reserva criada — confirmação automática pelo Mercado Pago (webhook)" +
                     "\nHora da compra: " + new Date().toLocaleString("pt-BR")
             );
-            if (okVenda && comprovanteImagemB64) {
-                try {
-                    const url = (window.CONFIG && window.CONFIG.SUPABASE_URL) || document.querySelector('meta[name="supabase-url"]')?.content || "";
-                    const chave = (window.CONFIG && window.CONFIG.SUPABASE_PUBLISHABLE_KEY) || document.querySelector('meta[name="supabase-key"]')?.content || "";
-                    if (url && chave) {
-                        await fetch(url.replace(/\/$/, "") + "/rest/v1/notificacao", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json", "apikey": chave, "Authorization": "Bearer " + chave, "Prefer": "return=minimal" },
-                            body: JSON.stringify({ titulo: "COMPROVANTE DA VENDA — TICKET " + ticketIdGerado, mensagem: "Comprovante anexado pelo comprador do ticket " + ticketIdGerado + ".", imagem: comprovanteImagemB64 })
-                        });
-                    }
-                } catch (e) {}
-            }
             const statusKey = "aguardando_conta_vendedor";
             const resumoRapido = montarResumoRapidoTicket({
                 ticketId: ticketIdGerado,
@@ -206,38 +145,36 @@
                 compradorWhats: wppUser
             });
             const chatBox = document.getElementById("chat-mensagens");
-            const mensagemConfirmacao = ehPix
-                ? "✓ Comprovante enviado ao admin — aguardando verificação do PIX"
-                : "✓ Pagamento e Comprovante Aprovados!";
-            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">${mensagemConfirmacao}</p>${resumoRapido}</div>`;
+            chatBox.innerHTML += `<div class="bg-[#050505] border border-[#26211a] rounded-xl p-3 text-gray-300 max-w-[90%] space-y-1"><p class="font-bold text-[var(--accent)]">🤖 Bot de Entrega Automática</p><p class="text-[11px] text-emerald-400 font-semibold">✓ Pedido registrado — conclua o pagamento no Mercado Pago para liberar a entrega.</p>${resumoRapido}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             setModalVisivel("modal-ticket", true);
-            if (viaMP || !ehPix) {
-                // Reserva via Mercado Pago: espera a aprovacao do webhook para virar ticket visivel no rastreio.
-                (async () => {
-                    for (let i = 0; i < 180; i++) {
-                        await new Promise(r => setTimeout(r, 10000));
-                        try {
-                            const row = await buscarTicketSupabase(ticketIdGerado);
-                            if (!row) continue;
-                            if (/cancelado/i.test(String(row.status_texto || ""))) return;
-                            if (/aprovado/i.test(String(row.status_texto || ""))) {
-                                try { await window.supabaseClient.from("tickets").update({ itens: listaItensFormatada || "Compra via Mercado Pago", comprador_whatsapp: wppUser || "" }).eq("codigo", ticketIdGerado); } catch (e) {}
-                                const idx = pedidosAtivos.findIndex(p => normalizarCodigoTicket(p.ticketId) === normalizarCodigoTicket(ticketIdGerado));
-                                if (idx >= 0) { pedidosAtivos[idx].status = row.status_texto; pedidosAtivos[idx].etapa = 2; pedidosAtivos[idx].etapasCustodia = (typeof ETAPAS_CUSTODIA !== "undefined") ? ETAPAS_CUSTODIA.slice(0, 2) : pedidosAtivos[idx].etapasCustodia; try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {} }
-                                mostrarAlerta("Pagamento aprovado", "O Mercado Pago confirmou o pagamento. Acompanhe pelo menu Rastrear Pedido.", "sucesso");
-                                return;
-                            }
-                        } catch (e) {}
-                    }
-                })();
-            }
+            // Reserva via Mercado Pago: espera a aprovacao do webhook para virar ticket visivel no rastreio.
+            (async () => {
+                for (let i = 0; i < 180; i++) {
+                    await new Promise(r => setTimeout(r, 10000));
+                    try {
+                        const row = await buscarTicketSupabase(ticketIdGerado);
+                        if (!row) continue;
+                        if (/cancelado/i.test(String(row.status_texto || ""))) return;
+                        if (/aprovado/i.test(String(row.status_texto || "")) || Number(row.etapa) >= 2) {
+                            try { await window.supabaseClient.from("tickets").update({ itens: listaItensFormatada || "Compra via Mercado Pago", comprador_whatsapp: wppUser || "" }).eq("codigo", ticketIdGerado); } catch (e) {}
+                            const idx = pedidosAtivos.findIndex(p => normalizarCodigoTicket(p.ticketId) === normalizarCodigoTicket(ticketIdGerado));
+                            if (idx >= 0) { pedidosAtivos[idx].status = row.status_texto; pedidosAtivos[idx].etapa = 2; pedidosAtivos[idx].etapasCustodia = (typeof ETAPAS_CUSTODIA !== "undefined") ? ETAPAS_CUSTODIA.slice(0, 2) : pedidosAtivos[idx].etapasCustodia; try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {} }
+                            mostrarAlerta("Pagamento aprovado", "O Mercado Pago confirmou o pagamento. Acompanhe pelo menu Rastrear Pedido.", "sucesso");
+                            return;
+                        }
+                    } catch (e) {}
+                }
+            })();
+            recarregarCarrinhoDoStorage();
             carrinhoItens = [];
             localStorage.removeItem("marktplace_stand2_cart");
             atualizarBadgeCarrinho();
         }
 
         function closeTicketModal() { setModalVisivel("modal-ticket", false); }
+
+
 
         function abrirChatSuporte() {
             closeTicketModal();

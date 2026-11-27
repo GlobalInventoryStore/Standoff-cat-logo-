@@ -202,7 +202,7 @@
         }
 
         // Função para criar pagamento via Mercado Pago Edge Function (token fica só no servidor)
-        async function criarPagamentoMP(ticketId, valor, itens) {
+        async function criarPagamentoMP(ticketId, valor, itens, metodo, faixaParcelas) {
             const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "").replace("https://", "").replace("http://", "").replace(/\/$/, "");
             if (!supabaseUrl) {
                 mostrarAlerta("MP", "Supabase não configurado — não é possível gerar o checkout.", "erro");
@@ -220,7 +220,9 @@
             const body = {
                 ticketId: ticketId,
                 valor: valor,
-                items: itensData
+                items: itensData,
+                metodo: metodo || "pix",
+                parcelas: faixaParcelas || ""
             };
 
             const anonKey = String(window.CONFIG && window.CONFIG.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || "");
@@ -278,13 +280,13 @@
             }
         }
 
-        // Comissão do marketplace por faixa de valor (definida pelo dono, ajuste 3,50/6%/7%).
+        // Comissão do marketplace por faixa de valor (definida pelo dono): R$3 / 4% / 8% — paga pelo comprador no checkout.
         function calcularComissaoVenda(valor) {
             const v = Number(valor || 0);
             if (!isFinite(v) || v <= 0) return 0;
-            if (v <= 100) return 3.5;
-            if (v <= 250) return v * 0.06;
-            return v * 0.07;
+            if (v <= 100) return 3.0;
+            if (v <= 250) return v * 0.04;
+            return v * 0.08;
         }
 
         function formatarComissaoVenda(valor) { return formatarValorPix(calcularComissaoVenda(valor)); }
