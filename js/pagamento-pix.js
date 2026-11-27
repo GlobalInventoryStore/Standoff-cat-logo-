@@ -202,7 +202,9 @@
         }
 
         // Função para criar pagamento via Mercado Pago Edge Function (token fica só no servidor)
-        async function criarPagamentoMP(ticketId, valor, itens, metodo, faixaParcelas) {
+        // A preferência e a reserva interna são montadas no servidor. O navegador envia
+        // somente a escolha atual e os IDs dos anúncios; preços vindos daqui não são aceitos.
+        async function criarPagamentoMP(pedido) {
             const supabaseUrl = String(window.CONFIG && window.CONFIG.SUPABASE_URL || document.querySelector('meta[name="supabase-url"]')?.content || "").replace("https://", "").replace("http://", "").replace(/\/$/, "");
             if (!supabaseUrl) {
                 mostrarAlerta("MP", "Supabase não configurado — não é possível gerar o checkout.", "erro");
@@ -210,19 +212,13 @@
             }
             const functionUrl = `https://${supabaseUrl}/functions/v1/criar-pagamento`;
 
-            const itensData = (itens && itens.length ? itens : [{ id: "item", title: "MARKTPLACE stand2", quantity: 1, unit_price: Number(valor) }])
-                .map(i => ({
-                    title: i.title || i.titulo || "MARKTPLACE stand2",
-                    quantity: Number(i.quantity || i.quantidade || 1),
-                    unit_price: Number(i.unit_price || parseFloat(String(i.preco || "").replace("R$", "").replace(/\./g, "").replace(",", ".")) || valor)
-                }));
-
             const body = {
-                ticketId: ticketId,
-                valor: valor,
-                items: itensData,
-                metodo: metodo || "pix",
-                parcelas: faixaParcelas || ""
+                reservaId: String((pedido || {}).reservaId || ""),
+                anuncioIds: Array.isArray((pedido || {}).anuncioIds) ? pedido.anuncioIds.map(String) : [],
+                metodo: String((pedido || {}).metodo || "pix"),
+                parcelas: String((pedido || {}).parcelas || ""),
+                comprador: (pedido || {}).comprador || {},
+                pedidoId: String((pedido || {}).pedidoId || "")
             };
 
             const anonKey = String(window.CONFIG && window.CONFIG.SUPABASE_PUBLISHABLE_KEY || document.querySelector('meta[name="supabase-key"]')?.content || "");

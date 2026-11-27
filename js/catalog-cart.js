@@ -234,10 +234,30 @@ function adicionarAoCarrinho(id) {
             resetarFormaPagamento();
             setModalVisivel("modal-checkout", true);
         }
-        function closeCheckout() { setModalVisivel("modal-checkout", false); }
+        function restaurarBotaoCheckout() {
+            const btn = document.getElementById("checkout-prosseguir");
+            if (!btn) return;
+            btn.disabled = false;
+            btn.textContent = "Prosseguir com Pagamento";
+            btn.classList.remove("opacity-60");
+        }
+
+        // Invalida qualquer tentativa anterior. Assim uma troca de método ou uma volta
+        // do Checkout Pro nunca reaproveita preferência, taxa ou botão em carregamento.
+        function invalidarTentativaCheckout() {
+            window.checkoutAttemptVersion = Number(window.checkoutAttemptVersion || 0) + 1;
+            window.checkoutPreferenceId = null;
+            restaurarBotaoCheckout();
+        }
+
+        function closeCheckout() {
+            invalidarTentativaCheckout();
+            setModalVisivel("modal-checkout", false);
+        }
 
         // Reseta a forma de pagamento a cada abertura: nada de seleção antiga em cache.
         function resetarFormaPagamento() {
+            invalidarTentativaCheckout();
             const sel = document.getElementById("select-parcelas");
             if (sel) sel.value = "1";
             const radioPix = document.querySelector('input[name="pagamento"][value="pix"]');
@@ -248,10 +268,13 @@ function adicionarAoCarrinho(id) {
         }
 
         function mudarMetodoPagamento(metodo) {
+            invalidarTentativaCheckout();
             const caixaCartao = document.getElementById("container-campos-cartao");
             if (metodo === "credito") {
                 caixaCartao.classList.remove("hidden");
             } else {
+                const sel = document.getElementById("select-parcelas");
+                if (sel) sel.value = "1";
                 caixaCartao.classList.add("hidden");
             }
         }

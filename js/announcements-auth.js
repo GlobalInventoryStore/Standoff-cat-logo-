@@ -76,9 +76,11 @@
         function closeAnuncioModal() { setModalVisivel("modal-anuncio", false); }
 
         function calcularComissaoVendedor(preco) {
-            // A comissão da plataforma agora é paga pelo COMPRADOR no checkout.
-            // O vendedor recebe o valor cheio; só as taxas do Mercado Pago (cartão) são descontadas pelo MP.
-            return { taxa: 0, regra: "sem comissão para o vendedor" };
+            const valor = Number(preco || 0);
+            if (!isFinite(valor) || valor <= 0) return { taxa: 0, regra: "sem comissão" };
+            if (valor <= 100) return { taxa: 3, regra: "R$ 3,00 de comissão da plataforma" };
+            if (valor <= 250) return { taxa: valor * 0.04, regra: "4% de comissão da plataforma" };
+            return { taxa: valor * 0.08, regra: "8% de comissão da plataforma" };
         }
 
         function atualizarRecebimentoVendedor() {
@@ -86,8 +88,10 @@
             const box = document.getElementById("info-comissao");
             if (!brute) { box.classList.add("hidden"); box.innerHTML = ""; return; }
             const fmt = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(brute) + ' (valor cheio)</p>' +
-                '<p class="text-[10px] text-gray-400 mt-0.5">A comissão da plataforma é paga pelo comprador no checkout. Se a venda for no cartão, o Mercado Pago desconta a taxa dele no repasse.</p>';
+            const comissao = calcularComissaoVendedor(brute);
+            const liquido = Math.max(0, brute - comissao.taxa);
+            box.innerHTML = '<p class="text-xs font-bold text-emerald-400">💸 Você recebe ' + fmt(liquido) + '</p>' +
+                '<p class="text-[10px] text-gray-400 mt-0.5">Valor anunciado: ' + fmt(brute) + ' · ' + comissao.regra + '. Taxas de processamento do Mercado Pago são tratadas separadamente conforme o pagamento.</p>';
             box.classList.remove("hidden");
         }
 

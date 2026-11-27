@@ -1,18 +1,8 @@
-        // Comissão da plataforma (paga pelo comprador, sobre o valor base) — faixas definidas pelo dono:
-        // R$ 10 a R$ 100: R$ 3,00 fixo | R$ 101 a R$ 250: 4% | acima de R$ 250: 8%
-        function calcularComissaoComprador(valor) {
-            const v = Number(valor || 0);
-            if (!isFinite(v) || v <= 0) return 0;
-            if (v <= 100) return 3.0;
-            if (v <= 250) return v * 0.04;
-            return v * 0.08;
-        }
-        // Taxa de processamento do Mercado Pago (custo do vendedor repassado sem margem, estimativa):
-        // PIX 0% (absorvida pela loja) | débito e crédito 1x 4,5% | crédito 2–6x 8% | crédito 7–12x 12%
-        function calcularTaxaMercadoPago(metodo, valorBaseComComissao, faixa) {
-            const base = Number(valorBaseComComissao || 0);
-            if (metodo === "pix") return 0;
-            if (metodo === "debito") return base * 0.045;
+        // A comissão da plataforma é descontada no repasse ao vendedor, nunca no checkout.
+        // O comprador só vê a taxa do gateway da forma de pagamento escolhida agora.
+        function calcularTaxaMercadoPago(metodo, valorBase, faixa) {
+            const base = Number(valorBase || 0);
+            if (metodo === "pix" || metodo === "debito") return 0;
             if (metodo === "credito") {
                 const f = faixa === "7-12" ? 0.12 : (faixa === "2-6" ? 0.08 : 0.045);
                 return base * f;
@@ -22,10 +12,14 @@
 
         async function gerarQrCodePagamento() {
             // Sem tela intermediária: valida, cria a reserva e vai direto ao Checkout Pro do Mercado Pago.
-            const btnProsseguir = document.querySelector('#modal-checkout button[onclick="gerarQrCodePagamento()"]');
+            const btnProsseguir = document.getElementById("checkout-prosseguir");
             const textoBtnOriginal = btnProsseguir ? btnProsseguir.textContent : "";
             const carregarBtn = (texto) => { if (btnProsseguir) { btnProsseguir.disabled = true; btnProsseguir.textContent = texto; btnProsseguir.classList.add("opacity-60"); } };
             const restaurarBtn = () => { if (btnProsseguir) { btnProsseguir.disabled = false; btnProsseguir.textContent = textoBtnOriginal; btnProsseguir.classList.remove("opacity-60"); } };
+            const tentativa = Number(window.checkoutAttemptVersion || 0) + 1;
+            window.checkoutAttemptVersion = tentativa;
+            window.checkoutPreferenceId = null;
+            let redirecionado = false;
             try {
             recarregarCarrinhoDoStorage();
             let nomesContas = carrinhoItens.map(i => i.titulo).join(", ");
@@ -41,105 +35,72 @@
             if (somaTotal <= 0) { mostrarAlerta("Aviso", "Não foi possível calcular o valor do pedido.", "aviso"); restaurarBtn(); return; }
             const metodoEscolhido = (document.querySelector('input[name="pagamento"]:checked') || {}).value || "pix";
             const faixaParcelas = metodoEscolhido === "credito" ? ((document.getElementById("select-parcelas") || {}).value || "1") : "";
-            // Comissão do comprador + taxa MP: total exato, calculado e bloqueado antes da preferência
-            const comissao = calcularComissaoComprador(somaTotal);
-            const baseComComissao = Math.round((somaTotal + comissao) * 100) / 100;
-            const taxaMP = calcularTaxaMercadoPago(metodoEscolhido, baseComComissao, faixaParcelas);
-            const totalFinal = Math.round((baseComComissao + taxaMP) * 100) / 100;
+            const taxaMP = calcularTaxaMercadoPago(metodoEscolhido, somaTotal, faixaParcelas);
+            const totalFinal = Math.round((somaTotal + taxaMP) * 100) / 100;
             const metodoPagamento = metodoEscolhido === "credito"
                 ? ("Cartão de Crédito (" + (faixaParcelas === "7-12" ? "7–12×" : faixaParcelas === "2-6" ? "2–6×" : "1×") + ")")
                 : metodoEscolhido === "debito" ? "Cartão de Débito" : "PIX";
             const pedidoId = "SO2-" + Math.floor(1000 + Math.random() * 9000);
-            const ticketIdMP = "TICK-" + Math.floor(10000 + Math.random() * 90000);
-            // Cada clique recalcula tudo do zero: nenhuma preferência ou valor anterior é reaproveitado.
-            const itensMP = carrinhoItens.length
-                ? carrinhoItens.map(i => ({ title: i.titulo || "Conta Standoff 2", quantity: 1, unit_price: Math.round((totalFinal / carrinhoItens.length) * 100) / 100 }))
-                : [{ title: nomesContas || "MARKTPLACE stand2", quantity: 1, unit_price: totalFinal }];
-            // corrige arredondamento: coloca a diferença no primeiro item
-            const somaItens = itensMP.reduce((s, i) => s + i.unit_price, 0);
-            itensMP[0].unit_price = Math.round((itensMP[0].unit_price + (totalFinal - somaItens)) * 100) / 100;
+            // RES é apenas uma referência interna. O código TICK só nasce no webhook aprovado.
+            const reservaIdMP = "RES-" + Math.floor(10000 + Math.random() * 90000);
+            const ticketFinalId = reservaIdMP.replace(/^RES-/, "TICK-");
+            const anuncioIds = carrinhoItens.map(i => i.id).filter(Boolean);
+            if (!anuncioIds.length && anuncioSelecionadoAtual && anuncioSelecionadoAtual.id) anuncioIds.push(anuncioSelecionadoAtual.id);
+            if (!anuncioIds.length) { mostrarAlerta("Aviso", "Não foi possível identificar os anúncios deste pedido.", "aviso"); return; }
             carregarBtn("🔒 Gerando checkout seguro...");
-            const resultado = await criarPagamentoMP(ticketIdMP, totalFinal, itensMP, metodoEscolhido, faixaParcelas);
-            if (resultado && resultado.init_point) {
-                // Ticket-reserva silencioso; ticket visível, notificação e reserva da conta só após o webhook aprovar.
-                await criarTicketViaMP(ticketIdMP, metodoPagamento, formatarValorPix(totalFinal), pedidoId);
-                window.location.href = resultado.init_point;
-            } else {
-                restaurarBtn();
+            const resultado = await criarPagamentoMP({
+                reservaId: reservaIdMP,
+                anuncioIds,
+                metodo: metodoEscolhido,
+                parcelas: faixaParcelas,
+                comprador: currentUser ? { email: currentUser.email, nome: sanitizarNomePublico(currentUser.username), whatsapp: currentUser.whatsapp || "" } : {},
+                pedidoId
+            });
+            if (tentativa !== Number(window.checkoutAttemptVersion || 0)) return;
+            if (!resultado || !resultado.init_point) {
                 mostrarAlerta("MP", "Não foi possível abrir o checkout do Mercado Pago agora. Nada foi cobrado — tente de novo em instantes ou fale com o suporte.", "erro");
+                return;
             }
+            window.checkoutPreferenceId = resultado.id || null;
+            acompanharPagamentoMP(reservaIdMP, ticketFinalId, pedidoId, Number(resultado.total || totalFinal), metodoPagamento);
+            redirecionado = true;
+            window.location.assign(resultado.init_point);
             } catch (e) {
-                restaurarBtn();
                 mostrarAlerta("Erro", "Falha ao iniciar o pagamento. Nada foi cobrado.", "erro");
+            } finally {
+                if (!redirecionado) restaurarBtn();
             }
         }
 
         function closePagamentoDetalhes() { setModalVisivel("modal-pagamento-detalhes", false); }
 
-        // Cria o ticket-reserva quando a preferência do Mercado Pago é gerada.
-        // NADA é liberado aqui: sem modal de "Compra Aprovada", sem marcar vendido, sem WhatsApp.
-        // Ticket visível, conta reservada (vendido=true) e aviso de venda acontecem só quando o webhook confirmar o pagamento.
-        async function criarTicketViaMP(ticketIdGerado, metodoPagamento, valorTotalTexto, pedidoIdParam) {
-            closeCheckout();
-            const pedidoIdGerado = pedidoIdParam || ("SO2-" + Math.floor(1000 + Math.random() * 9000));
-            var totalCompraTexto = valorTotalTexto || (document.getElementById("pag-conta-valor") || {}).textContent || "0";
-            var totalCompraNum = parseFloat(String(totalCompraTexto).replace("R$", "").replace(".", "").replace(",", ".")) || 0;
-            let gmailUser = currentUser ? currentUser.email : "cliente@gmail.com";
-            let wppUser = currentUser ? currentUser.whatsapp : "(Não informado)";
-            let nomesItens = carrinhoItens.map(i => i.titulo) || [];
-            const listaItensFormatada = Array.isArray(nomesItens)
-                ? nomesItens.filter(Boolean).join(", ")
-                : String(nomesItens || "").trim();
-            let valorTotalPedido = totalCompraTexto;
-            const statusInicial = "Reserva aguardando pagamento via Mercado Pago";
-            pedidosAtivos.unshift({
-                ticketId: ticketIdGerado,
-                pedidoId: pedidoIdGerado,
-                comprador: gmailUser,
-                status: statusInicial,
-                itens: listaItensFormatada,
-                total: valorTotalPedido,
-                etapa: 1,
-                preReserva: true,
-                etapasCustodia: [ETAPAS_CUSTODIA[0]]
-            });
-            localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos));
-            await salvarTicketSupabase({
-                codigo: ticketIdGerado,
-                comprador_email: String(gmailUser || "").toLowerCase() === "cliente@gmail.com" ? "" : String(gmailUser || "").toLowerCase(),
-                comprador_nome: currentUser ? sanitizarNomePublico(currentUser.username) : "Visitante",
-                comprador_whatsapp: wppUser || "",
-                itens: listaItensFormatada || "",
-                valor_total: valorTotalPedido || "",
-                metodo_pagamento: metodoPagamento,
-                etapa: 1,
-                status_texto: statusInicial,
-                concluido: false,
-                anuncio_ids: carrinhoItens.map(i => i.id).filter(Boolean).join(",")
-            });
-            const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
-            if (destaqueCodigo) destaqueCodigo.textContent = ticketIdGerado;
-            document.getElementById("ticket-id").textContent = `Ticket #${ticketIdGerado}`;
-            document.getElementById("ticket-info-gmail").textContent = gmailUser;
-            document.getElementById("ticket-info-wpp").textContent = wppUser;
-            // Espera a aprovacao do webhook para liberar ticket, carrinho e aviso.
+        // A Edge Function grava somente uma RES interna antes do Checkout Pro. Nenhum TICK,
+        // modal aprovado, notificação ou anúncio vendido existe antes do webhook aprovado.
+        function acompanharPagamentoMP(reservaId, ticketFinalId, pedidoIdGerado, totalCompraNum, metodoPagamento) {
+            const totalCompraTexto = formatarValorPix(totalCompraNum);
             (async () => {
                 for (let i = 0; i < 180; i++) {
                     await new Promise(r => setTimeout(r, 10000));
                     try {
-                        const row = await buscarTicketSupabase(ticketIdGerado);
+                        let row = await buscarTicketSupabase(ticketFinalId);
+                        if (!row) row = await buscarTicketSupabase(reservaId);
                         if (!row) continue;
                         if (/cancelado/i.test(String(row.status_texto || ""))) return;
                         if (/aprovado/i.test(String(row.status_texto || "")) || Number(row.etapa) >= 2) {
-                            try { await window.supabaseClient.from("tickets").update({ itens: listaItensFormatada || "Compra via Mercado Pago", comprador_whatsapp: wppUser || "" }).eq("codigo", ticketIdGerado); } catch (e) {}
-                            const idx = pedidosAtivos.findIndex(p => normalizarCodigoTicket(p.ticketId) === normalizarCodigoTicket(ticketIdGerado));
-                            if (idx >= 0) { pedidosAtivos[idx].status = row.status_texto; pedidosAtivos[idx].etapa = 2; pedidosAtivos[idx].preReserva = false; pedidosAtivos[idx].etapasCustodia = (typeof ETAPAS_CUSTODIA !== "undefined") ? ETAPAS_CUSTODIA.slice(0, 2) : pedidosAtivos[idx].etapasCustodia; try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {} }
-                            // Pagamento aprovado: agora sim limpa o carrinho e mostra o ticket.
+                            const codigoFinal = String(row.codigo || ticketFinalId).toUpperCase();
+                            const pedidoAprovado = converterRegistroSupabase(row);
+                            pedidosAtivos.unshift({ ...pedidoAprovado, ticketId: codigoFinal, pedidoId: pedidoIdGerado, metodo: metodoPagamento, total: totalCompraTexto, preReserva: false });
+                            try { localStorage.setItem("marktplace_stand2_pedidos", JSON.stringify(pedidosAtivos)); } catch (e) {}
                             recarregarCarrinhoDoStorage();
                             carrinhoItens = [];
                             localStorage.removeItem("marktplace_stand2_cart");
                             atualizarBadgeCarrinho();
                             eventosGtag("purchase", { currency: "BRL", value: totalCompraNum, transaction_id: pedidoIdGerado });
+                            const destaqueCodigo = document.getElementById("ticket-codigo-destaque-valor");
+                            if (destaqueCodigo) destaqueCodigo.textContent = codigoFinal;
+                            document.getElementById("ticket-id").textContent = `Ticket #${codigoFinal}`;
+                            document.getElementById("ticket-info-gmail").textContent = row.comprador_email || "";
+                            document.getElementById("ticket-info-wpp").textContent = row.comprador_whatsapp || "";
                             setModalVisivel("modal-ticket", true);
                             mostrarAlerta("Pagamento aprovado", "O Mercado Pago confirmou o pagamento. Acompanhe pelo menu Rastrear Pedido.", "sucesso");
                             return;

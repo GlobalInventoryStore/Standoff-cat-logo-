@@ -9,12 +9,23 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23d4ff00'/></svg>">
     <title>MARKTPLACE stand2 - Catálogo de Contas</title>
     <meta name="description" content="Marketplace de contas de Standoff 2 com intermediação oficial: pagamento em custódia, verificação de inventário e entrega com ticket de rastreio. Sem contato direto entre comprador e vendedor.">
+    <link rel="canonical" href="https://nexustrade.party/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MARKTPLACE stand2">
+    <meta property="og:title" content="MARKTPLACE stand2 - Catálogo de Contas de Standoff 2">
+    <meta property="og:description" content="Compre e venda contas de Standoff 2 com segurança: PIX aprovado na hora, custódia e rastreio de entrega.">
+    <meta property="og:url" content="https://nexustrade.party/">
+    <meta name="twitter:card" content="summary_large_image">
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-W59X465KK1"></script>
     
     <!-- Supabase Configuration -->
     <meta name="supabase-url" content="https://dumvvprvafzmzqdrenyn.supabase.co">
     <meta name="supabase-key" content="sb_publishable_aFCSgScOybPE8uWFVpxpHw_Xm1ov8SQ">
+    <!-- Gateway de pagamento (Fase 1 - PIX manual): a chave tambem pode vir de config.js -->
+    <meta name="pix-chave" content="globalinventorystore@gmail.com">
+    <meta name="pix-nome" content="MARKTPLACE STAND2">
+    <meta name="pix-cidade" content="SAO PAULO">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -29,6 +40,7 @@
     <script defer src="js/catalog-cart.js"></script>
     <script defer src="js/ocr-inventory.js"></script>
     <script defer src="js/admin-panel.js"></script>
+    <script defer src="js/pagamento-pix.js"></script>
     <script defer src="js/checkout-support.js"></script>
     <script defer src="js/lgpd.js"></script>
 </head>
@@ -193,13 +205,13 @@
     </footer>
 
     <!-- Modal Obrigatório de Entrada / Termos -->
-    <div id="modal-boas-vindas" class="modal-backdrop fixed inset-0 z-50 z-[999999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
-        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl">
+    <div id="modal-boas-vindas" class="modal-backdrop fixed inset-0 z-50 z-[999999] flex items-center justify-center p-3 sm:p-4 overflow-hidden hidden animate-fade-in">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative shadow-2xl flex flex-col max-h-[85vh]" style="max-height: 85dvh;">
             <div class="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-4">
                 <span class="text-[var(--accent)] font-black text-lg">M</span>
             </div>
             <h3 class="text-xl font-bold mb-3 text-white">Bem-vindo ao <span class="text-[var(--accent)]">MARKTPLACE stand2</span></h3>
-            <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-6 max-h-[50vh] overflow-y-auto pr-2">
+            <div class="space-y-3 text-xs text-[var(--muted)] leading-relaxed mb-4 flex-1 min-h-0 overflow-y-auto pr-2 overscroll-contain" style="-webkit-overflow-scrolling: touch;">
                 <p>O <strong>MARKTPLACE stand2</strong> é uma plataforma independente de intermediação e não possui vínculo oficial, patrocínio ou afiliação com a Axlebolt nem com o Standoff 2.</p>
                 <p>Nosso objetivo é proporcionar um ambiente seguro e organizado para transações entre jogadores, garantindo que ambas as partes sejam protegidas.</p>
                 <p>Antes de prosseguir, você deve concordar com as diretrizes:</p>
@@ -209,10 +221,16 @@
                 <p>4. <strong>Aviso de Segurança:</strong> Mantenha sempre provas do seu pedido/ticket, não compartilhe dados sensíveis fora do fluxo oficial e tenha ciência dos riscos inerentes às contas do jogo Standoff 2.</p>
                 <p>5. <strong>Isenção Total:</strong> A administração se isenta de acordos feitos por fora (Discord, WhatsApp, Telegram). Isso protege juridicamente a plataforma e os usuários contra riscos de transações não controladas.</p>
                 <p>6. <strong>Axlebolt:</strong> O comércio de contas está sujeito aos Termos da desenvolvedora. Cumprir essas diretrizes assegura que sua conta não seja penalizada pelas políticas oficiais do jogo.</p>
+                <div id="bloco-cookies-entrada" class="rounded-xl border border-[#f59e0b]/40 bg-[#14110c] p-3.5">
+                    <p class="text-[11px] text-gray-300 leading-relaxed mb-2.5">🍪 <strong class="text-white">Cookies (obrigatório):</strong> este site usa <strong class="text-white">cookies de análise</strong> (Google Analytics) para medir visitas e melhorar a experiência, conforme a LGPD. Para entrar, você precisa rolar até aqui e aceitar.</p>
+                    <button type="button" id="btn-aceitar-cookies-entrada" onclick="aceitarCookiesEntrada()" class="w-full py-2.5 rounded-xl font-bold text-xs cursor-pointer transition" style="background:var(--accent,#f59e0b);color:#0b0907;">Aceitar Cookies e Continuar</button>
+                </div>
             </div>
-            <button type="button" onclick="concordarTermosEntrada()" class="btn-primary py-3 text-sm">
-                Concordo com os Termos e Entrar
-            </button>
+            <div class="pt-1" style="padding-bottom: max(4px, env(safe-area-inset-bottom));">
+                <button type="button" id="btn-entrar-termos" onclick="concordarTermosEntrada()" class="btn-primary py-3 text-sm w-full">
+                    Concordo com os Termos e Entrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -337,6 +355,15 @@
                     <div id="login-feedback" class="text-xs text-center text-red-400 mb-2"></div>
                     <button type="submit" class="btn-primary mt-2">Entrar na Conta</button>
                     <button type="button" onclick="mostrarRecuperacaoSenha()" class="mt-2 w-full text-[11px] text-[var(--accent)] hover:underline cursor-pointer">Esqueceu a senha?</button>
+                    <div class="border-t border-[var(--border)] my-4 hidden" id="fb-divider">
+                        <span class="text-[10px] text-gray-400 opacity-60">ou</span>
+                    </div>
+                    <div class="input-group mb-3">
+                        <button type="button" onclick="facebookLogin()" class="w-full btn-secondary py-2 text-xs text-[var(--accent)] hover:text-white bg-[#1a1a1a] border border-[var(--accent)] rounded-lg flex items-center justify-center gap-2 cursor-pointer">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 2px;"><path d="M22.54 4.44a1.1 1.1 0 0 0-1.42 0L12 14.6 2.68 5.12a1.1 1.1 0 0 0-1.42.04 1.1 1.1 0 0 0-.06 1.43L2.16 18a1.1 1.1 0 0 0 .12 1.45h1.75a5.002 5.002 0 0 1 4.7 3.9 5.002 5.002 0 0 1-1.9 2.1 5.002 5.002 0 0 1-4.6-1.1 5.002 5.002 0 0 1-3.5-4.03 5.002 5.002 0 0 1-1.65-4.04A4.965 4.965 0 0 0 2 12.05a4.965 4.965 0 0 0 .46 8.07 1.1 1.1 0 0 0 .74 1.32h2.12a5.018 5.018 0 0 1 3.74 2.86 5.018 5.018 0 0 1-1.33 5.83 5.018 5.018 0 0 1-4.57 1.1 5.018 5.018 0 0 1-4.57-1.1 5.018 5.018 0 0 1-1.33-5.83A5.004 5.004 0 0 0 2 11.95c0-4.97 3.97-8.97 8.97-8.97 1.09 0 2.04.14 2.97.41a1.1 1.1 0 0 1 .88.29 1.1 1.1 0 0 1 .42.76 1.1 1.1 0 0 0 .21 1.35 1.1 1.1 0 0 0 .48 1.32h2.13a1.1 1.1 0 0 1 .7 1.09 1.1 1.1 0 0 0 .4.66 1.1 1.1 0 0 0 .16 1.16h.05a1.1 1.1 0 0 0 .07 1.32 1.1 1.1 0 0 0 .43 1.33 1.1 1.1 0 0 0 .71.35 1.1 1.1 0 0 1 1.04.15 5.002 5.002 0 0 1 6.04 0 5.002 5.002 0 0 1 4.78 4.45 5.002 5.002 0 0 1-1.83 5.11 5.002 5.002 0 0 1-4.64 1.1 5.002 5.002 0 0 1-4.43-4.38 5.002 5.002 0 0 1-1.07-5.03A11.046 11.046 0 0 0 12 2.25a11.046 11.046 0 0 0-5.04 1.78 1.1 1.1 0 0 0-.31.44 1.1 1.1 0 0 0-.74.16 1.1 1.1 0 0 0-.25.5 1.1 1.1 0 0 0-.16.83zM5.86 10.75a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM18.44 14.32a1.5 1.5 0 1 1-1.5-1.5 1.5 1.5 0 0 1 1.5 1.5z"></path></svg>
+                            Continuar com Facebook
+                        </button>
+                    </div>
                     <div id="rec-senha-area" class="hidden mt-3 border-t border-[#26211a] pt-3 space-y-2">
                         <p class="text-[11px] font-semibold text-[var(--accent)]">Recuperar acesso</p>
                         <input type="text" id="rec-identifier" placeholder="seuemail@gmail.com ou Nome">
@@ -442,10 +469,10 @@
             </div>
             <p id="detalhe-desc" class="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">Descrição...</p>
             <div class="space-y-3">
-                <button type="button" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2f2920]">
+                <button type="button" id="btn-carrinho-detalhes" onclick="adicionarAoCarrinhoAtual()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-3 rounded-xl font-bold text-sm transition cursor-pointer border border-[#2f2920]">
                     🛒 Adicionar ao Carrinho
                 </button>
-                <button type="button" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
+                <button type="button" id="btn-comprar-detalhes" onclick="abrirCheckoutDireto()" class="btn-primary py-3 text-sm">
                     Comprar Agora
                 </button>
                 <button type="button" onclick="closeDetalhes()" class="w-full bg-transparent hover:bg-[#1c1812] text-gray-400 hover:text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer">Voltar</button>
@@ -475,38 +502,31 @@
                 <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
                     <div class="flex items-center gap-3">
                         <span class="text-blue-400 font-bold text-lg">💳</span>
-                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12x com juros</span></div>
+                        <div><p class="text-sm font-bold text-white">Cartão de Débito</p><span class="text-[10px] text-emerald-400">Mercado Pago — sem taxa</span></div>
                     </div>
-                    <input type="radio" name="pagamento" value="cartao" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('cartao')">
+                    <input type="radio" name="pagamento" value="debito" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('debito')">
+                </label>
+                <label class="flex items-center justify-between p-3.5 bg-[#050505] border border-[#26211a] rounded-xl cursor-pointer hover:border-[var(--accent)] transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-purple-400 font-bold text-lg">🗓️</span>
+                        <div><p class="text-sm font-bold text-white">Cartão de Crédito</p><span class="text-[10px] text-[var(--muted)]">Até 12× no Mercado Pago — taxa conforme parcelas</span></div>
+                    </div>
+                    <input type="radio" name="pagamento" value="credito" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('credito')">
                 </label>
             </div>
+            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">PIX e débito são cobrados pelo valor anunciado. No crédito, somente a taxa de processamento da parcela escolhida é incluída: 1× 4,5% · 2–6× 8% · 7–12× 12%.</p>
             <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#26211a]">
                 <div class="input-group mb-0">
-                    <label>Número do Cartão</label>
-                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="input-group mb-0">
-                        <label>Validade</label>
-                        <input type="text" placeholder="MM/AA" maxlength="5">
-                    </div>
-                    <div class="input-group mb-0">
-                        <label>CVV</label>
-                        <input type="password" placeholder="123" maxlength="4">
-                    </div>
-                </div>
-                <div class="input-group mb-0">
                     <label>Parcelamento</label>
-                    <select class="w-full">
-                        <option>1x sem juros</option>
-                        <option>3x no cartão</option>
-                        <option>6x no cartão</option>
-                        <option>12x no cartão</option>
+                    <select id="select-parcelas" class="w-full" onchange="invalidarTentativaCheckout()">
+                        <option value="1">1× — taxa de 4,5% embutida</option>
+                        <option value="2-6">2× a 6× — taxa de 8% embutida</option>
+                        <option value="7-12">7× a 12× — taxa de 12% embutida</option>
                     </select>
                 </div>
             </div>
             <div class="space-y-2">
-                <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                <button type="button" id="checkout-prosseguir" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Prosseguir com Pagamento
                 </button>
                 <button type="button" onclick="closeCheckout()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Voltar</button>
@@ -526,9 +546,12 @@
             <h3 id="pag-titulo" class="text-lg font-bold text-white mb-1">Pagamento</h3>
             <p class="text-xs text-[var(--muted)] mb-4">Itens/Conta: <span id="pag-conta-nome" class="text-white font-semibold"></span> • Total: <span id="pag-conta-valor" class="text-emerald-400 font-bold"></span></p>
             <div id="pag-conteudo" class="bg-[#050505] border border-[#26211a] rounded-xl p-4 mb-4 text-center"></div>
-            <button type="button" onclick="enviarComprovanteParaTicket()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-xs transition cursor-pointer mb-2">
-                Já Paguei • Enviar Comprovante e Gerar Ticket
-            </button>
+            <div id="pix-acoes" class="hidden bg-[#050505] border border-[#26211a] rounded-xl p-3 mb-4">
+                <p class="text-[11px] text-gray-400 mb-1">Chave PIX: <span id="pix-chave-texto" class="text-white font-mono break-all"></span></p>
+                <button type="button" onclick="copiarPixCopiaECola()" class="w-full bg-[var(--accent)] text-black font-bold py-2 rounded-xl text-xs cursor-pointer mb-2">📋 Copiar código PIX (Copia e Cola)</button>
+                <label class="block text-[10px] text-gray-400 mb-1">Comprovante (no celular, compartilha a imagem; no desktop, anexe o print no WhatsApp):</label>
+                <input type="file" id="comprovante-pix" accept="image/*,application/pdf" class="w-full text-[11px] text-gray-300 file:mr-2 file:py-1.5 file:px-2 file:rounded-lg file:border-0 file:bg-[#26211a] file:text-white file:text-[11px] cursor-pointer">
+            </div>
             <button type="button" onclick="closePagamentoDetalhes()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2 rounded-xl font-bold text-xs cursor-pointer border border-[#2f2920]">Cancelar</button>
         </div>
     </div>
@@ -589,10 +612,10 @@
     </div>
 
     <!-- Modal Termos e Segurança -->
-    <div id="modal-termos" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-4 overflow-y-auto hidden animate-fade-in">
-        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="modal-termos" class="modal-backdrop fixed inset-0 z-50 z-[99999] flex items-center justify-center p-3 sm:p-4 overflow-hidden hidden animate-fade-in">
+        <div class="bg-[#16130e] border border-[#26211a] w-full max-w-lg rounded-[20px] p-4 sm:p-6 relative flex flex-col max-h-[85vh]" style="max-height: 85dvh;">
             <h3 class="text-xl font-bold mb-3 text-[var(--accent)]">Termos de Serviço e Isenção Legal</h3>
-            <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-6">
+            <div class="space-y-4 text-xs text-[var(--muted)] leading-relaxed mb-4 flex-1 min-h-0 overflow-y-auto pr-2 overscroll-contain" style="-webkit-overflow-scrolling: touch;">
                 <p>1. <strong>Intermediação Obrigatória:</strong> Todas as negociações e pagamentos devem ocorrer estritamente por meio do sistema oficial desta plataforma.</p>
                 <p class="text-amber-400 font-medium bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 leading-relaxed">
                     2. <strong>Isenção Total por Negociações Externas (Proteção Jurídica):</strong> O MARKTPLACE stand2 <strong>NÃO SE RESPONSABILIZA</strong> por acordos feitos por fora da plataforma (Discord, WhatsApp, Telegram). Isso inclui riscos de golpes, perda de dados e falta de proteção jurídica para transações não registradas no sistema.
@@ -602,7 +625,9 @@
                 <p>5. <strong>Custódia e Entrega:</strong> O pagamento fica retido em custódia até a conferência da conta e confirmação da entrega. A liberação dos dados da conta só ocorre após a confirmação de ambas as partes. Mantenha sempre provas do seu pedido/ticket e não compartilhe dados sensíveis fora do fluxo oficial.</p>
                 <p>6. <strong>Aviso de Fraudes e Disputas Indevidas:</strong> O MARKTPLACE stand2 não se responsabiliza por disputas resultantes de acordos feitos por fora da plataforma ou por falhas relacionadas ao uso indevido das contas do jogo. Em caso de disputa, registre imediatamente um ticket de rastreio pelo suporte oficial e mantenha todas as provas de comunicação e transação.</p>
             </div>
-            <button type="button" onclick="closeTermosModal()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Entendido e Concordo</button>
+            <div class="pt-1" style="padding-bottom: max(4px, env(safe-area-inset-bottom));">
+                <button type="button" onclick="closeTermosModal()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Entendido e Concordo</button>
+            </div>
         </div>
     </div>
 
@@ -753,6 +778,13 @@
         <button type="button" onclick="aceitarCookiesLgpd()" style="flex-shrink:0;background:var(--accent,#f59e0b);color:#0b0907;font-weight:800;font-size:12px;padding:10px 22px;border-radius:12px;border:0;cursor:pointer;" class="hover:opacity-90 transition">Aceitar</button>
     </div>
     
+
+    <!-- Facebook Login Handler -->
+    <script>
+        function facebookLogin() {
+            window.open('https://www.facebook.com/dialog/oauth?client_id=1817299576153734&config_id=1476210984713166&display=popup&override_default_response_type=true&redirect_uri=https%3A%2F%2Fnexustrade.party%2F&response_type=code&state=%3CSTATE%3E&prompt=login', '_blank', 'width=600,height=600');
+        }
+    </script>
 
 </body>
 </html>

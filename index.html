@@ -514,11 +514,11 @@
                     <input type="radio" name="pagamento" value="credito" class="accent-[var(--accent)]" onchange="mudarMetodoPagamento('credito')">
                 </label>
             </div>
-            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">PIX e débito não têm taxa. No crédito, a taxa embutida segue as parcelas: 1× 4,5% · 2–6× 8% · 7–12× 12%.</p>
+            <p class="text-[10px] text-[var(--muted)] -mt-3 mb-5">PIX e débito são cobrados pelo valor anunciado. No crédito, somente a taxa de processamento da parcela escolhida é incluída: 1× 4,5% · 2–6× 8% · 7–12× 12%.</p>
             <div id="container-campos-cartao" class="hidden space-y-3 mb-5 bg-[#050505] p-3.5 rounded-xl border border-[#26211a]">
                 <div class="input-group mb-0">
                     <label>Parcelamento</label>
-                    <select id="select-parcelas" class="w-full">
+                    <select id="select-parcelas" class="w-full" onchange="invalidarTentativaCheckout()">
                         <option value="1">1× — taxa de 4,5% embutida</option>
                         <option value="2-6">2× a 6× — taxa de 8% embutida</option>
                         <option value="7-12">7× a 12× — taxa de 12% embutida</option>
@@ -526,7 +526,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <button type="button" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
+                <button type="button" id="checkout-prosseguir" onclick="gerarQrCodePagamento()" class="w-full bg-[#10b981] hover:bg-emerald-600 text-black font-bold py-3 rounded-xl text-sm transition cursor-pointer">
                     Prosseguir com Pagamento
                 </button>
                 <button type="button" onclick="closeCheckout()" class="w-full bg-[#1c1812] hover:bg-[#26211a] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer border border-[#2f2920]">Voltar</button>
