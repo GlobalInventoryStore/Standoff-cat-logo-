@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
             const tr = await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(String(pay.external_reference)), { headers: { apikey: srk, Authorization: "Bearer " + srk } });
             const rows = tr.ok ? await tr.json().catch(() => []) : [];
             const row = Array.isArray(rows) ? rows[0] : null;
-            if (row && Number(row.etapa) < 2) {
+            if (row && !row.concluido && Number(row.etapa) < 2) {
               // 1. Libera o ticket no rastreio
               await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(String(pay.external_reference)), {
                 method: "PATCH",
