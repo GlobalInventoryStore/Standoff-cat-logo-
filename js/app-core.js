@@ -175,5 +175,5 @@
             atualizarBadgeCarrinho();
         }
         // Re-sincroniza a badge quando a aba volta ao foco ou volta da tela de pagamento do MP
-        window.addEventListener("pageshow", function () { recarregarCarrinhoDoStorage(); if (typeof atualizarBadgeCarrinho === "function") atualizarBadgeCarrinho(); });
+        window.addEventListener("pageshow", function () { recarregarCarrinhoDoStorage(); if (typeof atualizarBadgeCarrinho === "function") atualizarBadgeCarrinho(); if (typeof resetarFormaPagamento === "function") resetarFormaPagamento(); });
         window.addEventListener("focus", function () { recarregarCarrinhoDoStorage(); if (typeof atualizarBadgeCarrinho === "function") atualizarBadgeCarrinho(); });

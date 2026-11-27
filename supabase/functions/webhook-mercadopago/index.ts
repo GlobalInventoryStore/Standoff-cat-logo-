@@ -27,11 +27,42 @@ Deno.serve(async (req) => {
           const baseUrl = "https://dumvvprvafzmzqdrenyn.supabase.co";
           const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
           if (srk) {
-            await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(pay.external_reference), {
-              method: "PATCH",
-              headers: { apikey: srk, Authorization: "Bearer " + srk, "Content-Type": "application/json", Prefer: "return=minimal" },
-              body: JSON.stringify({ etapa: 2, status_texto: "Pagamento aprovado - Custodia Segura" })
-            });
+            const restHeaders = { apikey: srk, Authorization: "Bearer " + srk, "Content-Type": "application/json", Prefer: "return=representation" };
+            // Lê o ticket-reserva; só age se ainda estiver aguardando pagamento (idempotente).
+            const tr = await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(String(pay.external_reference)), { headers: { apikey: srk, Authorization: "Bearer " + srk } });
+            const rows = tr.ok ? await tr.json().catch(() => []) : [];
+            const row = Array.isArray(rows) ? rows[0] : null;
+            if (row && Number(row.etapa) < 2) {
+              // 1. Libera o ticket no rastreio
+              await fetch(baseUrl + "/rest/v1/tickets?codigo=eq." + encodeURIComponent(String(pay.external_reference)), {
+                method: "PATCH",
+                headers: { ...restHeaders, Prefer: "return=minimal" },
+                body: JSON.stringify({ etapa: 2, status_texto: "Pagamento aprovado - Custodia Segura" })
+              });
+              // 2. Reserva as contas (vendido=true) — só aqui, com pagamento confirmado
+              const ids = String(row.anuncio_ids || "").split(",").map(s => s.trim()).filter(Boolean);
+              if (ids.length) {
+                await fetch(baseUrl + "/rest/v1/contas?id=in.(" + ids.join(",") + ")", {
+                  method: "PATCH",
+                  headers: { ...restHeaders, Prefer: "return=minimal" },
+                  body: JSON.stringify({ vendido: true })
+                });
+              }
+              // 3. Aviso de VENDA no WhatsApp (fila lida pelo notifier)
+              const mpPagamento = String(pay.payment_method_id || pay.payment_type_id || "");
+              const msg = "VENDA\nTicket: " + String(pay.external_reference) +
+                "\nMétodo de pagamento: " + (row.metodo_pagamento || mpPagamento) +
+                "\nValor: " + (row.valor_total || (pay.transaction_amount != null ? "R$ " + Number(pay.transaction_amount).toFixed(2).replace(".", ",") : "")) +
+                "\nComprador: " + (row.comprador_nome || "(sem nome)") + (row.comprador_email ? " (" + row.comprador_email + ")" : "") + (row.comprador_whatsapp ? ", WhatsApp " + row.comprador_whatsapp : "") +
+                "\nItens: " + (row.itens || "(não informado)") +
+                "\nStatus: pagamento APROVADO pelo Mercado Pago (confirmação automática)" +
+                "\nHora da confirmação: " + new Date().toLocaleString("pt-BR");
+              await fetch(baseUrl + "/rest/v1/notificacao", {
+                method: "POST",
+                headers: { ...restHeaders, Prefer: "return=minimal" },
+                body: JSON.stringify({ titulo: "VENDA APROVADA — MARKTPLACE stand2", mensagem: msg.slice(0, 3000) })
+              });
+            }
           }
         }
       }

@@ -214,6 +214,7 @@ function adicionarAoCarrinho(id) {
             eventosGtag("begin_checkout", { currency: "BRL", value: totalFin });
             closeCarrinho();
             if (!currentUser) { mostrarAlerta("Login Necessário", "Entre na sua conta para finalizar o pagamento.", "aviso"); openModal(); return; }
+            resetarFormaPagamento();
             setModalVisivel("modal-checkout", true);
         }
 
@@ -230,9 +231,21 @@ function adicionarAoCarrinho(id) {
             }
             var precoDireto = parseFloat(String((anuncioSelecionadoAtual || {}).preco || "0").replace("R$", "").replace(".", "").replace(",", ".")) || 0;
             eventosGtag("begin_checkout", { currency: "BRL", value: precoDireto });
+            resetarFormaPagamento();
             setModalVisivel("modal-checkout", true);
         }
         function closeCheckout() { setModalVisivel("modal-checkout", false); }
+
+        // Reseta a forma de pagamento a cada abertura: nada de seleção antiga em cache.
+        function resetarFormaPagamento() {
+            const sel = document.getElementById("select-parcelas");
+            if (sel) sel.value = "1";
+            const radioPix = document.querySelector('input[name="pagamento"][value="pix"]');
+            if (radioPix) {
+                radioPix.checked = true;
+                if (typeof mudarMetodoPagamento === "function") mudarMetodoPagamento("pix");
+            }
+        }
 
         function mudarMetodoPagamento(metodo) {
             const caixaCartao = document.getElementById("container-campos-cartao");
