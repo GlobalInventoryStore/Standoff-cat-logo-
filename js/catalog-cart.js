@@ -229,7 +229,7 @@ function adicionarAoCarrinho(id) {
 
         function mudarMetodoPagamento(metodo) {
             const caixaCartao = document.getElementById("container-campos-cartao");
-            if (metodo === "cartao") {
+            if (metodo === "credito") {
                 caixaCartao.classList.remove("hidden");
             } else {
                 caixaCartao.classList.add("hidden");
